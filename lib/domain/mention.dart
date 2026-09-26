@@ -30,6 +30,7 @@ class Mention {
     this.uncertain = false,
     this.readOnline = false,
     this.needsCorroboration = false,
+    this.packQuantity,
   });
 
   final SourceKind source;
@@ -54,11 +55,16 @@ class Mention {
   /// when another source names the same medicine; noise ("namaste") when not.
   final bool needsCorroboration;
 
+  /// How many tablets a bill or strip line says were sold (`30 NOS`, `1x15`).
+  /// Checked against the course; never turned into a dose.
+  final int? packQuantity;
+
   Mention copyWith({
     Sig? sig,
     String? raw,
     String? purpose,
     bool? needsCorroboration,
+    int? packQuantity,
   }) => Mention(
     source: source,
     name: name,
@@ -69,6 +75,7 @@ class Mention {
     uncertain: uncertain,
     readOnline: readOnline,
     needsCorroboration: needsCorroboration ?? this.needsCorroboration,
+    packQuantity: packQuantity ?? this.packQuantity,
   );
 
   @override

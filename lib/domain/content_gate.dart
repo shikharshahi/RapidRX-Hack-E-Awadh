@@ -180,6 +180,18 @@ abstract final class ContentGate {
     return ContentVerdict(ContentKind.notMedical, evidence);
   }
 
+  /// The strong signals in one line — a dosage form, shorthand, a strength.
+  /// A line that has one but gave no medicine is a line nobody could read,
+  /// and a person is asked about it rather than it being dropped.
+  static List<String> strongSignals(String line) {
+    final s = ' ${SigParser.normalise(line)} ';
+    return _unique([
+      ..._hits(_form, s),
+      ..._hits(_shorthand, s),
+      ..._hits(_strength, s),
+    ]);
+  }
+
   static Iterable<String> _hits(RegExp re, String s) =>
       re.allMatches(s).map((m) => m[0]!.trim());
 

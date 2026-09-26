@@ -1,3 +1,5 @@
+import '../../domain/pharmacy_check.dart';
+
 /// Who checked what the phone understood from the doctor's words.
 enum Verifier { doctor, me }
 
@@ -60,9 +62,11 @@ class Visit {
     this.caretakerNote = '',
     this.notePriority = NotePriority.low,
     List<String>? notProvided,
+    List<PharmacyResolution>? pharmacyResolutions,
   }) : createdAt = createdAt ?? DateTime.now(),
        photos = photos ?? [],
-       notProvided = notProvided ?? [];
+       notProvided = notProvided ?? [],
+       pharmacyResolutions = pharmacyResolutions ?? [];
 
   factory Visit.start() =>
       Visit(id: 'v${DateTime.now().millisecondsSinceEpoch}');
@@ -110,12 +114,19 @@ class Visit {
   /// never guessed.
   final List<String> notProvided;
 
+  /// Every answer to a pharmacy question, oldest first — the latest one for
+  /// a question is the one that counts. Kept whole: "not sure" and an
+  /// explanation are part of the record, even though they settle nothing.
+  final List<PharmacyResolution> pharmacyResolutions;
+
   Map<String, Object?> toJson() => {
     'id': id,
     if (verifiedBy != null) 'verifiedBy': verifiedBy!.name,
     if (caretakerNote.isNotEmpty) 'caretakerNote': caretakerNote,
     'notePriority': notePriority.name,
     if (notProvided.isNotEmpty) 'notProvided': notProvided,
+    if (pharmacyResolutions.isNotEmpty)
+      'pharmacyResolutions': [for (final r in pharmacyResolutions) r.toJson()],
     'createdAt': createdAt.toIso8601String(),
     if (doctorName != null) 'doctorName': doctorName,
     'consent': consent,
@@ -137,6 +148,10 @@ class Visit {
     ),
     notProvided: [
       for (final n in j['notProvided'] as List? ?? const []) n as String,
+    ],
+    pharmacyResolutions: [
+      for (final r in j['pharmacyResolutions'] as List? ?? const [])
+        PharmacyResolution.fromJson((r as Map).cast<String, Object?>()),
     ],
     id: j['id']! as String,
     createdAt: DateTime.parse(j['createdAt']! as String),

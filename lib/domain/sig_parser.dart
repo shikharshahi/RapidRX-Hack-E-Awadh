@@ -9,6 +9,7 @@ class ParsedLine {
     this.form,
     this.sig = Sig.empty,
     this.purpose,
+    this.packQuantity,
   });
 
   final String raw;
@@ -25,6 +26,11 @@ class ParsedLine {
 
   /// Quoted from the words, never inferred: "for BP" gives `BP`.
   final String? purpose;
+
+  /// How many tablets a bill or strip line says were sold — `30 NOS` is 30,
+  /// `1x15` is 15. Never part of the name or the Sig: it is what was handed
+  /// over, not how to take it.
+  final int? packQuantity;
 }
 
 /// Prescription shorthand to structure, in code.
@@ -57,14 +63,15 @@ abstract final class SigParser {
     final purposeHit = _purpose(s);
     s = purposeHit.rest;
 
-    final sig = _parseSig(s);
+    final parsed = _parseSig(s);
     return ParsedLine(
       raw: text,
       name: name,
       strength: strength,
       form: form,
-      sig: sig,
+      sig: parsed.sig,
       purpose: purposeHit.purpose,
+      packQuantity: parsed.pack,
     );
   }
 
@@ -939,17 +946,26 @@ abstract final class SigParser {
       RegExp(r'\b(?:in\s+the\s+)?evening\b|\bsh?aam\b|\bsham\b'),
       (b, m) => b.addSlot(DoseSlot.evening),
     ),
-    // Pack quantities on bills and strips: "30 nos", "1x10", "10's".
+    // Pack quantities on bills and strips: "30 nos", "1x10", "10's". Taken
+    // out of the instruction exactly as before, and kept as a count of what
+    // was sold where the count is unambiguous: "10's" is a strip size, and
+    // "12 strips" says nothing about how many tablets are in one.
     (
       RegExp(
-        r"\b\d{2,}\s*(?:nos?|n|tabs?|tablets?|caps?|capsules?|strips?|s)\b"
-        r"|\b\d+\s*x\s*\d{2,}\b|\b\d+'s\b",
+        r"\b(\d{2,})\s*(nos?|n|tabs?|tablets?|caps?|capsules?|strips?|s)\b"
+        r"|\b(\d+)\s*x\s*(\d{2,})\b|\b\d+'s\b",
       ),
-      (b, m) {},
+      (b, m) {
+        if (m[1] != null && !const {'strip', 'strips', 's'}.contains(m[2])) {
+          b.pack ??= int.parse(m[1]!);
+        } else if (m[3] != null) {
+          b.pack ??= int.parse(m[3]!) * int.parse(m[4]!);
+        }
+      },
     ),
   ];
 
-  static Sig _parseSig(String text) {
+  static ({Sig sig, int? pack}) _parseSig(String text) {
     final b = _SigBuilder();
     var s = ' $text ';
     for (final (re, apply) in _phrases) {
@@ -975,7 +991,7 @@ abstract final class SigParser {
       if (forms.contains(t)) continue;
       b.unresolved.add(t);
     }
-    return b.build();
+    return (sig: b.build(), pack: b.pack);
   }
 }
 
@@ -988,6 +1004,7 @@ class _SigBuilder {
   bool stat = false;
   int? duration;
   double? units;
+  int? pack;
   final unresolved = <String>[];
 
   void addSlot(DoseSlot s) => _slots.add(s);

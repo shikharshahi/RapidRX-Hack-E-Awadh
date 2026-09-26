@@ -1,16 +1,35 @@
+import 'content_gate.dart';
 import 'mention.dart';
 import 'sig.dart';
 import 'sig_parser.dart';
 
+/// A line on a photo that looks like a medicine but gave none — a smudged
+/// name beside a clear `TAB` and `1-0-1`.
+class UnreadLine {
+  const UnreadLine(this.source, this.text, this.signals);
+
+  final SourceKind source;
+
+  /// The line exactly as it was read.
+  final String text;
+
+  /// Why it looks medical — the words the content gate recognised.
+  final List<String> signals;
+}
+
 /// Mentions of medicines, plus the advice that is not about a medicine.
 class Extraction {
-  const Extraction(this.mentions, this.notes);
+  const Extraction(this.mentions, this.notes, [this.unreadable = const []]);
 
   final List<Mention> mentions;
 
   /// "Come back after ten days for review". Shown to a person, never turned
   /// into a dose.
   final List<String> notes;
+
+  /// Photo lines that look medical but could not be turned into a medicine.
+  /// Never dropped quietly: a person is asked what each one is.
+  final List<UnreadLine> unreadable;
 }
 
 /// Turns one source's text into mentions of medicines.
@@ -74,6 +93,7 @@ abstract final class MentionExtractor {
     final segments = _segments(text, speech: speech);
     final mentions = <Mention>[];
     final notes = <String>[];
+    final unreadable = <UnreadLine>[];
     Mention? current;
 
     for (final seg in segments) {
@@ -96,9 +116,23 @@ abstract final class MentionExtractor {
             raw: seg.trim(),
             purpose: line.purpose,
             needsCorroboration: !evidence,
+            packQuantity: line.packQuantity,
           );
           continue;
         }
+      }
+
+      // A line that opens with a dosage form but has no readable name is a
+      // new medicine nobody could read — "Tab ~~~~ 0-0-1". Its "0-0-1" is not
+      // more instruction for the medicine above, and neither is what follows.
+      final signals = speech
+          ? const <String>[]
+          : ContentGate.strongSignals(seg);
+      if (line.name == null && line.form != null && signals.isNotEmpty) {
+        if (current != null) mentions.add(current);
+        current = null;
+        unreadable.add(UnreadLine(source, seg.trim(), signals));
+        continue;
       }
 
       // No name: instruction for the medicine above, if it carries any.
@@ -115,13 +149,17 @@ abstract final class MentionExtractor {
           purpose: current.purpose ?? line.purpose,
           // "Telma, subah ek": the instruction that follows is the evidence.
           needsCorroboration: current.needsCorroboration && !carries,
+          packQuantity: current.packQuantity ?? line.packQuantity,
         );
       } else if (speech && seg.trim().split(' ').length > 2) {
         notes.add(seg.trim());
+      } else if (signals.isNotEmpty) {
+        // Looks medical, belongs to nothing: asked about, never dropped.
+        unreadable.add(UnreadLine(source, seg.trim(), signals));
       }
     }
     if (current != null) mentions.add(current);
-    return Extraction(mentions, notes);
+    return Extraction(mentions, notes, unreadable);
   }
 
   static bool _isPrinted(SourceKind s) =>
