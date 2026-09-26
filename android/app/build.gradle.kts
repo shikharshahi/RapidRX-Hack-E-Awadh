@@ -46,6 +46,10 @@ kotlin {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // The ML Kit plugin only compiles against the non-Latin scripts; the app
+    // has to ship the ones it uses. Without this, reading a Hindi note on a
+    // prescription crashes on the phone — and only a release build (R8) says so.
+    implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
 }
 
 flutter {
