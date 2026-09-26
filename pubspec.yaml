@@ -1,0 +1,57 @@
+name: rapidrx
+description: "RapidRX — four sources that cross-question each other, so nobody guesses a dose."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  shared_preferences: ^2.3.3              # device choices AND (for now) all medical data
+  flutter_tts: ^4.2.0                     # fallback voice, behind Kokoro
+  crypto: ^3.0.6                          # SHA-256 PIN hash
+  audioplayers: ^6.1.0                    # plays cached Kokoro WAVs
+  image_picker: ^1.1.2                    # prescription / bill / strip photos
+  record: ^6.1.1                          # doctor / chemist audio — 5.x breaks the APK build
+  path_provider: ^2.1.5                   # visit media + voice cache folders
+  cross_file: ^0.3.4+2                    # file path on Android, blob URL on web
+  http: ^1.2.2                            # Kokoro, Gemini, Twilio
+  speech_to_text: ^7.0.0                  # dictation
+  google_mlkit_text_recognition: ^0.15.0  # on-device OCR, Latin + Devanagari
+  photo_manager: ^3.12.0                  # recent-photo scan
+  share_plus: ^13.3.0                     # share the plan anywhere
+  url_launcher: ^6.3.2                    # wa.me fallback
+  flutter_local_notifications: ^22.3.1    # dose reminders — v22 takes NAMED arguments
+  timezone: ^0.11.1                       # zonedSchedule needs a TZDateTime
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+
+  fonts:
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
+    - family: NotoSansDevanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansDevanagari-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansDevanagari-Bold.ttf
+          weight: 700
