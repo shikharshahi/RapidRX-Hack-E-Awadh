@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -5,7 +6,22 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
 import '../l10n/app_language.dart';
+import 'speech_result.dart';
 import 'voice_cache.dart';
+
+/// The outcome of asking the Space for one sentence. Exactly one of [bytes]
+/// and [failure] is set.
+class KokoroFetch {
+  const KokoroFetch.ok(Uint8List this.bytes, this.elapsed) : failure = null;
+  const KokoroFetch.failed(SpeechMiss this.failure, this.elapsed)
+    : bytes = null;
+
+  final Uint8List? bytes;
+  final SpeechMiss? failure;
+
+  /// From the first request to the last byte of audio.
+  final Duration elapsed;
+}
 
 /// Kokoro text-to-speech, through a public Hugging Face Space.
 ///
@@ -17,6 +33,10 @@ import 'voice_cache.dart';
 /// voice works with no network at all. One failure marks the Space unreachable
 /// for the rest of the session — a voice that stalls thirty seconds on every
 /// screen is worse than the fallback.
+///
+/// This class never waits on the user's behalf: it has one generous [timeout]
+/// for a whole fetch. The short "speak now or step aside" deadline belongs to
+/// `KokoroEngine`, which lets a slow fetch finish here and warm the cache.
 class KokoroTts {
   KokoroTts({
     http.Client? client,
@@ -52,10 +72,27 @@ class KokoroTts {
 
   VoiceCache get cache => _cache;
 
+  // One request per sentence at a time: a prompt repeats every ten seconds,
+  // and a slow Space must not be asked for the same sentence twice.
+  final _inFlight = <String, Future<KokoroFetch>>{};
+
   static String cacheKey(String text, AppLanguage language, double speed) =>
       sha1
           .convert(utf8.encode('${language.code}|$speed|${text.trim()}'))
           .toString();
+
+  /// The cached WAV for [text], without touching the network.
+  Future<Uint8List?> cached(
+    String text,
+    AppLanguage language, {
+    double speed = 1.0,
+  }) async {
+    try {
+      return await _cache.read(cacheKey(text, language, speed));
+    } catch (_) {
+      return null; // A cache that cannot be read is a cache miss.
+    }
+  }
 
   /// WAV bytes for [text], from the cache or the Space. Null when neither can
   /// provide them.
@@ -64,23 +101,34 @@ class KokoroTts {
     AppLanguage language, {
     double speed = 1.0,
   }) async {
-    final key = cacheKey(text, language, speed);
-    final cached = await _cache.read(key);
-    if (cached != null) return cached;
-    if (_unreachable) return null;
+    final hit = await cached(text, language, speed: speed);
+    if (hit != null) return hit;
+    return (await fetch(text, language, speed: speed)).bytes;
+  }
 
-    try {
-      final bytes = await _fetch(text, speed).timeout(timeout);
-      if (bytes == null) {
-        _unreachable = true;
-        return null;
-      }
-      await _cache.write(key, bytes);
-      return bytes;
-    } catch (_) {
-      _unreachable = true;
-      return null;
+  /// Ask the Space for [text] and cache the result. Never throws. A second
+  /// call for a sentence already being fetched joins the first.
+  Future<KokoroFetch> fetch(
+    String text,
+    AppLanguage language, {
+    double speed = 1.0,
+  }) {
+    if (_unreachable) {
+      return Future.value(
+        const KokoroFetch.failed(SpeechMiss.unreachable, Duration.zero),
+      );
     }
+    final key = cacheKey(text, language, speed);
+    return _inFlight[key] ??=
+        _fetchAndCache(
+          key,
+          text,
+          speed,
+          // A block body, not `=> remove(key)`: remove returns this very future,
+          // and whenComplete would wait on it — a deadlock.
+        ).whenComplete(() {
+          _inFlight.remove(key);
+        });
   }
 
   /// Warm the cache for a set of sentences, one after another.
@@ -91,7 +139,37 @@ class KokoroTts {
     }
   }
 
-  Future<Uint8List?> _fetch(String text, double speed) async {
+  Future<KokoroFetch> _fetchAndCache(
+    String key,
+    String text,
+    double speed,
+  ) async {
+    final watch = Stopwatch()..start();
+    SpeechMiss failure;
+    try {
+      final bytes = await _fetch(text, speed).timeout(timeout);
+      try {
+        await _cache.write(key, bytes);
+      } catch (_) {
+        // Still worth playing; it just will not be there next time.
+      }
+      return KokoroFetch.ok(bytes, watch.elapsed);
+    } on _SpaceError catch (e) {
+      failure = e.miss;
+    } on TimeoutException {
+      failure = SpeechMiss.timeout;
+    } on http.ClientException {
+      failure = SpeechMiss.offline;
+    } on FormatException {
+      failure = SpeechMiss.malformedResponse;
+    } catch (_) {
+      failure = SpeechMiss.error;
+    }
+    _unreachable = true;
+    return KokoroFetch.failed(failure, watch.elapsed);
+  }
+
+  Future<Uint8List> _fetch(String text, double speed) async {
     final start = await _http.post(
       Uri.parse('$baseUrl/gradio_api/call/predict'),
       headers: {'Content-Type': 'application/json'},
@@ -99,19 +177,28 @@ class KokoroTts {
         'data': [text, voice, speed],
       }),
     );
-    if (start.statusCode != 200) return null;
-    final eventId = (jsonDecode(start.body) as Map)['event_id'] as String?;
-    if (eventId == null) return null;
+    if (start.statusCode != 200) {
+      throw const _SpaceError(SpeechMiss.httpError);
+    }
+    final decoded = jsonDecode(start.body);
+    final eventId = decoded is Map ? decoded['event_id'] : null;
+    if (eventId is! String) {
+      throw const _SpaceError(SpeechMiss.malformedResponse);
+    }
 
     final stream = await _http.get(
       Uri.parse('$baseUrl/gradio_api/call/predict/$eventId'),
     );
-    if (stream.statusCode != 200) return null;
-    final url = audioUrlFromSse(stream.body);
-    if (url == null) return null;
+    if (stream.statusCode != 200) {
+      throw const _SpaceError(SpeechMiss.httpError);
+    }
+    final url = audioUrlFromSse(stream.body, baseUrl: baseUrl);
+    if (url == null) throw const _SpaceError(SpeechMiss.malformedResponse);
 
     final audio = await _http.get(Uri.parse(url));
-    if (audio.statusCode != 200 || audio.bodyBytes.isEmpty) return null;
+    if (audio.statusCode != 200 || audio.bodyBytes.isEmpty) {
+      throw const _SpaceError(SpeechMiss.httpError);
+    }
     return audio.bodyBytes;
   }
 
@@ -119,7 +206,8 @@ class KokoroTts {
   ///
   /// The body is a series of `event:` / `data:` pairs. The one that matters is
   /// `event: complete`, whose data is a JSON list whose first item is the file
-  /// — either an object with a `url`, or a bare path.
+  /// — either an object with a `url`, or a bare path. Anything else, including
+  /// data that is not JSON, yields null.
   static String? audioUrlFromSse(String body, {String? baseUrl}) {
     String? event;
     for (final raw in const LineSplitter().convert(body)) {
@@ -127,7 +215,12 @@ class KokoroTts {
       if (line.startsWith('event:')) {
         event = line.substring(6).trim();
       } else if (line.startsWith('data:') && event == 'complete') {
-        final data = jsonDecode(line.substring(5).trim());
+        final Object? data;
+        try {
+          data = jsonDecode(line.substring(5).trim());
+        } on FormatException {
+          return null;
+        }
         if (data is! List || data.isEmpty) return null;
         final first = data.first;
         if (first is Map && first['url'] is String) return first['url'];
@@ -140,4 +233,9 @@ class KokoroTts {
     }
     return null;
   }
+}
+
+class _SpaceError implements Exception {
+  const _SpaceError(this.miss);
+  final SpeechMiss miss;
 }

@@ -73,5 +73,24 @@ class _VoicePromptState extends State<VoicePrompt> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    final guide = _guide;
+    // Off in tests and release builds: the screen is exactly its child.
+    if (guide == null || !VoiceStatusLine.visible) return widget.child;
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        widget.child,
+        Positioned(
+          left: 4,
+          right: 4,
+          bottom: 4,
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: VoiceStatusLine(guide: guide),
+          ),
+        ),
+      ],
+    );
+  }
 }
