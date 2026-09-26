@@ -146,6 +146,67 @@ class AppStrings {
     'आपका नाम, नंबर और PIN फिर से पूछा जाएगा।',
   );
 
+  // ── Visit capture ───────────────────────────────────────────────────────
+  String get newVisit => _t('New visit', 'नई विज़िट');
+  String get visitIntro => _t(
+    'Add what you have. You can come back and add the rest later.',
+    'जो आपके पास है वो जोड़ें। बाकी बाद में भी जोड़ सकते हैं।',
+  );
+  String get doctorNameHint =>
+      _t('Doctor\'s name (optional)', 'डॉक्टर का नाम (ज़रूरी नहीं)');
+  String photoN(int n) => _t('Photo $n', 'फ़ोटो $n');
+  String get prescriptionPhoto => _t('Prescription photo', 'पर्ची की फ़ोटो');
+  String get prescriptionPhotoWhy =>
+      _t('The anchor of the visit', 'विज़िट की सबसे ज़रूरी चीज़');
+  String get doctorVoice => _t('Doctor\'s voice', 'डॉक्टर की बात');
+  String get doctorVoiceWhy =>
+      _t('What the doctor explained', 'डॉक्टर ने जो समझाया');
+  String get pharmacyBill => _t('Pharmacy bill', 'दवाई का बिल');
+  String get pharmacyBillWhy =>
+      _t('Printed, so the most reliable', 'छपा हुआ, इसलिए सबसे भरोसेमंद');
+  String get chemistVoice => _t('Chemist\'s voice', 'केमिस्ट की बात');
+  String get chemistVoiceWhy =>
+      _t('What the chemist explained', 'केमिस्ट ने जो समझाया');
+  String get required => _t('Required', 'ज़रूरी');
+  String get recommended => _t('Recommended', 'सुझाया गया');
+  String get added => _t('Added', 'जुड़ गया');
+  String get buildPlan => _t('Build plan', 'प्लान बनाएँ');
+  String get addPrescriptionFirst =>
+      _t('Add the prescription photo first.', 'पहले पर्ची की फ़ोटो जोड़ें।');
+  String get browserPreview => _t(
+    'Browser preview: captures are kept only until you close this tab. '
+        'The Android build saves them on the phone.',
+    'ब्राउज़र प्रीव्यू: टैब बंद करते ही फ़ोटो और आवाज़ हट जाएँगी। '
+        'Android ऐप इन्हें फ़ोन पर सेव करता है।',
+  );
+  String get takePhoto => _t('Take a photo', 'फ़ोटो खींचें');
+  String get chooseFromGallery => _t('Choose from gallery', 'गैलरी से चुनें');
+  String get startRecording => _t('Start recording', 'रिकॉर्डिंग शुरू करें');
+  String get stopRecording => _t('Stop and save', 'रोकें और सेव करें');
+  String get recording => _t('Recording…', 'रिकॉर्ड हो रहा है…');
+  String get micUnavailable => _t(
+    'The microphone is not available here.',
+    'यहाँ माइक्रोफ़ोन उपलब्ध नहीं है।',
+  );
+  String get cameraUnavailable => _t(
+    'Could not get a photo. Nothing was added.',
+    'फ़ोटो नहीं मिली। कुछ नहीं जोड़ा गया।',
+  );
+
+  // ── Consent ─────────────────────────────────────────────────────────────
+  String get consentTitle =>
+      _t('Before we keep anything', 'कुछ भी रखने से पहले');
+  String get consentBody => _t(
+    'Photos and voice notes of this visit are saved on this phone only. '
+        'They are read on the phone to build your plan. Nothing is sent '
+        'anywhere unless you say so on a later screen.',
+    'इस विज़िट की फ़ोटो और आवाज़ सिर्फ़ इसी फ़ोन पर सेव होंगी। प्लान बनाने '
+        'के लिए इन्हें फ़ोन पर ही पढ़ा जाता है। जब तक आप आगे किसी स्क्रीन '
+        'पर हाँ न कहें, कुछ भी कहीं नहीं भेजा जाता।',
+  );
+  String get consentAgree => _t('I agree, continue', 'मैं सहमत हूँ, आगे बढ़ें');
+  String get consentDecline => _t('Not now', 'अभी नहीं');
+
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');
   String get back => _t('Back', 'पीछे');

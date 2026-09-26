@@ -1,4 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Doctor and chemist voice notes, and dictation. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Prescription, bill and strip photos. The camera is optional: the
+         gallery works on a phone without one. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <!-- Kokoro voice, and the optional online handwriting read. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="RapidRX"
         android:name="${applicationName}"
