@@ -172,6 +172,35 @@ escalation moves to a different person rather than getting louder. Ids come from
 re-sync replaces instead of duplicating; every sync is a full replace; confirming a dose cancels
 its slot at once. Never for SOS, a finished course, a stopped medicine, or a slot taken.
 
+### ADR-60 · A dose alarm wakes the screen, like an alarm clock
+A reminder waiting in the notification shade is easy to miss for the person this app is for. Each
+of the two ADR-37 alarms is a **full-screen intent** notification: category *alarm*, on the alarm
+audio stream (so "media volume zero" does not silence it), with vibration. `MainActivity` has
+`showWhenLocked` and `turnScreenOn`, so the alarm screen opens over the lock screen. Ids, the
+two-alarm rule and full-replace syncing are unchanged. The alarms live on a new `dose_alarms`
+channel, because Android freezes a channel's sound and importance when it is first created; the
+old quiet `dose_reminders` channel is deleted. `USE_FULL_SCREEN_INTENT` is granted by default to
+a sideloaded APK; Android 14+ lets a person turn it off per app (the alarm then arrives as a
+heads-up, and tapping it opens the same screen), and a Play Store build would have to justify it.
+
+### ADR-61 · The alarm screen asks one question, and "later" writes nothing
+The notification carries only the slot and the day (`dose|morning|2026-09-26`); the medicines are
+read from the store when the screen opens, so one stopped after the alarm was set is never shown,
+and a slot already taken does not ask again. The screen shows each medicine as the strip looks —
+its photo when one exists (`ScheduledMedicine.imagePath`; nothing stores one yet), else its form
+as a pictogram — the name in English letters, the dose as dots and the food picture, read aloud.
+**Yes, taken** writes the same log as the dose screen and cancels the slot's alarms first.
+**No / Later** writes nothing: the dose is still due, and a re-sync keeps the +30 nudge if it is
+still ahead — never a third alarm. The whole slot is one answer, because a half-answered alarm
+is a question nobody is left to ask.
+
+### ADR-62 · Demo tools are a flag, and a demo never writes
+`DevFlags.demoTools` shows a small "Demo" link under the patient menu's tiles: show the alarm now,
+or ring it in 15 seconds to watch it wake a locked phone. It uses today's nearest slot with its
+real medicines, or `DEMO MEDICINE 500` on an empty schedule, and a demo alarm logs nothing,
+cancels nothing and tells nobody: a demo "Yes" at 10am must not mark the night dose taken or
+message the family. **Turn the flag off for a store build.**
+
 ### Missed is derived, never written
 Nothing runs at 09:01 to record a miss. Status is computed day to day whenever it is asked for.
 
