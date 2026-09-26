@@ -29,6 +29,20 @@ class SyncJob {
   /// The visit it belongs to, so My prescriptions can say "waiting to sync".
   final String? visitId;
 
+  /// The handwriting photo, or a clip flagged `needsAudio`, is still required.
+  /// Drop the job (or clear the flag) before deleting that file.
+  bool get needsRawClip => kind == 'gemini' || payload['needsAudio'] == true;
+
+  SyncJob copyWith({Map<String, Object?>? payload}) => SyncJob(
+    id: id,
+    kind: kind,
+    payload: payload ?? this.payload,
+    createdAt: createdAt,
+    attempts: attempts,
+    notBefore: notBefore,
+    visitId: visitId,
+  );
+
   SyncJob retried(DateTime now) => SyncJob(
     id: id,
     kind: kind,

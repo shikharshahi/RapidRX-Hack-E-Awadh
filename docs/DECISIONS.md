@@ -283,3 +283,20 @@ Family can read that copy. A commercial caretaker can read it only after the pat
 demo page compares four digits locally, and a real build checks the hash on the server. Only the
 patient device can write. Hosting is pointed at `portal/` with site id `myrapidrx`. Deploy is
 manual and was not run.
+
+---
+
+## Privacy
+
+### ADR-65 · Raw capture is wiped when the verified prescription is saved
+Approving the visit writes the structured medicines, the schedule, and the caretaker note first,
+then queues a handwriting read if one is waiting offline, then deletes the raw capture: doctor and
+chemist transcripts, their audio files, handwritten note text, temporary OCR, and pharmacy voice
+clips. The draft visit is cleared after that. A full-screen line — "Conversations deleted. Your
+prescription is saved encrypted on this phone only." — stays up for about 2.5 seconds and can be
+skipped after one second. Both durations are injected, because a real timer under fake test time
+never fires. A sync job that still needs the clip (Gemini's prescription photo, or a payload
+flagged `needsAudio`) keeps that file; other raw audio and transcript fields are stripped from
+queued payloads so they cannot leave later. When the job finishes or is dropped, the clip goes
+too. The encrypted store itself is a separate piece of work: this step only deletes raw capture,
+and it does not replace `MedicineStore` or `DoseLogStore`.

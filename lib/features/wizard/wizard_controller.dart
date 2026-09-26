@@ -18,6 +18,7 @@ import '../../platform/text_recogniser.dart';
 import '../medicines/medicine_store.dart';
 import '../sync/sync_queue.dart';
 import '../sync/sync_service.dart';
+import '../visit/data_wipe.dart';
 import '../visit/media_store.dart';
 import '../visit/visit.dart';
 import '../visit/visit_repository.dart';
@@ -722,8 +723,7 @@ class VisitWizardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  MergedMedicine? _row(String id) =>
-      rows.where((r) => r.id == id).firstOrNull;
+  MergedMedicine? _row(String id) => rows.where((r) => r.id == id).firstOrNull;
 
   /// Undo what earlier answers did, then apply the latest answer to every
   /// question — so "not sure" after an A puts the card back to red.
@@ -842,8 +842,24 @@ class VisitWizardController extends ChangeNotifier {
       notePriority: visit.notePriority.name,
     );
     await _queueOnlineRead();
+    await _wipeCaptured();
     await repository.clear();
     return approved;
+  }
+
+  /// Raw transcripts, audio, notes, and OCR. Structured rows are already in
+  /// the medicine store. A handwriting job queued above keeps its photo.
+  Future<void> _wipeCaptured() async {
+    await DataWipe.apply(visit: visit, media: media, queue: sync?.queue);
+    for (final candidate in candidates) {
+      candidate.ocrText = null;
+    }
+    for (final rows in _takeaways.values) {
+      for (final row in rows) {
+        row.sourceText = '';
+        row.rawInstruction = null;
+      }
+    }
   }
 
   /// No signal at approval: the handwriting read waits in the queue. What it

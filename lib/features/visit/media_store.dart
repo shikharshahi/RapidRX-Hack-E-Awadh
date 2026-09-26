@@ -19,4 +19,8 @@ abstract class MediaStore {
   Future<String> keep(String visitId, XFile file, {required String name});
 
   Future<void> deleteVisit(String visitId);
+
+  /// Delete one capture. Missing files are fine: a second wipe, or a job
+  /// that already finished, must not fail the rest of the wipe.
+  Future<void> deleteFile(String path);
 }

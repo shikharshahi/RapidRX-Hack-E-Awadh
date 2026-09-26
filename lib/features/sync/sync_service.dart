@@ -10,6 +10,8 @@ import '../../platform/notices.dart';
 import '../caregiver/whatsapp_alerts.dart';
 import '../health/pmjay_client.dart';
 import '../medicines/medicine_store.dart';
+import '../visit/data_wipe.dart';
+import '../visit/media_store.dart';
 import 'sync_queue.dart';
 
 /// Watches the connection, and when it comes back drains the queue.
@@ -29,6 +31,7 @@ class SyncService {
     this.alerts,
     this.pmjay,
     this.onPmjayCard,
+    this.media,
     DateTime Function()? clock,
   }) : _gemini = gemini ?? GeminiClient.new,
        _clock = clock ?? DateTime.now;
@@ -42,6 +45,9 @@ class SyncService {
   final GeminiClient Function() _gemini;
   final WhatsAppAlerts? alerts;
   final PmjayClient? pmjay;
+
+  /// Deletes a handwriting photo once its queued read is done or dropped.
+  final MediaStore? media;
   final DateTime Function() _clock;
 
   /// A PM-JAY card found in the background: saved unconfirmed, for the
@@ -102,6 +108,16 @@ class SyncService {
   };
 
   Future<JobResult> _geminiRead(SyncJob job) async {
+    final result = await _geminiResult(job);
+    // Retry still needs the photo. Done and dropped do not.
+    if (result != JobResult.retry) {
+      final media = this.media;
+      if (media != null) await DataWipe.releaseClip(job, media);
+    }
+    return result;
+  }
+
+  Future<JobResult> _geminiResult(SyncJob job) async {
     final store = this.store;
     final visitId = job.visitId;
     if (store == null || visitId == null) return JobResult.failed;

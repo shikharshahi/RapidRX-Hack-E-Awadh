@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,6 +46,12 @@ class FakeMedia implements MediaStore {
 
   @override
   Future<void> deleteVisit(String visitId) async {}
+
+  @override
+  Future<void> deleteFile(String path) async {
+    final file = File(path);
+    if (file.existsSync()) file.deleteSync();
+  }
 }
 
 void main() {

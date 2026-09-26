@@ -13,6 +13,7 @@ import '../../platform/gallery_scanner.dart';
 import '../recording/clip_player.dart';
 import '../visit/capture_tools.dart';
 import '../visit/consent_sheet.dart';
+import '../visit/data_wipe_screen.dart';
 import 'steps/doctor_verify_step.dart';
 import 'steps/medicines_step.dart';
 import 'steps/photos_step.dart';
@@ -39,6 +40,8 @@ class WizardScreen extends StatefulWidget {
     this.consent = askConsent,
     this.onApproved,
     this.onlineCard,
+    this.wipeDuration = const Duration(milliseconds: 2500),
+    this.wipeSkipAfter = const Duration(seconds: 1),
   });
 
   final VisitWizardController controller;
@@ -56,6 +59,11 @@ class WizardScreen extends StatefulWidget {
 
   /// The consent-gated "read the handwriting online" card, when available.
   final Widget Function(VisitWizardController)? onlineCard;
+
+  /// How long the wipe sequence stays up, and when Skip appears. Injected so
+  /// a test does not wait on a real timer.
+  final Duration wipeDuration;
+  final Duration wipeSkipAfter;
 
   @override
   State<WizardScreen> createState() => _WizardScreenState();
@@ -105,7 +113,23 @@ class _WizardScreenState extends State<WizardScreen> {
 
   Future<void> _approve() async {
     setState(() => _approving = true);
+    final transcript = [
+      c.visit.doctorWords,
+      c.visit.chemistWords,
+    ].where((line) => line.trim().isNotEmpty).join('\n');
     final approved = await c.approve();
+    if (!mounted) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => DataWipeScreen(
+          transcript: transcript,
+          duration: widget.wipeDuration,
+          skipAfter: widget.wipeSkipAfter,
+          onDone: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
     if (!mounted) return;
     widget.onApproved?.call(approved);
     final s = L10n.of(context);
