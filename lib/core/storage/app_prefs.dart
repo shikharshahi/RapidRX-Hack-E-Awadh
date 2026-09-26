@@ -18,6 +18,9 @@ class AppPrefs {
 
   final SharedPreferences _prefs;
 
+  /// The same store, for the stores that live beside these choices.
+  SharedPreferences get raw => _prefs;
+
   static Future<AppPrefs> load() async =>
       AppPrefs(await SharedPreferences.getInstance());
 

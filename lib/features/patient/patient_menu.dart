@@ -7,6 +7,8 @@ import '../../core/widgets/app_bar_actions.dart';
 import '../../core/widgets/big_choice_tile.dart';
 import '../../ai/ai_config.dart';
 import '../../ai/gemini_client.dart';
+import '../../core/app_state.dart';
+import '../caregiver/family.dart';
 import '../doses/dose_log_store.dart';
 import '../doses/schedule_screen.dart';
 import '../medicines/medicine_store.dart';
@@ -129,11 +131,25 @@ Future<void> openPrescriptions(BuildContext context) async {
 
 Future<void> openSchedule(BuildContext context) async {
   final navigator = Navigator.of(context);
+  final state = AppScope.of(context);
   final store = await MedicineStore.load();
   final logs = await DoseLogStore.load();
+  final family = familyNotifier(state);
   await navigator.push(
     MaterialPageRoute<void>(
-      builder: (_) => ScheduleScreen(store: store, logs: logs),
+      builder: (routeContext) => ScheduleScreen(
+        store: store,
+        logs: logs,
+        // Nothing runs in the background, so opening the schedule is when
+        // missed doses are found and queued alerts get another go.
+        onOpened: (meds, now) async {
+          await family.drainOutbox(now: now);
+          await family.checkMissed(meds, logs, now: now);
+        },
+        onConfirmed: (slot, date) =>
+            family.doseTaken(slot, date, now: DateTime.now()),
+        onShare: () => sharePlan(routeContext, store.active()),
+      ),
     ),
   );
 }

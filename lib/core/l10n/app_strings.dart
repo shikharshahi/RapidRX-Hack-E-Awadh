@@ -518,6 +518,81 @@ class AppStrings {
     'यह सब इसी फ़ोन पर हुआ। कुछ भी बाहर नहीं गया।',
   );
 
+  // ── Caregiver home ──────────────────────────────────────────────────────
+  String get todaysDoses => _t('Today\'s doses', 'आज की खुराक');
+  String get alerts => _t('Alerts', 'अलर्ट');
+  String get alertsWhy => _t(
+    'A message goes out when a dose is taken, and when one is missed.',
+    'दवाई लेने पर और छूटने पर संदेश जाता है।',
+  );
+  String get noFamilyYet =>
+      _t('No family member added yet.', 'अभी कोई सदस्य नहीं जोड़ा गया।');
+  String get sendStatus => _t('Send today\'s status', 'आज का हाल भेजें');
+  String get sharePlan => _t('Share the full plan', 'पूरा प्लान भेजें');
+  String get familyNumberTitle => _t(
+    'Family member\'s WhatsApp number',
+    'परिवार के सदस्य का WhatsApp नंबर',
+  );
+  String get familyNumberInvalid => _t(
+    'That does not look like a mobile number. Nothing was saved.',
+    'यह मोबाइल नंबर नहीं लगता। कुछ सेव नहीं हुआ।',
+  );
+  String get sentAutomatically =>
+      _t('Sent on WhatsApp.', 'WhatsApp पर भेज दिया।');
+  String get openedInWhatsApp => _t(
+    'Opened in WhatsApp — press send there.',
+    'WhatsApp में खुल गया — वहाँ भेजें दबाएँ।',
+  );
+  String get sendFailed => _t(
+    'Could not send. It will be tried again later.',
+    'भेजा नहीं जा सका। बाद में फिर कोशिश होगी।',
+  );
+  String get addFamilyFirst => _t(
+    'Add a family member\'s number first.',
+    'पहले परिवार के सदस्य का नंबर जोड़ें।',
+  );
+
+  // ── Messages that leave the phone (plain text) ──────────────────────────
+  String planHeader(String name) =>
+      _t('Medicine plan — $name', 'दवाई का प्लान — $name');
+  String statusHeader(String name) =>
+      _t('Medicines today — $name', 'आज की दवाई — $name');
+  String get messageFooter => _t(
+    'Sent from RapidRX. Every row was checked by a person. This is not '
+        'medical advice.',
+    'RapidRX से भेजा गया। हर पंक्ति किसी व्यक्ति ने जाँची है। यह डॉक्टरी '
+        'सलाह नहीं है।',
+  );
+  String get inTheMorning => _t('in the morning', 'सुबह');
+  String get inTheAfternoon => _t('in the afternoon', 'दोपहर में');
+  String get inTheEvening => _t('in the evening', 'शाम को');
+  String get atNight => _t('at night', 'रात को');
+  String get and => _t('and', 'और');
+  String take(String name) => _t('Take $name', '$name लें');
+  String takeWhenNeeded(String name) =>
+      _t('Take $name only when needed.', '$name सिर्फ़ ज़रूरत पड़ने पर लें।');
+  String takeOnceNow(String name) =>
+      _t('Take $name once.', '$name एक बार लें।');
+  String takeWhenUnknown(String name) => _t(
+    '$name — ask the doctor when to take it.',
+    '$name — कब लेनी है, डॉक्टर से पूछें।',
+  );
+  String forMoreDays(int d) => _t('for $d more days', 'अभी $d दिन और');
+  String doctorSaidFor(String p) => _t(
+    'The doctor said this is for "$p".',
+    'डॉक्टर ने कहा यह "$p" के लिए है।',
+  );
+  String slotTaken(String name, String slot) => _t(
+    '$name: $slot medicines were taken.',
+    '$name: $slot की दवाई ले ली गई।',
+  );
+  String slotMissed(String name, String slot) =>
+      _t('$name: $slot medicines were missed.', '$name: $slot की दवाई छूट गई।');
+  String slotMissedOn(String name, String slot, String date) => _t(
+    '$name: $slot medicines on $date were missed.',
+    '$name: $date को $slot की दवाई छूट गई।',
+  );
+
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');
   String get back => _t('Back', 'पीछे');
