@@ -17,4 +17,7 @@ class _MemoryMediaStore implements MediaStore {
 
   @override
   Future<void> deleteVisit(String visitId) async {}
+
+  @override
+  Future<void> deleteFile(String path) async {}
 }

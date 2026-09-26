@@ -253,3 +253,20 @@ the motor. `Haptics.on(callback)` returns null for a null callback, so a disable
 disabled. Primary buttons are wrapped in `Pressable`, which shrinks to 0.97 under the finger via a
 `Listener` (outside the gesture arena, so taps and semantics are untouched) and is exactly 1 at
 rest, so no golden moves. Saving shows a spinner in the button at once — never a dead tap.
+
+---
+
+## Privacy
+
+### ADR-63 · Raw capture is wiped when the verified prescription is saved
+Approving the visit writes the structured medicines, the schedule, and the caretaker note first,
+then queues a handwriting read if one is waiting offline, then deletes the raw capture: doctor and
+chemist transcripts, their audio files, handwritten note text, temporary OCR, and pharmacy voice
+clips. The draft visit is cleared after that. A full-screen line — "Conversations deleted. Your
+prescription is saved encrypted on this phone only." — stays up for about 2.5 seconds and can be
+skipped after one second. Both durations are injected, because a real timer under fake test time
+never fires. A sync job that still needs the clip (Gemini's prescription photo, or a payload
+flagged `needsAudio`) keeps that file; other raw audio and transcript fields are stripped from
+queued payloads so they cannot leave later. When the job finishes or is dropped, the clip goes
+too. The encrypted store itself is a separate piece of work: this step only deletes raw capture,
+and it does not replace `MedicineStore` or `DoseLogStore`.

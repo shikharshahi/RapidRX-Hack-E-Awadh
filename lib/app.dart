@@ -18,6 +18,7 @@ import 'features/health/health_profile_controller.dart';
 import 'features/health/health_profile_screen.dart';
 import 'features/health/pmjay_client.dart';
 import 'features/medicines/medicine_store.dart';
+import 'features/visit/media_store.dart';
 import 'features/sync/sync_queue.dart';
 import 'features/sync/sync_service.dart';
 import 'platform/network_status.dart';
@@ -128,6 +129,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
       notices: Notices(),
       strings: AppStrings(_state.language),
       store: store,
+      media: MediaStore(),
       pmjay: widget.pmjay,
       onPmjayCard: (card) =>
           _prefs.setFoundAyushmanCard(jsonEncode(card.toJson())),

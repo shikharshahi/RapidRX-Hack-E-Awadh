@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cross_file/cross_file.dart';
 import 'package:rapidrx/features/medicines/medicine_store.dart';
 import 'package:rapidrx/features/visit/capture_tools.dart';
@@ -43,6 +45,12 @@ class FakeMedia implements MediaStore {
 
   @override
   Future<void> deleteVisit(String visitId) async {}
+
+  @override
+  Future<void> deleteFile(String path) async {
+    final file = File(path);
+    if (file.existsSync()) file.deleteSync();
+  }
 }
 
 class FakePhotos extends PhotoCapture {

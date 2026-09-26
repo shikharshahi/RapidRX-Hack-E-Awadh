@@ -38,6 +38,12 @@ class _FileMediaStore implements MediaStore {
     if (dir.existsSync()) await dir.delete(recursive: true);
   }
 
+  @override
+  Future<void> deleteFile(String path) async {
+    final file = File(path);
+    if (file.existsSync()) await file.delete();
+  }
+
   static String _extension(String name) {
     final dot = name.lastIndexOf('.');
     if (dot < 0 || name.length - dot > 6) return '';
