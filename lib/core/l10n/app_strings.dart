@@ -18,6 +18,11 @@ class AppStrings {
 
   String _t(String en, String hi) => isHindi ? hi : en;
 
+  /// For strings that live beside their feature, as an extension on
+  /// AppStrings in `lib/core/l10n/strings_<feature>.dart`. Same rule: English
+  /// and Hindi side by side, and a missing one is a compile error.
+  String pick(String en, String hi) => _t(en, hi);
+
   // ── Brand ────────────────────────────────────────────────────────────────
   String get appName => 'RapidRX';
   String get tagline => _t('Every dose, on time', 'हर दवाई, सही समय');
@@ -673,6 +678,39 @@ class AppStrings {
   String get priorityMedium => _t('Medium', 'मध्यम');
   String get priorityHigh => _t('High', 'ज़्यादा');
   String get caretakerNotes => _t('Notes', 'नोट');
+
+  // ── Offline and sync ────────────────────────────────────────────────────
+  String get offlineTitle => _t('No internet', 'इंटरनेट नहीं है');
+  String get offlineSaved => _t(
+    'No internet. Your session is saved and will sync automatically when '
+        'you\'re back online.',
+    'इंटरनेट नहीं है। आपका सेशन सेव है और इंटरनेट आते ही अपने आप सिंक हो '
+        'जाएगा।',
+  );
+  String get allSyncedTitle => _t('All synced', 'सब सिंक हो गया');
+  String get allSynced => _t(
+    'Everything saved offline has been sent.',
+    'ऑफ़लाइन सेव हुआ सब कुछ भेज दिया गया।',
+  );
+  String get newReadingTitle =>
+      _t('New reading to review', 'नई पढ़ाई जाँचनी है');
+  String get newReading => _t(
+    'The handwriting was read online. Open My prescriptions to check it — '
+        'nothing on your schedule changed.',
+    'लिखावट ऑनलाइन पढ़ी गई। मेरी पर्चियाँ खोलकर जाँचें — आपके दवाई के '
+        'समय में कुछ नहीं बदला।',
+  );
+  String get waitingToSync => _t('Waiting to sync', 'सिंक होना बाकी');
+  String get syncedLabel => _t('Synced', 'सिंक हो गया');
+  String get reviewReading => _t('New reading to review', 'नई पढ़ाई जाँचें');
+  String get pmjayQueued => _t(
+    'No internet. We will look this up as soon as you are online.',
+    'इंटरनेट नहीं है। इंटरनेट आते ही हम इसे ढूँढ लेंगे।',
+  );
+  String get pmjayFoundLater => _t(
+    'Your Ayushman card was found. Is this you?',
+    'आपका आयुष्मान कार्ड मिल गया। क्या यह आप हैं?',
+  );
 
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');
