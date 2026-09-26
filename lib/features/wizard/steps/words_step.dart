@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/feedback/pressable.dart';
+import '../../../core/l10n/app_language.dart';
 import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/strings_recording.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/mention.dart';
 import '../../../platform/dictation.dart';
+import '../../recording/clip_player.dart';
+import '../../recording/recording_feedback.dart';
+import '../../recording/recording_sessions.dart';
 import '../../visit/capture_tools.dart';
 import '../wizard_controller.dart';
 import '../wizard_widgets.dart';
@@ -15,6 +21,10 @@ import '../write_note_screen.dart';
 /// One primary button — Speak. Writing is the alternative, on a full page.
 /// Saving the audio is a separate, secondary choice, off by default: the
 /// recording is for the family, and it is not what gets cross-checked.
+///
+/// Every take answers "did it record?" beneath its button: a live dot, timer
+/// and meter while the mic is open, then "Recorded ✓ 0:42" or "Nothing
+/// heard, try again".
 class WordsStep extends StatefulWidget {
   const WordsStep({
     super.key,
@@ -22,52 +32,57 @@ class WordsStep extends StatefulWidget {
     required this.who,
     required this.dictation,
     required this.audio,
+    this.player,
   });
 
   final VisitWizardController controller;
   final SourceKind who;
   final Dictation dictation;
   final AudioCapture audio;
+  final ClipPlayer? player;
 
   @override
   State<WordsStep> createState() => _WordsStepState();
 }
 
 class _WordsStepState extends State<WordsStep> {
-  bool _listening = false;
-  bool _recording = false;
-  String _before = '';
+  late final _speech = DictationSession(
+    dictation: widget.dictation,
+    read: () => c.wordsOf(widget.who),
+    write: (text) => c.setWords(widget.who, text),
+  );
+  late final _clip = ClipSession(audio: widget.audio);
+  late final ClipPlayer _player = widget.player ?? ClipPlayer();
 
   VisitWizardController get c => widget.controller;
 
+  String? get _audioPath => widget.who == SourceKind.doctor
+      ? c.visit.doctorAudioPath
+      : c.visit.chemistAudioPath;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_audioPath != null) _clip.recorder.restoreKept();
+  }
+
   @override
   void dispose() {
-    if (_listening) widget.dictation.stop();
+    _speech.dispose();
+    _clip.dispose();
+    if (widget.player == null) _player.dispose();
     super.dispose();
   }
 
   Future<void> _toggleSpeak() async {
+    if (_speech.listening) return _speech.stop();
+    await _listen(_speech.start);
+  }
+
+  Future<void> _listen(Future<bool> Function(AppLanguage) how) async {
     final s = L10n.of(context);
-    if (_listening) {
-      await widget.dictation.stop();
-      setState(() => _listening = false);
-      return;
-    }
-    _before = c.wordsOf(widget.who).trim();
-    final ok = await widget.dictation.listen(
-      language: L10n.languageOf(context),
-      onWords: (words, done) {
-        final joined = [_before, words].where((x) => x.isNotEmpty).join(' ');
-        c.setWords(widget.who, joined);
-        if (done && mounted) setState(() => _listening = false);
-      },
-    );
-    if (!mounted) return;
-    if (!ok) {
-      _say(s.dictationUnavailable);
-      return;
-    }
-    setState(() => _listening = true);
+    final ok = await how(L10n.languageOf(context));
+    if (!ok && mounted) _say(s.dictationUnavailable);
   }
 
   Future<void> _write() async {
@@ -80,18 +95,37 @@ class _WordsStepState extends State<WordsStep> {
   }
 
   Future<void> _toggleAudio() async {
-    final s = L10n.of(context);
-    if (_recording) {
-      final file = await widget.audio.stop();
-      setState(() => _recording = false);
+    if (_clip.recording) {
+      final file = await _clip.stop();
       if (file != null) await c.keepAudio(widget.who, file);
       return;
     }
-    if (!await widget.audio.start()) {
-      _say(s.micUnavailable);
-      return;
+    await _startAudio();
+  }
+
+  Future<void> _startAudio() async {
+    final s = L10n.of(context);
+    if (!await _clip.start() && mounted) _say(s.micUnavailable);
+  }
+
+  Future<void> _redoAudio() async {
+    await c.dropAudio(widget.who);
+    _clip.recorder.reset();
+    await _startAudio();
+  }
+
+  Future<void> _deleteAudio() async {
+    await _player.stop();
+    await c.dropAudio(widget.who);
+    _clip.recorder.delete();
+  }
+
+  Future<void> _play() async {
+    final s = L10n.of(context);
+    final path = _audioPath;
+    if (path == null || !await _player.play(path)) {
+      if (mounted) _say(s.cannotPlay);
     }
-    setState(() => _recording = true);
   }
 
   void _say(String message) => ScaffoldMessenger.of(context)
@@ -113,17 +147,32 @@ class _WordsStepState extends State<WordsStep> {
         StepIntro(
           widget.who == SourceKind.doctor ? s.doctorWordsWhy : s.pharmacyWhy,
         ),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(72),
-            backgroundColor: _listening ? AppColors.red : AppColors.ink,
-          ),
-          icon: Icon(
-            _listening ? Icons.stop_rounded : Icons.graphic_eq_rounded,
-            size: 30,
-          ),
-          label: Text(_listening ? s.listening : s.speak),
-          onPressed: _toggleSpeak,
+        ListenableBuilder(
+          listenable: _speech.recorder,
+          builder: (context, _) {
+            final on = _speech.listening;
+            return Pressable(
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(72),
+                  backgroundColor: on ? AppColors.red : AppColors.ink,
+                ),
+                icon: Icon(
+                  on ? Icons.stop_rounded : Icons.graphic_eq_rounded,
+                  size: 30,
+                ),
+                label: Text(on ? s.listening : s.speak),
+                onPressed: _toggleSpeak,
+              ),
+            );
+          },
+        ),
+        RecordingFeedback(
+          controller: _speech.recorder,
+          liveLabel: s.listeningLive,
+          onRedo: () => _listen(_speech.redo),
+          onDelete: _speech.delete,
+          onRetry: () => _listen(_speech.retry),
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
@@ -187,16 +236,32 @@ class _WordsStepState extends State<WordsStep> {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: _toggleAudio,
-              child: Text(
-                _recording ? s.stopRecording : s.speak,
-                style: TextStyle(
-                  color: _recording ? AppColors.red : AppColors.muted,
+            // Once kept, the panel below holds play, again and delete.
+            if (!audioKept)
+              ListenableBuilder(
+                listenable: _clip.recorder,
+                builder: (context, _) => TextButton(
+                  onPressed: _toggleAudio,
+                  child: Text(
+                    _clip.recording ? s.stopRecording : s.speak,
+                    style: TextStyle(
+                      color: _clip.recording ? AppColors.red : AppColors.muted,
+                    ),
+                  ),
                 ),
               ),
-            ),
           ],
+        ),
+        RecordingFeedback(
+          controller: _clip.recorder,
+          liveLabel: s.recordingLive,
+          onPlay: _play,
+          onRedo: _redoAudio,
+          onDelete: _deleteAudio,
+          onRetry: () {
+            _clip.recorder.reset();
+            _startAudio();
+          },
         ),
       ],
     );

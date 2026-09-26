@@ -78,6 +78,26 @@ class AudioCapture {
     }
   }
 
+  /// How loud the room is while recording, from 0 to 1, a few times a
+  /// second. Empty when not recording or when the platform cannot say — a
+  /// meter that stays flat is honest; one that fakes movement is not.
+  Stream<double> levels({Duration every = const Duration(milliseconds: 120)}) {
+    if (_lazy == null || !_recording) return const Stream.empty();
+    try {
+      return _recorder
+          .onAmplitudeChanged(every)
+          .map((a) => levelFromDbfs(a.current))
+          .handleError((Object _) {});
+    } catch (_) {
+      return const Stream.empty();
+    }
+  }
+
+  /// `record` reports dBFS: 0 is the loudest the mic can take, and a quiet
+  /// room sits near -50. Speech lands around the middle of this scale.
+  static double levelFromDbfs(double dbfs) =>
+      dbfs.isFinite ? ((dbfs + 50) / 50).clamp(0.0, 1.0) : 0;
+
   Future<void> dispose() async {
     if (_lazy == null) return;
     try {

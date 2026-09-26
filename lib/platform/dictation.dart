@@ -31,11 +31,16 @@ class Dictation {
 
   /// Listen until [onFinal] fires or [stop] is called. Partial results stream
   /// through [onWords] so the screen shows the words as they arrive.
+  ///
+  /// [onLevel], when given, hears how loud the room is, from 0 to 1, for a
+  /// level meter — so a person can see the phone is hearing them.
   Future<bool> listen({
     required AppLanguage language,
     required void Function(String words, bool done) onWords,
+    void Function(double level)? onLevel,
   }) async {
     if (!await available()) return false;
+    final scale = SoundLevelScale();
     try {
       await _stt.listen(
         listenOptions: SpeechListenOptions(
@@ -49,6 +54,9 @@ class Dictation {
           listenMode: ListenMode.dictation,
         ),
         onResult: (r) => onWords(r.recognizedWords, r.finalResult),
+        onSoundLevelChange: onLevel == null
+            ? null
+            : (dB) => onLevel(scale.normalise(dB)),
       );
       return true;
     } catch (_) {
@@ -61,5 +69,24 @@ class Dictation {
     try {
       await _stt.stop();
     } catch (_) {}
+  }
+}
+
+/// Turns the engine's sound level into 0..1 for a meter.
+///
+/// The number means different things on different phones: Android reports an
+/// RMS level of roughly -2 to 10 dB, iOS a negative dB figure, the web
+/// nothing at all. So the scale starts at Android's range and widens to
+/// whatever it actually sees — a meter that moves, not a measurement. Whether
+/// anything was *heard* is decided by the words, never by this.
+class SoundLevelScale {
+  double _low = -2;
+  double _high = 10;
+
+  double normalise(double dB) {
+    if (!dB.isFinite) return 0;
+    if (dB < _low) _low = dB;
+    if (dB > _high) _high = dB;
+    return ((dB - _low) / (_high - _low)).clamp(0.0, 1.0);
   }
 }
