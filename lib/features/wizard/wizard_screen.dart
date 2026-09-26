@@ -10,6 +10,7 @@ import '../../domain/mention.dart';
 import '../../domain/scheduled_medicine.dart';
 import '../../platform/dictation.dart';
 import '../../platform/gallery_scanner.dart';
+import '../recording/clip_player.dart';
 import '../visit/capture_tools.dart';
 import '../visit/consent_sheet.dart';
 import 'steps/doctor_verify_step.dart';
@@ -32,6 +33,7 @@ class WizardScreen extends StatefulWidget {
     required this.controller,
     this.dictation,
     this.audio,
+    this.player,
     this.photos,
     this.scanner,
     this.consent = askConsent,
@@ -42,6 +44,9 @@ class WizardScreen extends StatefulWidget {
   final VisitWizardController controller;
   final Dictation? dictation;
   final AudioCapture? audio;
+
+  /// Plays a kept recording back.
+  final ClipPlayer? player;
   final PhotoCapture? photos;
   final GalleryScanner? scanner;
   final Future<bool> Function(BuildContext) consent;
@@ -59,6 +64,7 @@ class WizardScreen extends StatefulWidget {
 class _WizardScreenState extends State<WizardScreen> {
   late final Dictation _dictation = widget.dictation ?? Dictation();
   late final AudioCapture _audio = widget.audio ?? AudioCapture();
+  late final ClipPlayer _player = widget.player ?? ClipPlayer();
   late final PhotoCapture _photos = widget.photos ?? PhotoCapture();
   late final GalleryScanner _scanner = widget.scanner ?? GalleryScanner();
   bool _approving = false;
@@ -93,6 +99,7 @@ class _WizardScreenState extends State<WizardScreen> {
   void dispose() {
     c.removeListener(_changed);
     _audio.dispose();
+    if (widget.player == null) _player.dispose();
     super.dispose();
   }
 
@@ -129,6 +136,7 @@ class _WizardScreenState extends State<WizardScreen> {
       who: SourceKind.doctor,
       dictation: _dictation,
       audio: _audio,
+      player: _player,
     ),
     WizardStep.doctorTakeaways => DoctorVerifyStep(
       controller: c,
@@ -145,6 +153,7 @@ class _WizardScreenState extends State<WizardScreen> {
       who: SourceKind.chemist,
       dictation: _dictation,
       audio: _audio,
+      player: _player,
     ),
     WizardStep.chemistTakeaways => TakeawaysStep(
       controller: c,

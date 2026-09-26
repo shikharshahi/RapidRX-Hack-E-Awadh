@@ -155,6 +155,17 @@ class VisitWizardController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Forget a kept recording: deleted, or about to be recorded again.
+  Future<void> dropAudio(SourceKind who) async {
+    if (who == SourceKind.doctor) {
+      visit.doctorAudioPath = null;
+    } else {
+      visit.chemistAudioPath = null;
+    }
+    await repository.save(visit);
+    notifyListeners();
+  }
+
   // ── Steps 2 and 5: takeaways ────────────────────────────────────────────
 
   final Map<SourceKind, List<Takeaway>> _takeaways = {};

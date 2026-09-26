@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/app_state.dart';
+import '../../../core/l10n/app_language.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/strings_recording.dart';
 import '../../../core/plain_language.dart';
 import '../../../core/storage/app_prefs.dart';
 import '../../../core/theme/app_colors.dart';
@@ -10,6 +12,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../domain/mention.dart';
 import '../../../domain/sig.dart';
 import '../../../platform/dictation.dart';
+import '../../recording/recording_feedback.dart';
+import '../../recording/recording_sessions.dart';
 import '../../visit/visit.dart';
 import '../wizard_controller.dart';
 import '../wizard_models.dart';
@@ -386,38 +390,33 @@ class _CaretakerNoteState extends State<_CaretakerNote> {
   late final _text = TextEditingController(
     text: widget.controller.visit.caretakerNote,
   );
-  bool _listening = false;
+  late final _speech = DictationSession(
+    dictation: widget.dictation,
+    read: () => _text.text,
+    write: (text) {
+      _text.text = text;
+      widget.controller.setCaretakerNote(text);
+    },
+  );
 
   @override
   void dispose() {
+    _speech.dispose();
     _text.dispose();
-    if (_listening) widget.dictation.stop();
     super.dispose();
   }
 
   Future<void> _dictate() async {
-    if (_listening) {
-      await widget.dictation.stop();
-      setState(() => _listening = false);
-      return;
+    if (_speech.listening) return _speech.stop();
+    await _listen(_speech.start);
+  }
+
+  Future<void> _listen(Future<bool> Function(AppLanguage) how) async {
+    final s = L10n.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    if (!await how(L10n.languageOf(context))) {
+      messenger.showSnackBar(SnackBar(content: Text(s.dictationUnavailable)));
     }
-    final before = _text.text.trim();
-    final ok = await widget.dictation.listen(
-      language: L10n.languageOf(context),
-      onWords: (words, done) {
-        _text.text = [before, words].where((x) => x.isNotEmpty).join(' ');
-        widget.controller.setCaretakerNote(_text.text);
-        if (done && mounted) setState(() => _listening = false);
-      },
-    );
-    if (!mounted) return;
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(L10n.of(context).dictationUnavailable)),
-      );
-      return;
-    }
-    setState(() => _listening = true);
   }
 
   @override
@@ -474,16 +473,28 @@ class _CaretakerNoteState extends State<_CaretakerNote> {
           onChanged: c.setCaretakerNote,
           decoration: InputDecoration(
             hintText: s.caretakerNoteHint,
-            suffixIcon: IconButton(
-              tooltip: s.speak,
-              icon: Icon(
-                _listening ? Icons.stop_circle_rounded : Icons.mic_rounded,
-                color: _listening ? AppColors.red : AppColors.inkSoft,
-                size: 30,
+            suffixIcon: ListenableBuilder(
+              listenable: _speech.recorder,
+              builder: (context, _) => IconButton(
+                tooltip: s.speak,
+                icon: Icon(
+                  _speech.listening
+                      ? Icons.stop_circle_rounded
+                      : Icons.mic_rounded,
+                  color: _speech.listening ? AppColors.red : AppColors.inkSoft,
+                  size: 30,
+                ),
+                onPressed: _dictate,
               ),
-              onPressed: _dictate,
             ),
           ),
+        ),
+        RecordingFeedback(
+          controller: _speech.recorder,
+          liveLabel: s.listeningLive,
+          onRedo: () => _listen(_speech.redo),
+          onDelete: _speech.delete,
+          onRetry: () => _listen(_speech.retry),
         ),
         const SizedBox(height: 12),
         Text(s.priority, style: Theme.of(context).textTheme.titleMedium),
