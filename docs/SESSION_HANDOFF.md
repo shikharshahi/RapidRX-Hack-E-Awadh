@@ -59,13 +59,26 @@ yet. Do not deploy Firebase. Do not install Stitch.
 ## Stopped work — not in the earlier wrap-up
 
 See [`HANDOFF.md`](HANDOFF.md) for the full leftover list. The PIN gate
-above is no longer in that list. Still open after it:
-- Encrypted medical vault, restore check, demo user.
-- After-verify data wipe.
-- Twilio / Cloud Functions / family portal (`myrapidrx.web.app`).
+above is no longer in that list.
+
+## 26 Sep 2026, evening — vault merged, portal hosted
+
+Merged onto `feat/paid-caretaker-pin`: family portal, data wipe (ADR-65),
+missed-dose call policy (ADR-66), encrypted vault (ADR-67). Vault tests:
+14 passed (`test/secure_records_test.dart`, `test/record_check_golden_test.dart`).
+A full `flutter test` on this Linux host still fails older goldens by
+glyph antialiasing; those goldens were not regenerated.
+
+Hosting only is live at https://rapidrx-portal.web.app on
+`rscortgameryca@gmail.com`, project `rapidrx-portal`. Functions, Firestore
+rules, Blaze and secrets were not deployed. `myrapidrx` is reserved.
+
+Still open:
 - Stitch plugin (not installed; do not install from an unverified source).
 - Live Kokoro measurement on a cold Space (opt-in test exists, skipped).
-- Release APK on a real phone.
+- Release APK on a real phone, locked-screen alarm, two-phone QR, airplane-mode sync.
+- Restore after uninstall on a device. IndexedDB is not built.
+- Deploy Functions only if a Blaze plan and a Twilio token are approved.
 
 ## How to keep going
 

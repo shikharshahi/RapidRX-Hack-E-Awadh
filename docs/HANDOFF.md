@@ -99,7 +99,7 @@ strips it). There is still no server.
 
 ### 2. Encrypted local records + restore (~5 s check)
 
-Built (ADR-63). Medicines, the dose log and the visit draft go through
+Built (ADR-67). Medicines, the dose log and the visit draft go through
 `SecureRecordStore`. Device choices stay in `shared_preferences`.
 
 Still open: prove a restore on a phone after uninstall (MediaStore, no
@@ -109,21 +109,23 @@ session must survive a refresh, and it is not built.
 
 ### 3. Data wipe after doctor verification
 
-Skippable ~2.5 s screen. Must actually delete transcripts, audio, note
-text, OCR temps. Keep structured records. Wait if a Gemini job still
-needs the raw clip.
+Built (ADR-65). The skippable screen deletes transcripts, audio, note
+text and OCR temps after the structured prescription is saved. A clip
+stays only while a sync job still needs it. Not watched on a phone.
 
 ### 4. Twilio missed-dose calls (Functions, not the APK)
 
-Designed in [`VOICE_AGENT.md`](VOICE_AGENT.md). Auth token must never
-ship in the client. App-check / shared-secret to Functions. Dedupe per
-slot. Demo “Call demo” with a confirm. **Ask before creating a Firebase
-project, Blaze, secrets, or `firebase deploy`.**
+Built in the app and in `functions/` (ADR-66). The phone posts to a
+function URL; Twilio's token is read from the function environment and
+is not in the APK. Functions were not deployed. No Blaze plan and no
+live call.
 
-### 5. Family web portal (`myrapidrx.web.app`)
+### 5. Family web portal
 
-Overview / alerts / APK download / demo. Minimal cloud copy only (dose
-status, names, times, alert events). Update ADR-6. `--pwa-strategy=none`.
+Static pages are live at `https://rapidrx-portal.web.app` (hosting only).
+`myrapidrx.web.app` is reserved by another project, so that name was not
+used. The overview reads a labeled demo fixture. Firestore rules were
+not deployed and the rules emulator was not run.
 
 A worktree already has `firebase.json` + `functions/` **and a full
 `node_modules`**. **Never merge that commit.** Copy source files by hand
