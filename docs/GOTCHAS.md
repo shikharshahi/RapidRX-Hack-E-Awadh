@@ -29,6 +29,8 @@ Every trap already hit, with the fix. When something looks impossible, look here
 | `Looking up a deactivated widget's ancestor is unsafe` | `dispose()` reading an inherited widget | Cache it in `didChangeDependencies` (`VoicePrompt`) |
 | A pushed route cannot find `L10n` or the voice | Scopes placed around `home` | Put them in `MaterialApp.builder` — and mirror that in the harness |
 | `pumpAndSettle` never settles on a screen with a loading bar | The bar animates forever | `pump()` with a duration instead |
+| "✓" and "✗" are boxes in a golden | The bundled Noto faces have no such glyphs; offline there is no fallback to fetch | Icons beside the words, never the characters (`AlarmScreen`) |
+| `test/failures/*.png` appear after a golden fails | The golden comparator writes its diffs next to the test | Delete them; never commit them |
 
 ## Layout
 
@@ -36,6 +38,17 @@ Every trap already hit, with the fix. When something looks impossible, look here
 |---|---|---|
 | The wizard's bottom bar fills the whole screen | A `Scaffold` gives `bottomNavigationBar` the full height as a loose limit, and a plain `Align` takes all of it | `Align(heightFactor: 1)` |
 | `RenderFlex overflowed by 72 pixels` on a short phone | `Expanded` tiles with a minimum content height | The menu measures itself and falls back to a scrolling list |
+
+## Notifications and alarms
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| New alarm sound, importance or full-screen settings "do nothing" on a phone that had the app | Android freezes a notification channel's settings when it is first created | A new channel id (`dose_alarms`); delete the old one. Changing a channel means a new id |
+| Tapping an alarm does nothing | A second `FlutterLocalNotificationsPlugin.initialize` without the tap callback replaces the first one's | `DoseReminders()` is one per app (a shared instance in `dose_reminders_io.dart`) |
+| The alarm screen opens again on every resume | `getNotificationAppLaunchDetails` reports the same launch for the whole process | `launchAlarm()` answers once |
+| The phone shows a heads-up instead of waking | Android 14+ let the person (or the Play Store) revoke `USE_FULL_SCREEN_INTENT`; or the phone was unlocked and in use, where Android shows a heads-up by design | Settings → Apps → RapidRX → "Full screen notifications". Test with the screen **off** |
+| The app shows over the lock screen after the alarm, too | `showWhenLocked` is on `MainActivity`, the only activity | Accepted for now (ADR-60). The strict fix is to set it from Kotlin only while the alarm is up |
+| A demo "ring in 15 s" never rings | Opening the schedule re-syncs, and every sync is a full replace (`cancelAll`) | Ring, then lock the phone — do not open the schedule in between |
 
 ## Product logic
 

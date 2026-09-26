@@ -88,10 +88,34 @@ static const bool voiceEnabled = true;
 - [ ] On a real phone, test the camera, the microphone, dictation, ML Kit reading a bill, and
       "find recent photos" — the browser exercises none of these
 - [ ] **Watch a reminder fire**: set a medicine for the next slot, lock the phone, wait
+- [ ] **Watch the alarm wake a locked phone** — see *Test the dose alarm* below
+- [ ] Decide on `DevFlags.demoTools`: on for the demo, **off for any store build**
 - [ ] Run the whole flow end to end: onboarding → new prescription → approve → take a dose →
       caregiver home → send status
 - [ ] Record a backup video
 - [ ] Rotate the Gemini key after the event
+
+## Test the dose alarm on a phone
+
+The full-screen alarm is platform code: no test on a laptop can show it waking a phone.
+
+1. Install the APK. On first open of the schedule, allow notifications and "Alarms & reminders".
+2. Android 14+: Settings → Apps → RapidRX → Notifications → allow **full screen notifications**.
+   A sideloaded APK normally has it; check anyway.
+3. Patient menu → **Demo** → *Dose demo* → **Ring in 15 seconds**. Lock the phone at once
+   (screen **off**) and do not open the schedule meanwhile — a sync replaces every alarm.
+4. Within ~15 s the screen turns on and the alarm screen shows over the lock screen, ringing on
+   the alarm stream and vibrating. With the screen on and unlocked, Android shows a heads-up
+   instead — by design; tapping it opens the same screen.
+5. Tap **Yes, taken**: a demo writes nothing (the banner says so). For the real flow, add a
+   medicine whose slot is a few minutes away, or temporarily change `DoseClock.nominalHour`, lock
+   the phone and wait. Then check: **Yes** ticks the slot on the schedule and the +30 nudge never
+   rings; **No / Later** leaves the slot due and the nudge rings 30 minutes after the first alarm.
+6. Cold start: force-stop the app (Settings → Apps → Force stop), ring the demo again from a
+   fresh open, swipe the app away, lock. The alarm must open straight onto the alarm screen.
+
+`adb shell dumpsys notification --noredact | grep -A3 dose_alarms` shows the channel and
+whether full-screen intents are allowed.
 
 ## Known gaps — say them before anyone finds them
 
@@ -102,6 +126,11 @@ static const bool voiceEnabled = true;
 - **The voice agent is designed, not built** ([`VOICE_AGENT.md`](VOICE_AGENT.md)), and it is the
   one part that needs a backend.
 - **Missed-dose alerts fire when the app opens**, not at the minute a dose is missed.
+- **The full-screen alarm has not been seen on a real phone from this build's tests.** Its
+  details are unit-tested (full-screen, alarm category, alarm stream, vibration); waking a
+  locked phone is checked by hand, above.
+- **No strip photo is stored yet**, so the alarm screen shows the form as a pictogram, read from
+  the printed name.
 - **Reminders, camera, microphone and ML Kit are platform code.** Their decisions are tested on a
   laptop; the handoff to Android must be seen on a phone (the checklist above).
 
