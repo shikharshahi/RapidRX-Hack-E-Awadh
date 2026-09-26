@@ -19,6 +19,7 @@ class AnalysisResult {
     required this.mentions,
     required this.sourcesRead,
     required this.dropped,
+    this.unreadable = const [],
   });
 
   final List<MergedMedicine> rows;
@@ -29,6 +30,9 @@ class AnalysisResult {
 
   /// Spoken names nothing else backed up — "namaste" is not a medicine.
   final List<Mention> dropped;
+
+  /// Photo lines that look like a medicine but gave none. A person is asked.
+  final List<UnreadLine> unreadable;
 
   int count(Verdict v) => rows.where((r) => r.verdict == v).length;
 }
@@ -41,11 +45,14 @@ abstract final class OfflineAnalyser {
     Iterable<Mention> extra = const [],
   }) {
     final mentions = <Mention>[];
+    final unreadable = <UnreadLine>[];
     final read = <SourceKind>{};
     for (final t in texts) {
       if (t.text.trim().isEmpty) continue;
       read.add(t.source);
-      mentions.addAll(MentionExtractor.extract(t.text, t.source));
+      final x = MentionExtractor.extractWithNotes(t.text, t.source);
+      mentions.addAll(x.mentions);
+      unreadable.addAll(x.unreadable);
     }
     mentions.addAll(extra);
 
@@ -71,6 +78,7 @@ abstract final class OfflineAnalyser {
       mentions: kept,
       sourcesRead: read,
       dropped: dropped,
+      unreadable: unreadable,
     );
   }
 }
