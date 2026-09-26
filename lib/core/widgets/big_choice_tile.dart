@@ -18,6 +18,11 @@ class BigChoiceTile extends StatelessWidget {
     this.selected = false,
     this.compact = false,
     this.titleStyle,
+    this.plainIcon = false,
+    this.iconSize,
+    this.padding,
+    this.alignTop = false,
+    this.minHeight = AppTheme.tapTarget,
   });
 
   final String title;
@@ -31,11 +36,20 @@ class BigChoiceTile extends StatelessWidget {
 
   final TextStyle? titleStyle;
 
+  /// Draw the icon bare, without the amber disc.
+  final bool plainIcon;
+  final double? iconSize;
+  final EdgeInsetsGeometry? padding;
+
+  /// Pin the content to the top when the tile is taller than it needs to be.
+  final bool alignTop;
+  final double minHeight;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final border = BorderSide(
-      color: selected ? AppColors.ink : AppColors.hairline,
+      color: selected ? AppColors.amber : AppColors.hairline,
       width: selected ? 3 : 2,
     );
 
@@ -54,8 +68,16 @@ class BigChoiceTile extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: AppTheme.tapTarget),
-            child: compact ? _row(text) : _column(text),
+            constraints: BoxConstraints(minHeight: minHeight),
+            child: compact
+                ? _row(text)
+                : Align(
+                    alignment:
+                        alignTop ? Alignment.topCenter : Alignment.center,
+                    widthFactor: 1,
+                    heightFactor: 1,
+                    child: _column(text),
+                  ),
           ),
         ),
       ),
@@ -64,13 +86,16 @@ class BigChoiceTile extends StatelessWidget {
 
   Widget _column(TextTheme text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: padding ??
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            _IconDisc(icon: icon!, size: 84),
-            const SizedBox(height: 16),
+            plainIcon
+                ? Icon(icon, size: iconSize ?? 44, color: AppColors.inkSoft)
+                : _IconDisc(icon: icon!, size: iconSize ?? 84),
+            SizedBox(height: plainIcon ? 6 : 12),
           ],
           Text(
             title,

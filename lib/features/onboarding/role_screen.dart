@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../core/l10n/l10n.dart';
+import '../../core/storage/app_prefs.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/big_choice_tile.dart';
 import '../../core/widgets/rx_logo.dart';
-
-enum AppRole { patient, caregiver }
 
 /// Who is using this app?
 ///
@@ -18,6 +18,7 @@ class RoleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final s = L10n.of(context);
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
@@ -31,28 +32,25 @@ class RoleScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Center(
-                    child: RxWordmark(tagline: 'Every dose, on time'),
-                  ),
+                  Center(child: RxWordmark(tagline: s.tagline)),
                   const SizedBox(height: 24),
                   Text(
-                    'Who is using this app?',
+                    s.roleQuestion,
                     textAlign: TextAlign.center,
                     style: text.headlineLarge?.copyWith(fontSize: 32),
                   ),
                   const SizedBox(height: 20),
                   BigChoiceTile(
                     icon: Icons.elderly_rounded,
-                    title: 'PATIENT',
-                    subtitle: 'I want to track my prescription',
+                    title: s.patient,
+                    subtitle: s.patientWhy,
                     onTap: () => onChosen(AppRole.patient),
                   ),
                   const SizedBox(height: 18),
                   BigChoiceTile(
                     icon: Icons.volunteer_activism_rounded,
-                    title: 'CAREGIVER',
-                    subtitle:
-                        'I want to help a patient track their prescription',
+                    title: s.caregiver,
+                    subtitle: s.caregiverWhy,
                     onTap: () => onChosen(AppRole.caregiver),
                   ),
                 ],
