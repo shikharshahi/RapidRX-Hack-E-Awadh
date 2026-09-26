@@ -45,6 +45,7 @@ Every trap already hit, with the fix. When something looks impossible, look here
 | A café receipt, a cricket chat and "beach 2024" pass the content gate | `TOTAL` and `night` counted as medical, and word-plus-number matched on its own | The strong/weak split; English times of day are weak in speech |
 | A strip is labelled as a bill | "batch", "exp" and "store" are on both | Bill words are only the ones a bill alone has |
 | A counter substitution (TELMA → TELMISARTAN) folds into one quiet row | Jaro-Winkler scores the pair at 0.89 | A length-ratio guard in `NameMatcher` |
+| "…after food BP ke liye" loses "after food" | The purpose pattern captured two words before "ke liye" and deleted both | A purpose takes only its own words, never a timing word |
 | "Come back after ten days" turns a medicine into a ten-day course | The advice line had no name, so its duration attached to the row above | Sentences that open with an advice word are notes |
 | A medicine on the bill disappears | `AMLONG 5 TAB` read as five tablets, leaving no strength and no form | On printed lines, a single digit before `TAB` is a strength |
 | Green is unreachable with the best evidence present | A rule demanding timing from two sources; a bill never has timing | Rule dropped; bill + one timed source can be green |

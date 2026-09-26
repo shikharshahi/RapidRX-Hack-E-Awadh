@@ -10,6 +10,7 @@ import '../../platform/dictation.dart';
 import '../../platform/gallery_scanner.dart';
 import '../visit/capture_tools.dart';
 import '../visit/consent_sheet.dart';
+import 'steps/doctor_verify_step.dart';
 import 'steps/medicines_step.dart';
 import 'steps/photos_step.dart';
 import 'steps/placement_step.dart';
@@ -127,9 +128,9 @@ class _WizardScreenState extends State<WizardScreen> {
       dictation: _dictation,
       audio: _audio,
     ),
-    WizardStep.doctorTakeaways => TakeawaysStep(
+    WizardStep.doctorTakeaways => DoctorVerifyStep(
       controller: c,
-      who: SourceKind.doctor,
+      dictation: _dictation,
     ),
     WizardStep.photos => PhotosStep(
       controller: c,

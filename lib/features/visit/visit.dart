@@ -1,3 +1,8 @@
+/// Who checked what the phone understood from the doctor's words.
+enum Verifier { doctor, me }
+
+enum NotePriority { low, medium, high }
+
 /// What a photo turned out to be.
 enum PhotoLabel { prescription, bill, strip, medicalOther, notMedical }
 
@@ -51,8 +56,13 @@ class Visit {
     this.doctorAudioPath,
     this.chemistAudioPath,
     List<VisitPhoto>? photos,
+    this.verifiedBy,
+    this.caretakerNote = '',
+    this.notePriority = NotePriority.low,
+    List<String>? notProvided,
   }) : createdAt = createdAt ?? DateTime.now(),
-       photos = photos ?? [];
+       photos = photos ?? [],
+       notProvided = notProvided ?? [];
 
   factory Visit.start() =>
       Visit(id: 'v${DateTime.now().millisecondsSinceEpoch}');
@@ -89,8 +99,23 @@ class Visit {
       chemistAudioPath != null || chemistWords.trim().isNotEmpty,
   };
 
+  /// Who ran the doctor verification.
+  Verifier? verifiedBy;
+
+  /// A note for the caretaker, and how much it matters.
+  String caretakerNote;
+  NotePriority notePriority;
+
+  /// Steps a person skipped. Recorded as "not provided" — never blank,
+  /// never guessed.
+  final List<String> notProvided;
+
   Map<String, Object?> toJson() => {
     'id': id,
+    if (verifiedBy != null) 'verifiedBy': verifiedBy!.name,
+    if (caretakerNote.isNotEmpty) 'caretakerNote': caretakerNote,
+    'notePriority': notePriority.name,
+    if (notProvided.isNotEmpty) 'notProvided': notProvided,
     'createdAt': createdAt.toIso8601String(),
     if (doctorName != null) 'doctorName': doctorName,
     'consent': consent,
@@ -102,6 +127,17 @@ class Visit {
   };
 
   factory Visit.fromJson(Map<String, Object?> j) => Visit(
+    verifiedBy: switch (j['verifiedBy']) {
+      final String v => Verifier.values.byName(v),
+      _ => null,
+    },
+    caretakerNote: j['caretakerNote'] as String? ?? '',
+    notePriority: NotePriority.values.byName(
+      j['notePriority'] as String? ?? 'low',
+    ),
+    notProvided: [
+      for (final n in j['notProvided'] as List? ?? const []) n as String,
+    ],
     id: j['id']! as String,
     createdAt: DateTime.parse(j['createdAt']! as String),
     doctorName: j['doctorName'] as String?,

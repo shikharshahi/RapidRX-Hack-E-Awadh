@@ -635,6 +635,45 @@ class AppStrings {
   String get notMe => _t('Not me', 'यह मैं नहीं');
   String get cardConfirmed => _t('Card saved', 'कार्ड सेव हो गया');
 
+  // ── Doctor verification ─────────────────────────────────────────────────
+  String get whoVerifies => _t('Who is verifying?', 'कौन जाँच रहा है?');
+  String get verifierDoctor => _t('Doctor', 'डॉक्टर');
+  String get verifierPatient => _t('Me (patient)', 'मैं (मरीज़)');
+  String get verifierCaretaker =>
+      _t('Me (caretaker)', 'मैं (देखभाल करने वाला)');
+  String get doctorCheckTitle =>
+      _t('Doctor, is this what you said?', 'डॉक्टर साहब, क्या आपने यही कहा?');
+  String get doctorCheckWhy => _t(
+    'Tick each point that is right. Mark "Not provided" for anything you '
+        'did not say. Unticked points stay flagged.',
+    'जो सही है उस पर टिक करें। जो आपने नहीं कहा, उसे "नहीं बताया" चुनें। '
+        'बिना टिक वाले बिंदु जाँच के लिए रह जाते हैं।',
+  );
+  String get pointName => _t('Medicine and strength', 'दवाई और ताक़त');
+  String get pointDose => _t('Dose', 'खुराक');
+  String get pointTiming => _t('When to take', 'कब लेनी है');
+  String get pointFood => _t('With food', 'खाने के साथ');
+  String get pointDuration => _t('How long', 'कितने दिन');
+  String get pointPurpose => _t('What it is for', 'किसलिए');
+  String get notProvided => _t('Not provided', 'नहीं बताया');
+  String get notMentioned => _t('Not mentioned', 'नहीं कहा गया');
+  String get oneTablet => _t('1 tablet', '1 गोली');
+  String get verified => _t('Verified', 'जाँच हो गई');
+  String pointsLeft(int n) =>
+      _t(n == 1 ? '1 point left' : '$n points left', '$n बिंदु बाकी');
+  String get adviceCheck => _t('Advice', 'सलाह');
+
+  // ── Note for the caretaker ──────────────────────────────────────────────
+  String get caretakerNoteTitle =>
+      _t('Note for the caretaker', 'देखभाल करने वाले के लिए नोट');
+  String get caretakerNoteHint =>
+      _t('Anything the family should know', 'परिवार को जो जानना चाहिए');
+  String get priority => _t('Priority', 'ज़रूरी कितना');
+  String get priorityLow => _t('Low', 'कम');
+  String get priorityMedium => _t('Medium', 'मध्यम');
+  String get priorityHigh => _t('High', 'ज़्यादा');
+  String get caretakerNotes => _t('Notes', 'नोट');
+
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');
   String get back => _t('Back', 'पीछे');

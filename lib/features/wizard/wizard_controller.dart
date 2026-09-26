@@ -79,6 +79,16 @@ class VisitWizardController extends ChangeNotifier {
 
   Future<void> skip() async {
     if (!canSkip) return;
+    // A skipped step is recorded as "not provided": never blank, never
+    // guessed.
+    if (!visit.notProvided.contains(_step.name)) {
+      visit.notProvided.add(_step.name);
+    }
+    if (_step == WizardStep.doctorWords) {
+      visit.notProvided.add(WizardStep.doctorTakeaways.name);
+    } else if (_step == WizardStep.pharmacyWords) {
+      visit.notProvided.add(WizardStep.chemistTakeaways.name);
+    }
     // Skipping the words skips their checkpoint as well.
     if (_step == WizardStep.doctorWords) {
       _step = WizardStep.photos;
@@ -173,6 +183,7 @@ class VisitWizardController extends ChangeNotifier {
       sourceText: m.raw,
       ticked: clear,
       clear: clear,
+      purpose: m.purpose,
     );
     if (!m.sig.isClear || !m.sig.hasTiming) {
       // Show the words themselves, not a confident reading of them.
@@ -233,10 +244,83 @@ class VisitWizardController extends ChangeNotifier {
   String _validatedText(SourceKind who) {
     final rows = _takeaways[who];
     if (rows == null) return wordsOf(who);
+    if (who == SourceKind.doctor && verifier == Verifier.doctor) {
+      return [
+        for (final t in rows)
+          if (!t.isNote && t.doctorVerified) doctorLine(t),
+      ].join('\n');
+    }
     return [
       for (final t in rows)
         if (t.ticked && !t.isNote && t.sourceText.isNotEmpty) t.sourceText,
     ].join('\n');
+  }
+
+  // ── Step 2: who verifies ────────────────────────────────────────────────
+
+  /// Me until someone says the doctor is checking.
+  Verifier get verifier => visit.verifiedBy ?? Verifier.me;
+
+  void setVerifier(Verifier v) {
+    visit.verifiedBy = v;
+    repository.save(visit);
+    notifyListeners();
+  }
+
+  void setCheck(SourceKind who, int i, CheckPoint point, CheckState state) {
+    _takeaways[who]![i].checks[point] = state;
+    notifyListeners();
+  }
+
+  /// What a doctor-verified row tells the analysis: only the points they
+  /// confirmed. A point marked "not provided" is left out, so the merge sees
+  /// it as missing — an amber card, not a guess.
+  static String doctorLine(Takeaway t) {
+    bool ok(CheckPoint p) => t.checks[p] == CheckState.confirmed;
+    final sig = t.sig;
+    final parts = <String>[t.name];
+    if (ok(CheckPoint.timing)) {
+      if (sig.sos) {
+        parts.add('SOS');
+      } else if (sig.stat) {
+        parts.add('STAT');
+      } else {
+        parts.addAll(sig.slots.map((s) => s.name));
+      }
+    }
+    if (ok(CheckPoint.dose) && sig.unitsPerDose != 1) {
+      parts.add(
+        sig.unitsPerDose == .5
+            ? 'half tablet'
+            : '${sig.unitsPerDose.round()} tablets',
+      );
+    }
+    if (ok(CheckPoint.food)) {
+      if (sig.food == FoodTiming.before) parts.add('before food');
+      if (sig.food == FoodTiming.after) parts.add('after food');
+    }
+    if (ok(CheckPoint.duration)) {
+      if (sig.everyNDays != null) parts.add('every ${sig.everyNDays} days');
+      if (sig.durationDays != null) parts.add('for ${sig.durationDays} days');
+    }
+    if (ok(CheckPoint.purpose) && t.purpose != null) {
+      parts.add('${t.purpose} ke liye');
+    }
+    return parts.join(' ');
+  }
+
+  // ── Note for the caretaker ─────────────────────────────────────────────
+
+  void setCaretakerNote(String text) {
+    visit.caretakerNote = text;
+    repository.save(visit);
+    notifyListeners();
+  }
+
+  void setNotePriority(NotePriority p) {
+    visit.notePriority = p;
+    repository.save(visit);
+    notifyListeners();
   }
 
   // ── Step 3: photos ──────────────────────────────────────────────────────
@@ -481,6 +565,10 @@ class VisitWizardController extends ChangeNotifier {
       evidence: [
         for (final s in analysis?.sourcesRead ?? const <SourceKind>{}) s.name,
       ],
+      caretakerNote: visit.caretakerNote.trim().isEmpty
+          ? null
+          : visit.caretakerNote.trim(),
+      notePriority: visit.notePriority.name,
     );
     await repository.clear();
     return approved;

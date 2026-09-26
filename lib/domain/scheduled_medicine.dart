@@ -66,6 +66,8 @@ class PrescriptionRecord {
     required this.addedAt,
     required this.medicineNames,
     this.evidence = const [],
+    this.caretakerNote,
+    this.notePriority = 'low',
   });
 
   final String id;
@@ -75,11 +77,19 @@ class PrescriptionRecord {
   /// What the visit was built from: doctor, prescription, bill, chemist.
   final List<String> evidence;
 
+  /// The note for the caretaker, and its priority: low, medium or high.
+  final String? caretakerNote;
+  final String notePriority;
+
   Map<String, Object?> toJson() => {
     'id': id,
     'addedAt': addedAt.toIso8601String(),
     'medicineNames': medicineNames,
     if (evidence.isNotEmpty) 'evidence': evidence,
+    if (caretakerNote != null && caretakerNote!.isNotEmpty) ...{
+      'caretakerNote': caretakerNote,
+      'notePriority': notePriority,
+    },
   };
 
   factory PrescriptionRecord.fromJson(
@@ -89,6 +99,8 @@ class PrescriptionRecord {
     addedAt: DateTime.parse(j['addedAt']! as String),
     medicineNames: [for (final n in j['medicineNames']! as List) n as String],
     evidence: [for (final e in j['evidence'] as List? ?? const []) e as String],
+    caretakerNote: j['caretakerNote'] as String?,
+    notePriority: j['notePriority'] as String? ?? 'low',
   );
 }
 

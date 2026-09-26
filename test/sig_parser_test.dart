@@ -236,6 +236,16 @@ void main() {
       expect(line('Glycomet 500 raat sugar ke liye').purpose, 'Sugar');
     });
 
+    test('a purpose never swallows the timing next to it', () {
+      final l = line('Telma 40 morning after food BP ke liye');
+      expect(l.purpose, 'BP');
+      expect(l.sig.food, FoodTiming.after);
+      final m = line('Glycomet 500 for sugar subah');
+      expect(m.purpose, 'Sugar');
+      expect(m.sig.slots, [DoseSlot.morning]);
+      expect(line('Telma 40 for blood pressure OD').purpose, 'Blood pressure');
+    });
+
     test('"for 10 days" is a duration, not a purpose', () {
       final l = line('Augmentin 625 BD for 10 days');
       expect(l.purpose, isNull);

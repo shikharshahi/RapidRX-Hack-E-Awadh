@@ -36,6 +36,8 @@ class MedicineStore {
     required List<ScheduledMedicine> approved,
     DateTime? at,
     List<String> evidence = const [],
+    String? caretakerNote,
+    String notePriority = 'low',
   }) async {
     final byId = {for (final m in medicines()) m.id: m};
     for (final m in approved) {
@@ -51,6 +53,8 @@ class MedicineStore {
           addedAt: at ?? DateTime.now(),
           medicineNames: [for (final m in approved) m.name],
           evidence: evidence,
+          caretakerNote: caretakerNote,
+          notePriority: notePriority,
         ),
       );
     await _write(_records, [for (final r in records) r.toJson()]);

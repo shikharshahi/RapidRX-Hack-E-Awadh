@@ -65,6 +65,18 @@ class _CaregiverHomeState extends State<CaregiverHome> {
 
   List<ScheduledMedicine> get _meds => _store?.active() ?? const [];
 
+  /// Visits that carried a note for the caretaker: high first, newest first.
+  List<PrescriptionRecord> get _notes {
+    const rank = {'high': 0, 'medium': 1, 'low': 2};
+    return [
+      for (final r in _store?.records() ?? const <PrescriptionRecord>[])
+        if (r.caretakerNote != null) r,
+    ]..sort((a, b) {
+      final p = rank[a.notePriority]!.compareTo(rank[b.notePriority]!);
+      return p != 0 ? p : b.addedAt.compareTo(a.addedAt);
+    });
+  }
+
   Future<void> _changeNumber() async {
     final state = AppScope.of(context);
     final s = L10n.of(context);
@@ -157,6 +169,12 @@ class _CaregiverHomeState extends State<CaregiverHome> {
         body: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
+            // A High-priority note from the patient's side is the first
+            // thing a caretaker sees.
+            for (final r in _notes.where((r) => r.notePriority == 'high')) ...[
+              NoteCard(record: r),
+              const SizedBox(height: 12),
+            ],
             Text(s.todaysDoses, style: text.titleLarge),
             const SizedBox(height: 10),
             if (_meds.isEmpty)
@@ -199,6 +217,16 @@ class _CaregiverHomeState extends State<CaregiverHome> {
               onPressed: () => sharePlan(context, _meds),
             ),
             const SizedBox(height: 26),
+            if (_notes.any((r) => r.notePriority != 'high')) ...[
+              Text(s.caretakerNotes, style: text.titleLarge),
+              const SizedBox(height: 8),
+              for (final r in _notes.where((r) => r.notePriority != 'high'))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: NoteCard(record: r),
+                ),
+              const SizedBox(height: 16),
+            ],
             Text(s.medicineSchedule, style: text.titleLarge),
             const SizedBox(height: 8),
             if (_meds.isEmpty)
@@ -332,6 +360,63 @@ class _NumberRow extends StatelessWidget {
             style: TextButton.styleFrom(foregroundColor: AppColors.muted),
             onPressed: onChange,
             child: Text(changeLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A caretaker note, coloured by how much it matters.
+class NoteCard extends StatelessWidget {
+  const NoteCard({super.key, required this.record});
+
+  final PrescriptionRecord record;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = L10n.of(context);
+    final (fill, border, word) = switch (record.notePriority) {
+      'high' => (AppColors.redSoft, AppColors.red, s.priorityHigh),
+      'medium' => (AppColors.warnSoft, AppColors.warn, s.priorityMedium),
+      _ => (AppColors.greenSoft, AppColors.green, s.priorityLow),
+    };
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        border: Border.all(color: border, width: 2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            record.notePriority == 'high'
+                ? Icons.priority_high_rounded
+                : Icons.sticky_note_2_outlined,
+            color: border,
+            size: 28,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  word,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: border,
+                  ),
+                ),
+                Text(
+                  record.caretakerNote ?? '',
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -513,17 +513,27 @@ abstract final class SigParser {
     );
     String? purpose;
     var rest = guarded;
-    final forHit = RegExp(r'(?<!§)\bfor\s+([a-z]+(?:\s+[a-z]+)?)\b')
+    // A purpose takes only its own words. It once swallowed the word before
+    // "ke liye", and "after food BP ke liye" lost its "after food".
+    final forHit = RegExp(r'(?<!§)\bfor\s+([a-z]+)(?:\s+([a-z]+))?\b')
         .firstMatch(rest);
-    final keLiye = RegExp(r'\b([a-z]+(?:\s+[a-z]+)?)\s+(?:ke|ki)\s+liye\b')
-        .firstMatch(rest);
+    final keLiye = RegExp(r'\b([a-z]+)\s+(?:ke|ki)\s+liye\b').firstMatch(rest);
     if (forHit != null && !_timingWord(forHit[1]!)) {
-      purpose = _purposeText(forHit[1]!);
-      rest = rest.replaceRange(forHit.start, forHit.end, ' ');
-    } else if (keLiye != null) {
-      final words = keLiye[1]!.split(' ');
+      final second = forHit[2];
+      // "for blood pressure" keeps both words; "for sugar subah" keeps
+      // "sugar" and leaves "subah" for the timing.
+      final two =
+          second != null &&
+          !_timingWord(second) &&
+          !_ignorable.contains(second);
+      purpose = _purposeText(two ? '${forHit[1]} $second' : forHit[1]!);
+      final end = two
+          ? forHit.end
+          : forHit.start + forHit[0]!.indexOf(forHit[1]!) + forHit[1]!.length;
+      rest = rest.replaceRange(forHit.start, end, ' ');
+    } else if (keLiye != null && !_timingWord(keLiye[1]!)) {
       // "bp ke liye" → BP; "sugar ke liye" → Sugar.
-      purpose = _purposeText(words.last);
+      purpose = _purposeText(keLiye[1]!);
       rest = rest.replaceRange(keLiye.start, keLiye.end, ' ');
     }
     return (purpose: purpose, rest: rest.replaceAll('§', ''));

@@ -13,6 +13,11 @@ enum WizardStep {
   placement,
 }
 
+/// The points a doctor confirms for one medicine, in seconds.
+enum CheckPoint { name, dose, timing, food, duration, purpose }
+
+enum CheckState { unchecked, confirmed, notProvided }
+
 /// One row a person validates on the takeaways steps.
 class Takeaway {
   Takeaway({
@@ -22,7 +27,25 @@ class Takeaway {
     required this.ticked,
     required this.clear,
     this.isNote = false,
-  });
+    this.purpose,
+  }) : checks = {
+         CheckPoint.name: CheckState.unchecked,
+         // The amount is always asked: the default of one tablet is the
+         // parser's, not the doctor's.
+         CheckPoint.dose: CheckState.unchecked,
+         CheckPoint.timing: sig.hasTiming
+             ? CheckState.unchecked
+             : CheckState.notProvided,
+         CheckPoint.food: sig.food != FoodTiming.unspecified
+             ? CheckState.unchecked
+             : CheckState.notProvided,
+         CheckPoint.duration: sig.durationDays != null || sig.everyNDays != null
+             ? CheckState.unchecked
+             : CheckState.notProvided,
+         CheckPoint.purpose: purpose != null
+             ? CheckState.unchecked
+             : CheckState.notProvided,
+       };
 
   factory Takeaway.note(String text) => Takeaway(
     name: text,
@@ -51,6 +74,21 @@ class Takeaway {
   /// The raw instruction when the parser could not make sense of it, so the
   /// row shows the words themselves rather than a confident guess.
   String? rawInstruction;
+
+  /// Quoted from the doctor, never inferred.
+  String? purpose;
+
+  /// Doctor mode: one answer per point. A point with nothing extracted
+  /// starts as "not provided" — that is what was heard, not a guess.
+  final Map<CheckPoint, CheckState> checks;
+
+  /// Every point answered, and the medicine itself confirmed. Anything less
+  /// is an unverified row, and is treated exactly like an unticked one.
+  bool get doctorVerified =>
+      checks[CheckPoint.name] == CheckState.confirmed &&
+      checks.values.every((c) => c != CheckState.unchecked);
+
+  bool get anyUnchecked => checks.values.contains(CheckState.unchecked);
 }
 
 /// A photo in the photo step, before it becomes part of the visit.

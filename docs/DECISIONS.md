@@ -141,6 +141,18 @@ enter the visit, and only when the step is left. OCR runs once; the text is reus
 
 ## Doses and reminders
 
+### ADR-40 · Doctor verification is a checklist, and "not provided" is an answer
+Step 2 asks who is verifying. **Doctor** gets one tick per point — name and strength, dose,
+timing, food, duration, purpose — each with "Not provided". A row reaches the analysis only when
+every point is answered; anything less is an unverified row, left out exactly as an unticked one.
+A point marked "not provided" is removed from what the merge sees, so the card shows it missing
+rather than guessing it. Verification does not outrank the other sources: a doctor confirming
+"morning only" against a prescription reading 1-0-1 is still a red card for a person. **Me** keeps
+the tick-and-edit list. A skipped step is recorded on the visit as not provided.
+
+The note for the caretaker (with Low / Medium / High) travels on the prescription record, and a
+High note is the first thing on the caretaker's home.
+
 ### ADR-26 · Two notifications on approval
 "Prescription saved" and "Schedule updated" are two different facts.
 

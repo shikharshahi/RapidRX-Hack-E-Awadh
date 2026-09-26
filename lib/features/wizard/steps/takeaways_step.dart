@@ -16,10 +16,21 @@ import '../wizard_widgets.dart';
 /// invented. A substitution at the counter — "Telma ki jagah Telmisartan de
 /// diya" — becomes a row someone ticks or corrects, not a silent difference.
 class TakeawaysStep extends StatelessWidget {
-  const TakeawaysStep({super.key, required this.controller, required this.who});
+  const TakeawaysStep({
+    super.key,
+    required this.controller,
+    required this.who,
+    this.leading = const [],
+    this.trailing = const [],
+  });
 
   final VisitWizardController controller;
   final SourceKind who;
+
+  /// Shown above and below the rows — the doctor step puts its toggle and
+  /// the caretaker note here.
+  final List<Widget> leading;
+  final List<Widget> trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +39,7 @@ class TakeawaysStep extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
+        ...leading,
         StepIntro(s.takeawaysWhy),
         if (rows.isEmpty)
           InfoCard(text: s.nothingToCheck, icon: Icons.info_outline),
@@ -50,6 +62,7 @@ class TakeawaysStep extends StatelessWidget {
           label: Text(s.addRow),
           onPressed: () => _edit(context, null, null),
         ),
+        ...trailing,
       ],
     );
   }
