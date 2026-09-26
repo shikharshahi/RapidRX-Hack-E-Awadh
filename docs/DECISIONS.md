@@ -253,3 +253,19 @@ the motor. `Haptics.on(callback)` returns null for a null callback, so a disable
 disabled. Primary buttons are wrapped in `Pressable`, which shrinks to 0.97 under the finger via a
 `Listener` (outside the gesture arena, so taps and semantics are untouched) and is exactly 1 at
 rest, so no golden moves. Saving shows a spinner in the button at once — never a dead tap.
+
+---
+
+## Missed-dose calls
+
+### ADR-64 · The phone requests a call; Twilio's token stays in Functions
+After the existing missed window the app asks a Cloud Function to ring the patient. It does not
+call Twilio itself. The function URL and the shared-secret header come from `--dart-define`
+(`CALL_FUNCTION_URL`, `CALL_FUNCTION_SECRET`). An empty URL does nothing, and the demo says calls
+are not configured.
+
+The Twilio auth token stays in Functions config. It is not in `lib/`, assets, or any file that
+ships in the APK. The phone sends the medicine names, the language, the slot, and the number
+already on the profile — never a transcript or a note. The call speaks those names. Press 1 logs
+the dose taken, 2 leaves it due, 9 tells the caretaker. Silence logs nothing. One call per slot
+per day, one retry an hour later, then the caretaker alert.

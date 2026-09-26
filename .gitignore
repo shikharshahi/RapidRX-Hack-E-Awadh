@@ -56,3 +56,6 @@ test/failures/
 # Secrets — the repository is public, no key is ever committed
 tools/keys.local.ps1
 tools/keys.local.sh
+
+# Cloud Functions dependencies — source is committed, modules are not
+functions/node_modules/
