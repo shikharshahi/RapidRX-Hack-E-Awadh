@@ -5,6 +5,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/app_bar_actions.dart';
 import '../../core/widgets/big_choice_tile.dart';
+import '../doses/dose_log_store.dart';
+import '../doses/schedule_screen.dart';
 import '../medicines/medicine_store.dart';
 import '../visit/visit.dart';
 import '../visit/visit_repository.dart';
@@ -43,15 +45,13 @@ class PatientMenu extends StatelessWidget {
         icon: Icons.description_outlined,
         title: s.myPrescriptions,
         subtitle: s.myPrescriptionsWhy,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const PrescriptionsScreen()),
-        ),
+        onTap: () => openPrescriptions(context),
       ),
       _MenuTile(
         icon: Icons.schedule_rounded,
         title: s.medicineSchedule,
         subtitle: s.medicineScheduleWhy,
-        onTap: onSchedule,
+        onTap: onSchedule ?? () => openSchedule(context),
       ),
     ];
 
@@ -112,6 +112,27 @@ class PatientMenu extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> openPrescriptions(BuildContext context) async {
+  final navigator = Navigator.of(context);
+  final store = await MedicineStore.load();
+  await navigator.push(
+    MaterialPageRoute<void>(
+      builder: (_) => PrescriptionsScreen(records: store.records()),
+    ),
+  );
+}
+
+Future<void> openSchedule(BuildContext context) async {
+  final navigator = Navigator.of(context);
+  final store = await MedicineStore.load();
+  final logs = await DoseLogStore.load();
+  await navigator.push(
+    MaterialPageRoute<void>(
+      builder: (_) => ScheduleScreen(store: store, logs: logs),
+    ),
+  );
 }
 
 /// Start (or resume) a new prescription. A visit left half-way is picked up

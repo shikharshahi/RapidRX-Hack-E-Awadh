@@ -474,7 +474,14 @@ class VisitWizardController extends ChangeNotifier {
   /// Approve and add. Returns the medicines that went onto the schedule.
   Future<List<ScheduledMedicine>> approve() async {
     final approved = [for (final p in placements) p.medicine];
-    await store.approve(visitId: visit.id, approved: approved, at: _clock());
+    await store.approve(
+      visitId: visit.id,
+      approved: approved,
+      at: _clock(),
+      evidence: [
+        for (final s in analysis?.sourcesRead ?? const <SourceKind>{}) s.name,
+      ],
+    );
     await repository.clear();
     return approved;
   }

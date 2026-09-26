@@ -453,6 +453,44 @@ class AppStrings {
   String get scheduleUpdated =>
       _t('Schedule updated', 'दवाई का समय अपडेट हो गया');
 
+  // ── Daily doses ─────────────────────────────────────────────────────────
+  String get tickAsYouGo => _t(
+    'Tick each medicine as you take it.',
+    'जैसे-जैसे लेते जाइए, हर दवाई पर टिक कीजिए।',
+  );
+  String get allTaken => _t('All taken', 'सब ले ली');
+  String get statusTaken => _t('Taken', 'ले ली');
+  String get statusMissed => _t('Missed', 'छूट गई');
+  String get statusNotYet => _t('Not yet', 'अभी नहीं');
+  String get statusDueNow => _t('Due now', 'अभी का समय');
+  String takeOnlyWhenNeeded(String names) => _t(
+    'Take $names only when you need it.',
+    '$names सिर्फ़ ज़रूरत पड़ने पर लें।',
+  );
+  String get thisMonth => _t('This month', 'इस महीने');
+  String get legendTaken => _t('Taken', 'ले ली');
+  String get legendMissed => _t('Missed', 'छूट गई');
+  String get legendNothingDue => _t('Nothing due', 'कुछ नहीं लेना था');
+  String get nothingDueToday =>
+      _t('Nothing is due today.', 'आज कुछ नहीं लेना है।');
+  String get remindersUnavailable => _t(
+    'Reminders only work in the Android app.',
+    'याद दिलाना सिर्फ़ Android ऐप में काम करता है।',
+  );
+  String get remindersOff => _t(
+    'Reminders are turned off for RapidRX. Turn on notifications so the '
+        'phone can ring when a dose is due.',
+    'RapidRX के लिए याद दिलाना बंद है। नोटिफ़िकेशन चालू करें ताकि दवाई के '
+        'समय फ़ोन बज सके।',
+  );
+  String get share => _t('Share', 'शेयर करें');
+  String get doseSaved => _t('Saved. Well done.', 'सेव हो गया। शाबाश।');
+  String get evidenceDoctor => _t('doctor note', 'डॉक्टर की बात');
+  String get evidencePrescription => _t('prescription', 'पर्ची');
+  String get evidenceBill => _t('bill', 'बिल');
+  String get evidenceChemist => _t('chemist', 'केमिस्ट');
+  String get halfDot => _t('half', 'आधी');
+
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');
   String get back => _t('Back', 'पीछे');

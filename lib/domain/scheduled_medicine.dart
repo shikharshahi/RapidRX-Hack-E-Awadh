@@ -65,26 +65,31 @@ class PrescriptionRecord {
     required this.id,
     required this.addedAt,
     required this.medicineNames,
+    this.evidence = const [],
   });
 
   final String id;
   final DateTime addedAt;
   final List<String> medicineNames;
 
+  /// What the visit was built from: doctor, prescription, bill, chemist.
+  final List<String> evidence;
+
   Map<String, Object?> toJson() => {
     'id': id,
     'addedAt': addedAt.toIso8601String(),
     'medicineNames': medicineNames,
+    if (evidence.isNotEmpty) 'evidence': evidence,
   };
 
-  factory PrescriptionRecord.fromJson(Map<String, Object?> j) =>
-      PrescriptionRecord(
-        id: j['id']! as String,
-        addedAt: DateTime.parse(j['addedAt']! as String),
-        medicineNames: [
-          for (final n in j['medicineNames']! as List) n as String,
-        ],
-      );
+  factory PrescriptionRecord.fromJson(
+    Map<String, Object?> j,
+  ) => PrescriptionRecord(
+    id: j['id']! as String,
+    addedAt: DateTime.parse(j['addedAt']! as String),
+    medicineNames: [for (final n in j['medicineNames']! as List) n as String],
+    evidence: [for (final e in j['evidence'] as List? ?? const []) e as String],
+  );
 }
 
 /// Midnight of [d]. Every comparison of days goes through here.
