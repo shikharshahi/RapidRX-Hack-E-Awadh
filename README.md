@@ -54,13 +54,16 @@ was taken, and tells the family on WhatsApp what was missed.
 ## How it works
 
 ```
- ONBOARDING  language · voice help · phone + OTP · name + family number · PIN · role
+ ONBOARDING  language · voice help · phone + OTP · name · PIN · role
+             patient: health profile (age, optional height/weight/Ayushman mock)
+             caretaker: family or paid → QR for the patient to scan
       │
       ▼
  NEW PRESCRIPTION — eight steps
-   1 what the doctor said ─▶ 2 is this what was said?        (speak or write)
+   1 what the doctor said ─▶ 2 who is verifying? doctor checklist or me
    3 photos: prescription + bill + strips, read on the phone and labelled
    4 the pharmacy page     ─▶ 5 is this what the chemist said?
+        a disagreement asks before anything turns green
    6 judge · extract · verify — on the phone
         └─ optional, online, with consent: read the handwriting with Gemini
    7 one card per medicine, 🟢🟡🔴, every source quoted
@@ -141,16 +144,17 @@ lib/
   ai/         the Gemini client — the only cloud call
   core/       theme · strings (en + hi) · voice (Kokoro) · shared widgets
 test/         271 tests, including golden screenshots of every screen in both languages
-docs/         decisions · gotchas · runbook · the voice-agent design
+docs/         decisions · gotchas · runbook · voice-agent design · HANDOFF (done vs left)
 ```
 
 ## Honest about what it is
 
 This is a hackathon build. Medical data stays on the phone (no cloud database yet), the OTP is a
 demo code and the screen says so, and the phone-call voice agent is
-[designed](docs/VOICE_AGENT.md) but not built. The full list is in the
-[runbook](docs/RUNBOOK.md#known-gaps--say-them-before-anyone-finds-them), and why each choice
-was made is in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+[designed](docs/VOICE_AGENT.md) but not built. **What is built vs still open** is in
+[`docs/HANDOFF.md`](docs/HANDOFF.md). The runbook lists
+[gaps to say out loud](docs/RUNBOOK.md#known-gaps--say-them-before-anyone-finds-them), and why
+each choice was made is in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 **RapidRX is not medical advice.** Every row that reaches a schedule was checked by a person.
 

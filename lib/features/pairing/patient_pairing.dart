@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/strings_caretaker.dart';
 import '../../core/storage/app_prefs.dart';
 import 'pairing_channel.dart';
 import 'pairing_code.dart';
@@ -200,3 +202,12 @@ class PatientPairing extends ChangeNotifier {
 /// Forget the linked caretaker. Alerts stop going to them at once.
 Future<void> unlinkCaretaker(AppPrefs prefs) =>
     prefs.setLinkedCaretakerJson(null);
+
+/// Why a scanned code was refused, in the words on the screen.
+String pairingErrorMessage(PairingError e, AppStrings s) => switch (e) {
+  PairingError.malformed => s.codeMalformed,
+  PairingError.unsupportedVersion => s.codeVersion,
+  PairingError.checksum => s.codeChecksum,
+  PairingError.expired => s.codeExpired,
+  PairingError.clockWrong => s.codeClock,
+};

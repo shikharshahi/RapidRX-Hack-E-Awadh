@@ -124,6 +124,10 @@ whether full-screen intents are allowed.
 - **Caretaker pairing has no server.** The patient scans the caretaker's QR code, and the
   caretaker types the 4-digit code the patient's phone shows (ADR-45). Nothing travels between
   the phones except what the two people carry; the screens say "Demo".
+- **A paid caretaker's PIN is set on the patient's phone, but the caretaker home is not gated
+  yet.** Family vs paid is stored; the restricted view is not.
+- **Medical records are still plain SharedPreferences.** The encrypted vault and restore
+  check are not built. See [`HANDOFF.md`](HANDOFF.md).
 - **The voice agent is designed, not built** ([`VOICE_AGENT.md`](VOICE_AGENT.md)), and it is the
   one part that needs a backend.
 - **Missed-dose alerts fire when the app opens**, not at the minute a dose is missed.

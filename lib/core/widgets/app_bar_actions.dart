@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../l10n/app_strings.dart';
 import '../l10n/l10n.dart';
+import '../l10n/strings_caretaker.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../../features/pairing/patient_pairing.dart';
 
 /// Voice, language and account — the three controls on every home screen.
 ///
@@ -62,6 +65,15 @@ void _showAccount(BuildContext context, VoidCallback onRestart) {
                 ),
               const SizedBox(height: 20),
             ],
+            if (state.prefs.role == AppRole.patient) ...[
+              Text(
+                s.yourCaretaker,
+                style: Theme.of(sheet).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              _caretakerLine(sheet, state, s),
+              const SizedBox(height: 20),
+            ],
             OutlinedButton.icon(
               icon: const Icon(Icons.swap_horiz_rounded),
               label: Text(s.changeRole),
@@ -90,4 +102,59 @@ void _showAccount(BuildContext context, VoidCallback onRestart) {
       ),
     ),
   );
+}
+
+Widget _caretakerLine(BuildContext sheet, AppState state, AppStrings s) {
+  final linked = LinkedCaretaker.of(state.prefs);
+  if (linked == null) {
+    return Text(
+      s.noCaretakerLinked,
+      style: Theme.of(sheet).textTheme.bodyMedium,
+    );
+  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        '${linked.name} — ${s.caretakerTypeLabel(linked.type)}',
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      ),
+      Text('+91 ${linked.phone}', style: Theme.of(sheet).textTheme.bodySmall),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton(
+          onPressed: () => _confirmUnlink(sheet, state, s, linked),
+          child: Text(s.unlink),
+        ),
+      ),
+    ],
+  );
+}
+
+Future<void> _confirmUnlink(
+  BuildContext sheet,
+  AppState state,
+  AppStrings s,
+  LinkedCaretaker linked,
+) async {
+  final go = await showDialog<bool>(
+    context: sheet,
+    builder: (d) => AlertDialog(
+      title: Text(s.unlinkQuestion(linked.name)),
+      content: Text(s.unlinkWhy),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(d, false),
+          child: Text(s.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(d, true),
+          child: Text(s.unlink),
+        ),
+      ],
+    ),
+  );
+  if (go != true) return;
+  await unlinkCaretaker(state.prefs);
+  if (sheet.mounted) Navigator.pop(sheet);
 }

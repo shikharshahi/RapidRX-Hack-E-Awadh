@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/dev_flags.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/l10n/strings_alarm.dart';
+import '../../core/l10n/strings_caretaker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/voice/voice_prompt.dart';
@@ -24,6 +25,8 @@ import '../medicines/medicine_store.dart';
 import '../visit/visit.dart';
 import '../visit/visit_repository.dart';
 import '../wizard/online_read_card.dart';
+import '../pairing/patient_pairing.dart';
+import '../pairing/patient_scan_screen.dart';
 import '../wizard/wizard_controller.dart';
 import '../wizard/wizard_screen.dart';
 import 'prescriptions_screen.dart';
@@ -71,12 +74,19 @@ class PatientMenu extends StatelessWidget {
         subtitle: s.medicineScheduleWhy,
         onTap: onSchedule ?? () => openSchedule(context),
       ),
+      _MenuTile(
+        icon: Icons.qr_code_scanner_rounded,
+        title: s.scanCaretakerQr,
+        subtitle: s.scanCaretakerQrWhy,
+        onTap: () => openScanCaretaker(context),
+      ),
     ];
 
     return VoicePrompt(
       text:
           '${s.menuQuestion} 1. ${s.newPrescription}. '
-          '2. ${s.myPrescriptions}. 3. ${s.medicineSchedule}.',
+          '2. ${s.myPrescriptions}. 3. ${s.medicineSchedule}. '
+          '4. ${s.scanCaretakerQr}.',
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -91,15 +101,17 @@ class PatientMenu extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // All three tiles must fit without scrolling. Below this height
+                // All tiles must fit without scrolling. Below this height
                 // they would squash their text, so scroll instead.
-                const minTile = 150.0;
+                const minTile = 132.0;
                 const header = 56.0;
                 // The demo link sits below the tiles, and must not push them
                 // off the screen.
                 final footer = demoTools ? _DemoLink.height : 0.0;
+                final n = tiles.length;
                 final fits =
-                    (constraints.maxHeight - header - footer - 32) / 3 >=
+                    (constraints.maxHeight - header - footer - 16 * (n - 1)) /
+                        n >=
                     minTile;
                 final heading = Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -206,6 +218,15 @@ Future<void> openSchedule(BuildContext context) async {
         },
         onShare: () => sharePlan(routeContext, store.active()),
       ),
+    ),
+  );
+}
+
+Future<void> openScanCaretaker(BuildContext context) {
+  final prefs = AppScope.of(context).prefs;
+  return Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => PatientScanScreen(pairing: PatientPairing(prefs: prefs)),
     ),
   );
 }

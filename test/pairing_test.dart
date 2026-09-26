@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rapidrx/core/app_state.dart';
 import 'package:rapidrx/core/l10n/app_language.dart';
+import 'package:rapidrx/core/l10n/app_strings.dart';
+import 'package:rapidrx/core/l10n/strings_caretaker.dart';
 import 'package:rapidrx/core/storage/app_prefs.dart';
 import 'package:rapidrx/features/pairing/caretaker_confirm_screen.dart';
 import 'package:rapidrx/features/pairing/caretaker_pairing.dart';
@@ -13,7 +15,12 @@ import 'package:rapidrx/features/pairing/caretaker_qr_screen.dart';
 import 'package:rapidrx/features/pairing/caretaker_type_screen.dart';
 import 'package:rapidrx/features/pairing/pairing_channel.dart';
 import 'package:rapidrx/features/pairing/pairing_code.dart';
+import 'package:rapidrx/features/pairing/patient_pairing.dart';
+import 'package:rapidrx/features/pairing/patient_scan_screen.dart';
+import 'package:rapidrx/platform/qr_scanner_stub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/fake_haptics.dart';
 
 import 'support/golden_harness.dart';
 
@@ -333,6 +340,93 @@ void main() {
     });
   });
 
+  group('PatientPairing', () {
+    late AppPrefs patientPrefs;
+    final now = issued.add(const Duration(minutes: 3));
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({
+        'user_name': 'Ramesh',
+        'phone_number': '9876543210',
+        'app_role': 'patient',
+      });
+      patientPrefs = await AppPrefs.load();
+    });
+
+    PatientPairing scan() =>
+        PatientPairing(prefs: patientPrefs, clock: () => now);
+
+    test(
+      'a family code is linked at once, and alerts go to their number',
+      () async {
+        final p = scan();
+        expect(p.submit(PairingCode.encode(payload())), isTrue);
+        expect(p.step, ScanStep.found);
+        await p.accept();
+        expect(p.step, ScanStep.done);
+        expect(p.confirmationCode, PairingCode.confirmationCode('K7Q2XMPA3B'));
+        expect(patientPrefs.alertPhone, '9812345678');
+        final linked = LinkedCaretaker.of(patientPrefs)!;
+        expect(linked.name, 'Sunita');
+        expect(linked.type, CaretakerType.family);
+        expect(linked.pinHash, isNull);
+      },
+    );
+
+    test('a commercial caretaker needs a PIN before they are linked', () async {
+      final p = scan();
+      p.submit(PairingCode.encode(payload(type: CaretakerType.commercial)));
+      await p.accept();
+      expect(p.step, ScanStep.setPin);
+      expect(patientPrefs.linkedCaretakerJson, isNull);
+      expect(await p.setPin('12', '12'), isFalse);
+      expect(p.pinProblem, PinProblem.short);
+      expect(await p.setPin('1234', '4321'), isFalse);
+      expect(p.pinProblem, PinProblem.mismatch);
+      expect(await p.setPin('1234', '1234'), isTrue);
+      expect(p.step, ScanStep.done);
+      final linked = LinkedCaretaker.of(patientPrefs)!;
+      expect(linked.type, CaretakerType.commercial);
+      expect(linked.checkPin('1234'), isTrue);
+      expect(linked.checkPin('0000'), isFalse);
+    });
+
+    test('a bad or expired code is refused, and nothing is saved', () {
+      final p = scan();
+      expect(p.submit('not-a-code'), isFalse);
+      expect(p.error, PairingError.malformed);
+      expect(
+        p.submit(
+          PairingCode.encode(
+            payload(at: issued.subtract(const Duration(minutes: 20))),
+          ),
+        ),
+        isFalse,
+      );
+      expect(p.error, PairingError.expired);
+      expect(patientPrefs.linkedCaretakerJson, isNull);
+    });
+
+    test(
+      'unlinking forgets them, and alerts stop going to their number',
+      () async {
+        final p = scan();
+        p.submit(PairingCode.encode(payload()));
+        await p.accept();
+        await unlinkCaretaker(patientPrefs);
+        expect(LinkedCaretaker.of(patientPrefs), isNull);
+        expect(patientPrefs.alertPhone, isNull);
+      },
+    );
+
+    test('each refusal has its own words', () {
+      final s = AppStrings(AppLanguage.en);
+      expect(pairingErrorMessage(PairingError.malformed, s), s.codeMalformed);
+      expect(pairingErrorMessage(PairingError.expired, s), s.codeExpired);
+      expect(pairingErrorMessage(PairingError.checksum, s), s.codeChecksum);
+    });
+  });
+
   group('screens', () {
     Future<(AppState, CaretakerPairing)> setup(
       AppLanguage language, {
@@ -498,5 +592,96 @@ void main() {
       );
       expect(p.linked, isNull);
     });
+
+    Future<(AppState, PatientPairing)> patientSetup(
+      AppLanguage language,
+    ) async {
+      final state = await freshState(
+        language: language,
+        values: {
+          'phone_number': '9876543210',
+          'user_name': 'Ramesh',
+          'app_role': 'patient',
+        },
+      );
+      return (
+        state,
+        PatientPairing(
+          prefs: state.prefs,
+          clock: () => issued.add(const Duration(minutes: 3)),
+        ),
+      );
+    }
+
+    Widget scanScreen(PatientPairing p) =>
+        PatientScanScreen(pairing: p, scanner: UnsupportedQrScanner());
+
+    for (final l in AppLanguage.values) {
+      testWidgets('patient scan ${l.code}', (t) async {
+        FakeHaptics.install();
+        final (state, p) = await patientSetup(l);
+        await shoot(
+          t,
+          scanScreen(p),
+          'pairing_5_patient_scan_${l.code}',
+          language: l,
+          state: state,
+        );
+      });
+
+      testWidgets('patient found ${l.code}', (t) async {
+        FakeHaptics.install();
+        final (state, p) = await patientSetup(l);
+        p.submit(PairingCode.encode(payload()));
+        await shoot(
+          t,
+          scanScreen(p),
+          'pairing_6_patient_found_${l.code}',
+          language: l,
+          state: state,
+        );
+      });
+
+      testWidgets('patient linked ${l.code}', (t) async {
+        FakeHaptics.install();
+        final (state, p) = await patientSetup(l);
+        p.submit(PairingCode.encode(payload()));
+        await p.accept();
+        await shoot(
+          t,
+          scanScreen(p),
+          'pairing_7_patient_linked_${l.code}',
+          language: l,
+          state: state,
+        );
+      });
+    }
+
+    testWidgets(
+      'typing a family code links them and shows the confirm digits',
+      (t) async {
+        FakeHaptics.install();
+        usePhoneSurface(t);
+        final (state, p) = await patientSetup(AppLanguage.en);
+        await t.pumpWidget(themed(scanScreen(p), state: state));
+        expect(
+          find.text(
+            'This device cannot scan. Type or paste the code the caretaker sent you.',
+          ),
+          findsOne,
+        );
+        await t.enterText(
+          find.byType(TextField),
+          PairingCode.encode(payload()),
+        );
+        await t.tap(find.text('Check code'));
+        await t.pump();
+        expect(find.text('Sunita — Family member'), findsOne);
+        await t.tap(find.text('Link Sunita'));
+        await t.pumpAndSettle();
+        expect(find.text('Caretaker connection successful'), findsOne);
+        expect(p.confirmationCode, PairingCode.confirmationCode('K7Q2XMPA3B'));
+      },
+    );
   });
 }

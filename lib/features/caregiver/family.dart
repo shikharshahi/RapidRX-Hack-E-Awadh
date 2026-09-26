@@ -15,7 +15,7 @@ CaregiverNotifier familyNotifier(AppState state, {WhatsAppAlerts? alerts}) =>
       alerts: alerts ?? WhatsAppAlerts(),
       prefs: state.prefs.raw,
       patientName: state.prefs.name ?? '',
-      caregiverPhone: state.prefs.backupPhone,
+      caregiverPhone: state.prefs.alertPhone,
       strings: AppStrings(state.language),
     );
 

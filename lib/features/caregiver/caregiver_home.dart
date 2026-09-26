@@ -83,7 +83,7 @@ class _CaregiverHomeState extends State<CaregiverHome> {
   Future<void> _changeNumber() async {
     final state = AppScope.of(context);
     final s = L10n.of(context);
-    final ctl = TextEditingController(text: state.prefs.backupPhone ?? '');
+    final ctl = TextEditingController(text: state.prefs.alertPhone ?? '');
     final value = await showDialog<String>(
       context: context,
       builder: (d) => AlertDialog(
@@ -119,7 +119,7 @@ class _CaregiverHomeState extends State<CaregiverHome> {
   Future<void> _sendStatus() async {
     final state = AppScope.of(context);
     final s = L10n.of(context);
-    final to = WhatsAppAlerts.normalise(state.prefs.backupPhone);
+    final to = WhatsAppAlerts.normalise(state.prefs.alertPhone);
     if (to == null) {
       _say(s.addFamilyFirst);
       return;
@@ -157,7 +157,7 @@ class _CaregiverHomeState extends State<CaregiverHome> {
     final s = L10n.of(context);
     final text = Theme.of(context).textTheme;
     final state = AppScope.of(context);
-    final phone = state.prefs.backupPhone;
+    final phone = state.prefs.alertPhone;
     final now = widget.clock();
     final due = _logs == null
         ? const <DoseSlot, List<ScheduledMedicine>>{}
