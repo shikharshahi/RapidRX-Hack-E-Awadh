@@ -28,6 +28,10 @@ import 'features/onboarding/role_screen.dart';
 import 'features/onboarding/saving_screen.dart';
 import 'features/onboarding/splash_screen.dart';
 import 'features/onboarding/voice_help_screen.dart';
+import 'features/pairing/caretaker_confirm_screen.dart';
+import 'features/pairing/caretaker_pairing.dart';
+import 'features/pairing/caretaker_qr_screen.dart';
+import 'features/pairing/caretaker_type_screen.dart';
 import 'features/patient/patient_menu.dart';
 import 'platform/dose_reminders.dart';
 
@@ -43,6 +47,9 @@ enum _Stage {
   pinConfirm,
   role,
   health,
+  caretakerType,
+  caretakerQr,
+  caretakerConfirm,
   ready,
 }
 
@@ -96,6 +103,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
     state: _state,
     reminders: widget.reminders,
   );
+  late final CaretakerPairing _pairing = CaretakerPairing(prefs: _prefs);
 
   @override
   void initState() {
@@ -159,6 +167,18 @@ class _RapidRxAppState extends State<RapidRxApp> {
     if (_prefs.role == null) return _Stage.role;
     if (_prefs.role == AppRole.patient && _prefs.age == null) {
       return _Stage.health;
+    }
+    if (_prefs.role == AppRole.caregiver) return _caretakerNext();
+    return _Stage.ready;
+  }
+
+  /// A caretaker is asked who they are to the patient, then shown their QR
+  /// code — unless they are linked already, or said "later". "Later" is
+  /// remembered, so a relaunch goes home instead of trapping them on the QR.
+  _Stage _caretakerNext() {
+    if (_prefs.caretakerType == null) return _Stage.caretakerType;
+    if (_prefs.linkedPatientJson == null && !_prefs.caretakerPairLater) {
+      return _Stage.caretakerQr;
     }
     return _Stage.ready;
   }
@@ -300,6 +320,32 @@ class _RapidRxAppState extends State<RapidRxApp> {
           onDone: () => _go(_Stage.ready),
         );
 
+      case _Stage.caretakerType:
+        return CaretakerTypeScreen(
+          current: _prefs.caretakerType,
+          onChosen: (type) async {
+            await _prefs.setCaretakerType(type);
+            _go(_caretakerNext());
+          },
+        );
+
+      case _Stage.caretakerQr:
+        return CaretakerQrScreen(
+          pairing: _pairing,
+          onEnterCode: () => _go(_Stage.caretakerConfirm),
+          onLater: () async {
+            await _pairing.later();
+            _go(_Stage.ready);
+          },
+        );
+
+      case _Stage.caretakerConfirm:
+        return CaretakerConfirmScreen(
+          pairing: _pairing,
+          onBack: () => _go(_Stage.caretakerQr),
+          onLinked: () => _go(_Stage.ready),
+        );
+
       case _Stage.ready:
         return switch (_state.role) {
           // "Change who is using the app" from a home screen lands here.
@@ -311,14 +357,15 @@ class _RapidRxAppState extends State<RapidRxApp> {
   }
 
   /// Health details only make sense for a patient, so they come after the
-  /// role — and only for a patient who has not given them yet.
+  /// role — and only for a patient who has not given them yet. A caretaker
+  /// says who they are to the patient, then gets a QR code.
   Future<void> _roleChosen(AppRole role) async {
     await _state.setRole(role);
-    _go(
-      role == AppRole.patient && _prefs.age == null
-          ? _Stage.health
-          : _Stage.ready,
-    );
+    _go(switch (role) {
+      AppRole.patient when _prefs.age == null => _Stage.health,
+      AppRole.patient => _Stage.ready,
+      AppRole.caregiver => _caretakerNext(),
+    });
   }
 
   Future<void> _restart() async {

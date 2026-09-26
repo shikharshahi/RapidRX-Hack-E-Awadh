@@ -97,8 +97,9 @@ static const bool voiceEnabled = true;
 
 - **No cloud database.** Everything persists on the phone. The migration path is ADR-6.
 - **The OTP is `1234`.** Phone auth needs Firebase's paid plan, and the screen says so.
-- **No caregiver device pairing.** Sharing is plain text on purpose — arguably the better
-  answer for the real user — but there is no device-to-device link.
+- **Caretaker pairing has no server.** The patient scans the caretaker's QR code, and the
+  caretaker types the 4-digit code the patient's phone shows (ADR-45). Nothing travels between
+  the phones except what the two people carry; the screens say "Demo".
 - **The voice agent is designed, not built** ([`VOICE_AGENT.md`](VOICE_AGENT.md)), and it is the
   one part that needs a backend.
 - **Missed-dose alerts fire when the app opens**, not at the minute a dose is missed.

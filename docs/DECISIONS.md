@@ -177,6 +177,32 @@ Nothing runs at 09:01 to record a miss. Status is computed day to day whenever i
 
 ---
 
+## Caretaker pairing
+
+### ADR-45 · Pairing is a QR code and a 4-digit code back — no backend, behind an interface
+The caretaker says who they are to the patient (family or a paid, non-family caretaker), then
+shows a QR code. It carries versioned JSON — `{v, caretakerId, phone, name, type, issuedAt}` —
+as `RXC1.<base64url JSON>.<first 8 hex of SHA-256 over that JSON>`. The same text is the "type
+or paste" code for a phone with no camera; the caretaker sends it with **Send the code**. A code
+works for 15 minutes, then says so and offers **Make a new code** (same caretaker id, new time).
+
+With no server, the patient's phone cannot tell the caretaker's phone that it scanned. So after
+a successful scan the patient's phone shows a **4-digit confirmation code**, derived from the
+caretaker id (SHA-256, mod 10 000), and the caretaker types it — both phones compute the same
+digits offline, and a match proves the patient scanned *this* caretaker's code. A 4-digit code
+cannot carry a name, so the caretaker types the patient's name beside it; the patient's success
+screen shows both together.
+
+`PairingChannel` is the seam: `LocalPairingChannel` does the above, and a backend replaces it
+(the patient's phone posts the link, the caretaker is told, no code to type). The checksum
+catches typos and bad scans; it is **not** a signature — anyone can compute SHA-256 — so a
+forged code is possible in this build. A real backend signs codes.
+
+"I'll do this later" is remembered, so a relaunch goes to the caretaker home (which offers the
+QR again) instead of trapping them on the QR screen.
+
+---
+
 ## The voice agent
 
 ### ADR-38 · A keypad, not a conversation — and the last rung, not the first
