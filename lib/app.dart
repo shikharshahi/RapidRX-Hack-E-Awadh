@@ -6,6 +6,7 @@ import 'core/l10n/app_strings.dart';
 import 'core/l10n/l10n.dart';
 import 'core/storage/app_prefs.dart';
 import 'core/theme/app_theme.dart';
+import 'core/voice/voice_guide.dart';
 import 'core/widgets/phone_shell.dart';
 import 'features/caregiver/caregiver_home.dart';
 import 'features/onboarding/language_screen.dart';
@@ -36,6 +37,7 @@ class RapidRxApp extends StatefulWidget {
     required this.prefs,
     this.stageDelay = const Duration(seconds: 3),
     this.showSplash = true,
+    this.voice,
   });
 
   final AppPrefs prefs;
@@ -46,12 +48,30 @@ class RapidRxApp extends StatefulWidget {
 
   final bool showSplash;
 
+  /// Injected by tests; the app builds its own.
+  final VoiceGuide? voice;
+
   @override
   State<RapidRxApp> createState() => _RapidRxAppState();
 }
 
 class _RapidRxAppState extends State<RapidRxApp> {
-  late final AppState _state = AppState(widget.prefs);
+  late final AppState _state = AppState(widget.prefs)..addListener(_syncVoice);
+  late final VoiceGuide _voice = widget.voice ?? VoiceGuide();
+
+  @override
+  void initState() {
+    super.initState();
+    _syncVoice();
+  }
+
+  /// Voice speaks only when the build allows it and the user asked for it.
+  void _syncVoice() {
+    final on = DevFlags.voiceEnabled && _state.voiceHelp;
+    if (_voice.enabled && !on) _voice.stopAll();
+    _voice.enabled = on;
+  }
+
   late _Stage _stage = widget.showSplash ? _Stage.splash : _resume();
 
   // Held between screens during onboarding, written once confirmed.
@@ -80,6 +100,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
 
   @override
   void dispose() {
+    _voice.stopAll();
     _state.dispose();
     super.dispose();
   }
@@ -98,12 +119,12 @@ class _RapidRxAppState extends State<RapidRxApp> {
           // can find them too.
           builder: (context, child) => L10n(
             language: _state.language,
-            child: PhoneShell(child: child!),
+            child: VoiceScope(
+              guide: _voice,
+              child: PhoneShell(child: child!),
+            ),
           ),
-          home: KeyedSubtree(
-            key: ValueKey(_stage),
-            child: _screen(),
-          ),
+          home: KeyedSubtree(key: ValueKey(_stage), child: _screen()),
         ),
       ),
     );

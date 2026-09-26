@@ -160,8 +160,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final backup = _backup.text.trim();
     setState(() {
       _nameError = name.isEmpty ? s.nameMissing : null;
-      _backupError =
-          backup.isNotEmpty && backup.length != 10 ? s.phoneInvalid : null;
+      _backupError = backup.isNotEmpty && backup.length != 10
+          ? s.phoneInvalid
+          : null;
     });
     if (_nameError != null || _backupError != null) return;
     widget.onSubmitted(name, backup.isEmpty ? null : backup);
@@ -185,7 +186,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Flexible(
               child: Text(
                 s.backupLabel,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(width: 10),

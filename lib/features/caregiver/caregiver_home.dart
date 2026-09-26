@@ -31,7 +31,8 @@ class CaregiverHome extends StatelessWidget {
         padding: AppTheme.pagePadding,
         children: const [
           NextStepNote(
-            text: 'Next: today\'s doses per slot, the family WhatsApp number, '
+            text:
+                'Next: today\'s doses per slot, the family WhatsApp number, '
                 'and the plan in plain words.',
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/app_bar_actions.dart';
 import '../../core/widgets/big_choice_tile.dart';
 import 'prescriptions_screen.dart';
@@ -49,53 +50,58 @@ class PatientMenu extends StatelessWidget {
       ),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(s.menuTitle),
-        actions: appBarActions(context, onRestart: onRestart),
-      ),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // All three tiles must fit without scrolling. Below this height
-              // they would squash their text, so scroll instead.
-              const minTile = 150.0;
-              const header = 56.0;
-              final fits =
-                  (constraints.maxHeight - header - 32) / 3 >= minTile;
-              final heading = Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  s.menuQuestion,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              );
-              if (!fits) {
-                return ListView(
+    return VoicePrompt(
+      text:
+          '${s.menuQuestion} 1. ${s.newPrescription}. '
+          '2. ${s.myPrescriptions}. 3. ${s.medicineSchedule}.',
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(s.menuTitle),
+          actions: appBarActions(context, onRestart: onRestart),
+        ),
+        body: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // All three tiles must fit without scrolling. Below this height
+                // they would squash their text, so scroll instead.
+                const minTile = 150.0;
+                const header = 56.0;
+                final fits =
+                    (constraints.maxHeight - header - 32) / 3 >= minTile;
+                final heading = Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    s.menuQuestion,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                );
+                if (!fits) {
+                  return ListView(
+                    children: [
+                      heading,
+                      for (final t in tiles)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: SizedBox(height: minTile, child: t),
+                        ),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     heading,
-                    for (final t in tiles)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: SizedBox(height: minTile, child: t),
-                      ),
+                    for (var i = 0; i < tiles.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 16),
+                      Expanded(child: tiles[i]),
+                    ],
                   ],
                 );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  heading,
-                  for (var i = 0; i < tiles.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 16),
-                    Expanded(child: tiles[i]),
-                  ],
-                ],
-              );
-            },
+              },
+            ),
           ),
         ),
       ),
@@ -124,9 +130,7 @@ class _MenuTile extends StatelessWidget {
       subtitle: subtitle,
       onTap: onTap,
       iconSize: 60,
-      titleStyle: Theme.of(context)
-          .textTheme
-          .titleLarge
+      titleStyle: Theme.of(context).textTheme.titleLarge
           ?.copyWith(fontSize: 24, height: 1.2),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       alignTop: true,

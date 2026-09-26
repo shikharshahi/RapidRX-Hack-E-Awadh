@@ -37,50 +37,115 @@ void main() {
   }
 
   group('onboarding goldens', () {
-    testWidgets('splash en', (t) => golden(
+    testWidgets(
+      'splash en',
+      (t) => golden(
         t,
         SplashScreen(onDone: () {}, language: en),
-        'onboarding_1_splash_en'));
-    testWidgets('splash hi', (t) => golden(
+        'onboarding_1_splash_en',
+      ),
+    );
+    testWidgets(
+      'splash hi',
+      (t) => golden(
         t,
         SplashScreen(onDone: () {}, language: hi),
-        'onboarding_2_splash_hi'));
-    testWidgets('language', (t) => golden(
-        t, LanguageScreen(onChosen: (_) {}), 'onboarding_3_language'));
-    testWidgets('saving hi', (t) => golden(
-        t, SavingScreen(onDone: () {}), 'onboarding_4_saving_hi',
-        language: hi));
-    testWidgets('voice hi', (t) => golden(
-        t, VoiceHelpScreen(onChosen: (_) {}), 'onboarding_5_voice_hi',
-        language: hi));
-    testWidgets('phone en', (t) => golden(
-        t, PhoneScreen(onSubmitted: (_) {}), 'onboarding_6_phone_en'));
-    testWidgets('otp en', (t) => golden(
+        'onboarding_2_splash_hi',
+      ),
+    );
+    testWidgets(
+      'language',
+      (t) =>
+          golden(t, LanguageScreen(onChosen: (_) {}), 'onboarding_3_language'),
+    );
+    testWidgets(
+      'saving hi',
+      (t) => golden(
+        t,
+        SavingScreen(onDone: () {}),
+        'onboarding_4_saving_hi',
+        language: hi,
+      ),
+    );
+    testWidgets(
+      'voice hi',
+      (t) => golden(
+        t,
+        VoiceHelpScreen(onChosen: (_) {}),
+        'onboarding_5_voice_hi',
+        language: hi,
+      ),
+    );
+    testWidgets(
+      'phone en',
+      (t) =>
+          golden(t, PhoneScreen(onSubmitted: (_) {}), 'onboarding_6_phone_en'),
+    );
+    testWidgets(
+      'otp en',
+      (t) => golden(
         t,
         OtpScreen(phone: '9876543210', onVerified: () {}),
-        'onboarding_7_otp_en'));
-    testWidgets('profile hi', (t) => golden(
-        t, ProfileScreen(onSubmitted: (_, _) {}), 'onboarding_8_profile_hi',
-        language: hi));
-    testWidgets('pin en', (t) => golden(
-        t, PinScreen(onSubmitted: (_) {}), 'onboarding_9_pin_en'));
-    testWidgets('role en', (t) => golden(
-        t, RoleScreen(onChosen: (_) {}), 'onboarding_10_role_en'));
-    testWidgets('role hi', (t) => golden(
-        t, RoleScreen(onChosen: (_) {}), 'onboarding_11_role_hi',
-        language: hi));
+        'onboarding_7_otp_en',
+      ),
+    );
+    testWidgets(
+      'profile hi',
+      (t) => golden(
+        t,
+        ProfileScreen(onSubmitted: (_, _) {}),
+        'onboarding_8_profile_hi',
+        language: hi,
+      ),
+    );
+    testWidgets(
+      'pin en',
+      (t) => golden(t, PinScreen(onSubmitted: (_) {}), 'onboarding_9_pin_en'),
+    );
+    testWidgets(
+      'role en',
+      (t) => golden(t, RoleScreen(onChosen: (_) {}), 'onboarding_10_role_en'),
+    );
+    testWidgets(
+      'role hi',
+      (t) => golden(
+        t,
+        RoleScreen(onChosen: (_) {}),
+        'onboarding_11_role_hi',
+        language: hi,
+      ),
+    );
   });
 
   group('patient goldens', () {
-    testWidgets('menu hi', (t) => golden(
-        t, PatientMenu(onRestart: () {}), 'patient_1_menu_hi',
-        language: hi, withState: true));
-    testWidgets('menu en', (t) => golden(
-        t, PatientMenu(onRestart: () {}), 'patient_2_menu_en',
-        withState: true));
-    testWidgets('prescriptions empty hi', (t) => golden(
-        t, const PrescriptionsScreen(), 'patient_4_prescriptions_hi',
-        language: hi));
+    testWidgets(
+      'menu hi',
+      (t) => golden(
+        t,
+        PatientMenu(onRestart: () {}),
+        'patient_1_menu_hi',
+        language: hi,
+        withState: true,
+      ),
+    );
+    testWidgets(
+      'menu en',
+      (t) => golden(
+        t,
+        PatientMenu(onRestart: () {}),
+        'patient_2_menu_en',
+        withState: true,
+      ),
+    );
+    testWidgets(
+      'prescriptions empty hi',
+      (t) => golden(
+        t,
+        const PrescriptionsScreen(),
+        'patient_4_prescriptions_hi',
+        language: hi,
+      ),
+    );
   });
 
   group('onboarding behaviour', () {
@@ -92,13 +157,16 @@ void main() {
       expect(chosen, AppRole.caregiver);
     });
 
-    testWidgets('the wrong OTP is refused, the demo code is accepted',
-        (tester) async {
+    testWidgets('the wrong OTP is refused, the demo code is accepted', (
+      tester,
+    ) async {
       usePhoneSurface(tester);
       var verified = false;
-      await tester.pumpWidget(themed(
-        OtpScreen(phone: '9876543210', onVerified: () => verified = true),
-      ));
+      await tester.pumpWidget(
+        themed(
+          OtpScreen(phone: '9876543210', onVerified: () => verified = true),
+        ),
+      );
       await tester.enterText(find.byType(TextField), '0000');
       await tester.tap(find.text('Verify'));
       await tester.pump();
@@ -110,13 +178,14 @@ void main() {
       expect(verified, isTrue);
     });
 
-    testWidgets('a short phone number is an error, not a submission',
-        (tester) async {
+    testWidgets('a short phone number is an error, not a submission', (
+      tester,
+    ) async {
       usePhoneSurface(tester);
       String? submitted;
-      await tester.pumpWidget(themed(
-        PhoneScreen(onSubmitted: (p) => submitted = p),
-      ));
+      await tester.pumpWidget(
+        themed(PhoneScreen(onSubmitted: (p) => submitted = p)),
+      );
       await tester.enterText(find.byType(TextField), '98765');
       await tester.tap(find.text('Continue'));
       await tester.pump();
@@ -124,8 +193,9 @@ void main() {
       expect(find.text('Enter a 10-digit mobile number'), findsOneWidget);
     });
 
-    testWidgets('the menu shows all three tiles without scrolling',
-        (tester) async {
+    testWidgets('the menu shows all three tiles without scrolling', (
+      tester,
+    ) async {
       usePhoneSurface(tester);
       final state = await freshState();
       await tester.pumpWidget(

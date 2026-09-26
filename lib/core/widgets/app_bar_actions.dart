@@ -56,8 +56,10 @@ void _showAccount(BuildContext context, VoidCallback onRestart) {
             if (name != null) ...[
               Text(name, style: Theme.of(sheet).textTheme.titleLarge),
               if (state.prefs.phoneNumber != null)
-                Text('+91 ${state.prefs.phoneNumber}',
-                    style: Theme.of(sheet).textTheme.bodySmall),
+                Text(
+                  '+91 ${state.prefs.phoneNumber}',
+                  style: Theme.of(sheet).textTheme.bodySmall,
+                ),
               const SizedBox(height: 20),
             ],
             OutlinedButton.icon(
@@ -78,9 +80,11 @@ void _showAccount(BuildContext context, VoidCallback onRestart) {
               },
             ),
             const SizedBox(height: 8),
-            Text(s.startAgainWhy,
-                textAlign: TextAlign.center,
-                style: Theme.of(sheet).textTheme.bodySmall),
+            Text(
+              s.startAgainWhy,
+              textAlign: TextAlign.center,
+              style: Theme.of(sheet).textTheme.bodySmall,
+            ),
           ],
         ),
       ),

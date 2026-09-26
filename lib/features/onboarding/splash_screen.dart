@@ -62,8 +62,10 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const RxLogo(size: 124),
             const SizedBox(height: 32),
-            Text(strings.appName,
-                style: text.displayLarge?.copyWith(fontSize: 40)),
+            Text(
+              strings.appName,
+              style: text.displayLarge?.copyWith(fontSize: 40),
+            ),
             const SizedBox(height: 14),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
@@ -130,10 +132,7 @@ class _BarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = AppColors.amberSoft,
-    );
+    canvas.drawRect(Offset.zero & size, Paint()..color = AppColors.amberSoft);
     final travel = size.width * (1 + segment);
     final start = progress * travel - size.width * segment;
     final left = start.clamp(0.0, size.width);

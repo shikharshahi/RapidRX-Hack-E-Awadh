@@ -26,8 +26,11 @@ class NextStepNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.construction_rounded,
-              color: AppColors.amberDark, size: 28),
+          const Icon(
+            Icons.construction_rounded,
+            color: AppColors.amberDark,
+            size: 28,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(text, style: Theme.of(context).textTheme.bodyMedium),

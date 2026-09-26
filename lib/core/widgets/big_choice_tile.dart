@@ -72,8 +72,9 @@ class BigChoiceTile extends StatelessWidget {
             child: compact
                 ? _row(text)
                 : Align(
-                    alignment:
-                        alignTop ? Alignment.topCenter : Alignment.center,
+                    alignment: alignTop
+                        ? Alignment.topCenter
+                        : Alignment.center,
                     widthFactor: 1,
                     heightFactor: 1,
                     child: _column(text),
@@ -86,8 +87,8 @@ class BigChoiceTile extends StatelessWidget {
 
   Widget _column(TextTheme text) {
     return Padding(
-      padding: padding ??
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -100,7 +101,8 @@ class BigChoiceTile extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: titleStyle ??
+            style:
+                titleStyle ??
                 text.headlineMedium?.copyWith(fontSize: 28, letterSpacing: .2),
           ),
           if (subtitle != null) ...[
@@ -144,8 +146,11 @@ class BigChoiceTile extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded,
-              size: 32, color: AppColors.muted),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 32,
+            color: AppColors.muted,
+          ),
         ],
       ),
     );

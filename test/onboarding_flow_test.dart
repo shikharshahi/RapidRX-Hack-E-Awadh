@@ -21,15 +21,18 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('walks the whole onboarding chain in Hindi to the patient menu',
-      (tester) async {
+  testWidgets('walks the whole onboarding chain in Hindi to the patient menu', (
+    tester,
+  ) async {
     usePhoneSurface(tester);
     final p = await prefs();
-    await tester.pumpWidget(RapidRxApp(
-      prefs: p,
-      showSplash: false,
-      stageDelay: const Duration(milliseconds: 10),
-    ));
+    await tester.pumpWidget(
+      RapidRxApp(
+        prefs: p,
+        showSplash: false,
+        stageDelay: const Duration(milliseconds: 10),
+      ),
+    );
     await tester.pump();
 
     await tester.tap(find.text('हिंदी'));
@@ -69,8 +72,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 20));
   });
 
-  testWidgets('a mismatched PIN sends the user back to set it again',
-      (tester) async {
+  testWidgets('a mismatched PIN sends the user back to set it again', (
+    tester,
+  ) async {
     usePhoneSurface(tester);
     SharedPreferences.setMockInitialValues({
       'app_language': 'en',
@@ -101,8 +105,10 @@ void main() {
 
     expect(p.hasPin, isFalse);
     expect(find.text('Set a 4-digit PIN'), findsWidgets);
-    expect(find.text('The two PINs are different. Set it again.'),
-        findsOneWidget);
+    expect(
+      find.text('The two PINs are different. Set it again.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('a family number gets its own code check', (tester) async {

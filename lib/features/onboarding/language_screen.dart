@@ -24,6 +24,10 @@ class LanguageScreen extends StatelessWidget {
       logoSize: 68,
       title: AppStrings.languageQuestionEn,
       why: AppStrings.languageQuestionHi,
+      voiceText:
+          '${AppStrings.languageQuestionEn} '
+          '${AppStrings.languageQuestionHi}',
+      voiceLanguage: AppLanguage.hi,
       children: [
         BigChoiceTile(
           title: AppStrings.englishOption,

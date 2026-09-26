@@ -54,9 +54,7 @@ class _SavingScreenState extends State<SavingScreen> {
             const SizedBox(height: 24),
             Text(
               s.savingPreference,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
+              style: Theme.of(context).textTheme.titleMedium
                   ?.copyWith(color: AppColors.muted),
             ),
           ],

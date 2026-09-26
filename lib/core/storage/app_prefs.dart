@@ -30,14 +30,16 @@ class AppPrefs {
   static const _pinHash = 'pin_hash';
 
   AppRole? get role => switch (_prefs.getString(_role)) {
-        'patient' => AppRole.patient,
-        'caregiver' => AppRole.caregiver,
-        _ => null,
-      };
+    'patient' => AppRole.patient,
+    'caregiver' => AppRole.caregiver,
+    _ => null,
+  };
   Future<void> setRole(AppRole role) => _prefs.setString(_role, role.name);
 
-  AppLanguage? get language => AppLanguage.fromCode(_prefs.getString(_language));
-  Future<void> setLanguage(AppLanguage l) => _prefs.setString(_language, l.code);
+  AppLanguage? get language =>
+      AppLanguage.fromCode(_prefs.getString(_language));
+  Future<void> setLanguage(AppLanguage l) =>
+      _prefs.setString(_language, l.code);
 
   bool? get voiceHelp => _prefs.getBool(_voiceHelp);
   Future<void> setVoiceHelp(bool on) => _prefs.setBool(_voiceHelp, on);

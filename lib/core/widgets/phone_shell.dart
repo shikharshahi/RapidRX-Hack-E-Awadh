@@ -48,9 +48,8 @@ class PhoneShell extends StatelessWidget {
                 removeTop: true,
                 removeBottom: true,
                 child: MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    size: Size(AppTheme.phoneWidth, height),
-                  ),
+                  data: MediaQuery.of(context)
+                      .copyWith(size: Size(AppTheme.phoneWidth, height)),
                   child: child,
                 ),
               ),

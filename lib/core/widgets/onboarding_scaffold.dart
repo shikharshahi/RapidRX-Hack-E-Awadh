@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_language.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../voice/voice_prompt.dart';
 import 'rx_logo.dart';
 
 /// One question per screen, centred.
@@ -17,6 +19,8 @@ class OnboardingScaffold extends StatelessWidget {
     this.why,
     required this.children,
     this.logoSize = 52,
+    this.voiceText,
+    this.voiceLanguage,
   });
 
   final String title;
@@ -24,40 +28,49 @@ class OnboardingScaffold extends StatelessWidget {
   final List<Widget> children;
   final double logoSize;
 
+  /// What the voice reads. Defaults to the question and why it is asked.
+  final String? voiceText;
+  final AppLanguage? voiceLanguage;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: AppTheme.pagePadding,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight - AppTheme.pagePadding.vertical,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(child: RxLogo(size: logoSize)),
-                  const SizedBox(height: 24),
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: text.headlineLarge?.copyWith(fontSize: 32),
-                  ),
-                  if (why != null) ...[
-                    const SizedBox(height: 10),
+    return VoicePrompt(
+      text: voiceText ?? [title, ?why].join(' '),
+      language: voiceLanguage,
+      child: Scaffold(
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: AppTheme.pagePadding,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight:
+                      constraints.maxHeight - AppTheme.pagePadding.vertical,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(child: RxLogo(size: logoSize)),
+                    const SizedBox(height: 24),
                     Text(
-                      why!,
+                      title,
                       textAlign: TextAlign.center,
-                      style: text.bodySmall,
+                      style: text.headlineLarge?.copyWith(fontSize: 32),
                     ),
+                    if (why != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        why!,
+                        textAlign: TextAlign.center,
+                        style: text.bodySmall,
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    ...children,
                   ],
-                  const SizedBox(height: 24),
-                  ...children,
-                ],
+                ),
               ),
             ),
           ),
@@ -117,8 +130,10 @@ class BigTextField extends StatelessWidget {
         errorStyle: const TextStyle(fontSize: 18, color: AppColors.red),
         prefixText: prefixText,
         prefixStyle: const TextStyle(fontSize: 24, color: AppColors.muted),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 22,
+          vertical: 24,
+        ),
       ),
     );
   }
@@ -142,8 +157,11 @@ class HintPill extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon ?? Icons.info_outline_rounded,
-              size: 22, color: AppColors.ink),
+          Icon(
+            icon ?? Icons.info_outline_rounded,
+            size: 22,
+            color: AppColors.ink,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

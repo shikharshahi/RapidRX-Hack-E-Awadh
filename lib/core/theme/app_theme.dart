@@ -13,8 +13,10 @@ abstract final class AppTheme {
   /// Every button and tile starts here.
   static const double tapTarget = 64;
 
-  static const EdgeInsets pagePadding =
-      EdgeInsets.symmetric(horizontal: 20, vertical: 16);
+  static const EdgeInsets pagePadding = EdgeInsets.symmetric(
+    horizontal: 20,
+    vertical: 16,
+  );
 
   static const double radius = 20;
 
@@ -131,8 +133,10 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 20,
+        ),
         hintStyle: const TextStyle(fontSize: 20, color: AppColors.muted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radius),

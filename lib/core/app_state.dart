@@ -9,9 +9,9 @@ import 'storage/app_prefs.dart';
 /// scope are enough for three values, and there is nothing to learn on the day.
 class AppState extends ChangeNotifier {
   AppState(this.prefs)
-      : _language = prefs.language ?? AppLanguage.en,
-        _voiceHelp = prefs.voiceHelp ?? false,
-        _role = prefs.role;
+    : _language = prefs.language ?? AppLanguage.en,
+      _voiceHelp = prefs.voiceHelp ?? false,
+      _role = prefs.role;
 
   final AppPrefs prefs;
 
@@ -30,8 +30,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> toggleLanguage() => setLanguage(
-        _language == AppLanguage.en ? AppLanguage.hi : AppLanguage.en,
-      );
+    _language == AppLanguage.en ? AppLanguage.hi : AppLanguage.en,
+  );
 
   Future<void> setVoiceHelp(bool on) async {
     _voiceHelp = on;
@@ -48,7 +48,7 @@ class AppState extends ChangeNotifier {
 
 class AppScope extends InheritedNotifier<AppState> {
   const AppScope({super.key, required AppState state, required super.child})
-      : super(notifier: state);
+    : super(notifier: state);
 
   static AppState of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
