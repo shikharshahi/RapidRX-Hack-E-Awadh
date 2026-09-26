@@ -69,7 +69,10 @@ class PatientMenu extends StatelessWidget {
           '2. ${s.myPrescriptions}. 3. ${s.medicineSchedule}.',
       child: Scaffold(
         appBar: AppBar(
-          title: Text(s.menuTitle),
+          title: Text(
+            s.hello(AppScope.maybeOf(context)?.prefs.name),
+            overflow: TextOverflow.ellipsis,
+          ),
           actions: appBarActions(context, onRestart: onRestart),
         ),
         body: SafeArea(

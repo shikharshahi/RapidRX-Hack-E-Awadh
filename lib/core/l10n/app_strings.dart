@@ -105,7 +105,12 @@ class AppStrings {
   );
 
   // ── Patient menu ────────────────────────────────────────────────────────
-  String get menuTitle => _t('Today\'s medicines', 'आज की दवाई');
+  /// The patient's greeting at the top of the menu.
+  String hello(String? name) {
+    final n = name?.trim() ?? '';
+    return n.isEmpty ? _t('Hello', 'नमस्ते') : _t('Hello $n', 'नमस्ते $n');
+  }
+
   String get menuQuestion =>
       _t('What would you like to do?', 'आप क्या करना चाहते हैं?');
   String get newPrescription => _t('New prescription', 'नई पर्ची');

@@ -25,7 +25,12 @@ void main() {
     bool withState = false,
   }) async {
     usePhoneSurface(tester);
-    final state = withState ? await freshState(language: language) : null;
+    final state = withState
+        ? await freshState(
+            language: language,
+            values: const {'user_name': 'Ramesh'},
+          )
+        : null;
     await tester.pumpWidget(themed(screen, language: language, state: state));
     await precacheLogo(tester);
     await expectLater(
