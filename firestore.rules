@@ -1,0 +1,83 @@
+rules_version = '2';
+// Deploy is manual and was not run. No Firebase project is selected.
+// Reads: a linked family caretaker, or a linked commercial caretaker whose
+// token has pinOk == true. That claim is set by a server after it checks the
+// PIN hash. This file does not check the four demo digits.
+// Writes: only the patient device, and only the fields named below.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isPatientDevice(patientId) {
+      return signedIn()
+        && request.auth.token.patientId == patientId
+        && request.auth.token.device == 'patient';
+    }
+
+    function isLinkedCaretaker(patientId) {
+      return signedIn()
+        && request.auth.token.role == 'caretaker'
+        && request.auth.token.linked == true
+        && request.auth.token.patientId == patientId;
+    }
+
+    function canRead(patientId) {
+      return isLinkedCaretaker(patientId) && (
+        request.auth.token.caretakerType == 'family'
+        || (request.auth.token.caretakerType == 'commercial'
+            && request.auth.token.pinOk == true)
+      );
+    }
+
+    function forbidden(data) {
+      return data.keys().hasAny([
+        'transcript',
+        'transcripts',
+        'photo',
+        'photos',
+        'image',
+        'images',
+        'audio',
+        'healthProfile',
+        'health_profile',
+        'ayushman',
+        'ayushmanId',
+        'ayushman_id',
+        'prescriptionPhoto',
+        'prescription_photo'
+      ]);
+    }
+
+    match /patients/{patientId}/doses/{doseId} {
+      allow read: if canRead(patientId);
+      allow create, update: if isPatientDevice(patientId)
+        && !forbidden(request.resource.data)
+        && request.resource.data.keys().hasOnly(['status', 'medicine', 'time'])
+        && request.resource.data.keys().hasAll(['status', 'medicine', 'time'])
+        && request.resource.data.status in ['taken', 'missed', 'upcoming']
+        && request.resource.data.medicine is string
+        && request.resource.data.medicine.size() > 0
+        && request.resource.data.time is string;
+      allow delete: if false;
+    }
+
+    match /patients/{patientId}/alerts/{alertId} {
+      allow read: if canRead(patientId);
+      allow create: if isPatientDevice(patientId)
+        && !forbidden(request.resource.data)
+        && request.resource.data.keys().hasOnly(['kind', 'medicine', 'time'])
+        && request.resource.data.keys().hasAll(['kind', 'time'])
+        && request.resource.data.kind in ['missed_dose', 'unanswered_call', 'new_prescription']
+        && request.resource.data.time is string
+        && (!request.resource.data.keys().hasAny(['medicine'])
+            || request.resource.data.medicine is string);
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

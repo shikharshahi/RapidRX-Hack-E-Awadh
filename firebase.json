@@ -1,0 +1,15 @@
+{
+  "_comment": "Deploy is manual and was not run. Do not run firebase deploy until a Firebase project is approved. Hosting site id is myrapidrx. Public directory is portal/.",
+  "hosting": {
+    "site": "myrapidrx",
+    "public": "portal",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
