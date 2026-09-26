@@ -132,19 +132,24 @@ void main() {
         now: at(26, 19),
         taken: (_, s) => s == n,
       );
-      expect(takenNight!.slot, m);
+      expect(takenNight.slot, m);
     });
 
-    test('with nothing due today, the demo has no real slot', () {
-      expect(
-        DoseAlarm.demoTarget(
-          medicines: [meftal],
-          now: at(26, 9),
-          taken: (_, _) => false,
-        ),
-        isNull,
+    test('with nothing due today, the demo shows the demo medicine', () {
+      final target = DoseAlarm.demoTarget(
+        medicines: [meftal],
+        now: at(26, 13),
+        taken: (_, _) => false,
       );
-      expect(DoseAlarm.demoMedicine.name, contains('DEMO'));
+      expect(target.slot, DoseSlot.afternoon, reason: 'nearest to 13:00');
+      expect(target.demo, isTrue);
+      final shown = DoseAlarm.demoMedicines(target, [meftal]);
+      expect(shown.single.name, contains('DEMO'));
+      expect(
+        DoseAlarm.demoMedicines(AlarmPayload(slot: m, date: start), [telma]),
+        [telma],
+        reason: 'a real medicine when there is one',
+      );
     });
   });
 

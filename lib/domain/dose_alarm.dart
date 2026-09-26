@@ -95,20 +95,34 @@ abstract final class DoseAlarm {
   }) => payload.demo || (due.isNotEmpty && !alreadyTaken);
 
   /// The slot the demo button rings for: today's slot nearest to [now] that
-  /// has something due, preferring one not yet taken. Null when nothing is
-  /// due today — the demo medicine is shown instead.
-  static AlarmPayload? demoTarget({
+  /// has something due, preferring one not yet taken. With nothing due today,
+  /// simply the slot nearest to [now] — [demoMedicines] then shows the demo
+  /// medicine in it.
+  static AlarmPayload demoTarget({
     required Iterable<ScheduledMedicine> medicines,
     required DateTime now,
     required bool Function(DateTime date, DoseSlot slot) taken,
   }) {
-    final due = ScheduleEngine.dueOn(medicines, now).keys.toList();
-    if (due.isEmpty) return null;
     int distance(DoseSlot s) =>
         DoseClock.dueAt(now, s).difference(now).inMinutes.abs();
+    final due = ScheduleEngine.dueOn(medicines, now).keys.toList();
     final open = due.where((s) => !taken(now, s)).toList();
-    final pool = open.isEmpty ? due : open;
+    final pool = open.isNotEmpty
+        ? open
+        : due.isNotEmpty
+        ? due
+        : DoseSlot.values.toList();
     pool.sort((a, b) => distance(a).compareTo(distance(b)));
     return AlarmPayload(slot: pool.first, date: now, demo: true);
+  }
+
+  /// What a demo alarm shows: the real medicines of that slot, or — when the
+  /// schedule has none — the clearly named demo medicine.
+  static List<ScheduledMedicine> demoMedicines(
+    AlarmPayload payload,
+    Iterable<ScheduledMedicine> medicines,
+  ) {
+    final due = medicinesFor(payload, medicines);
+    return due.isNotEmpty ? due : [demoMedicine];
   }
 }

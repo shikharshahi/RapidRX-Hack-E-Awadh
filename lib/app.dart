@@ -8,6 +8,7 @@ import 'core/storage/app_prefs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/voice/voice_guide.dart';
 import 'core/widgets/phone_shell.dart';
+import 'features/doses/alarm_launcher.dart';
 import 'features/caregiver/caregiver_home.dart';
 import 'features/health/health_profile_controller.dart';
 import 'features/health/health_profile_screen.dart';
@@ -19,6 +20,7 @@ import 'features/onboarding/saving_screen.dart';
 import 'features/onboarding/splash_screen.dart';
 import 'features/onboarding/voice_help_screen.dart';
 import 'features/patient/patient_menu.dart';
+import 'platform/dose_reminders.dart';
 
 enum _Stage {
   splash,
@@ -44,6 +46,7 @@ class RapidRxApp extends StatefulWidget {
     this.voice,
     this.pmjay,
     this.resumeOnboarding = false,
+    this.reminders,
   });
 
   final AppPrefs prefs;
@@ -64,6 +67,9 @@ class RapidRxApp extends StatefulWidget {
   /// so the rule itself can be tested.
   final bool resumeOnboarding;
 
+  /// Injected by tests; the app uses the phone's alarm service.
+  final DoseReminders? reminders;
+
   @override
   State<RapidRxApp> createState() => _RapidRxAppState();
 }
@@ -71,11 +77,20 @@ class RapidRxApp extends StatefulWidget {
 class _RapidRxAppState extends State<RapidRxApp> {
   late final AppState _state = AppState(widget.prefs)..addListener(_syncVoice);
   late final VoiceGuide _voice = widget.voice ?? VoiceGuide();
+  final _navigator = GlobalKey<NavigatorState>();
+  late final DoseAlarmRouter _alarms = DoseAlarmRouter(
+    navigatorKey: _navigator,
+    state: _state,
+    reminders: widget.reminders,
+  );
 
   @override
   void initState() {
     super.initState();
     _syncVoice();
+    // After the first frame, so there is a navigator to open the alarm on —
+    // including the alarm that started the app from cold.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _alarms.start());
   }
 
   /// Voice speaks only when the build allows it and the user asked for it.
@@ -118,6 +133,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
 
   @override
   void dispose() {
+    _alarms.dispose();
     _voice.stopAll();
     _state.dispose();
     super.dispose();
@@ -131,6 +147,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
         listenable: _state,
         builder: (context, _) => MaterialApp(
           title: 'RapidRX',
+          navigatorKey: _navigator,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(),
           // Scopes live in the builder, not around `home`, so pushed routes
