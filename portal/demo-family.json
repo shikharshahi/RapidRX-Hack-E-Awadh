@@ -1,0 +1,35 @@
+{
+  "_comment": "Demo fixture for the static portal only. Not a live record. Dose status, medicine name, time, caretaker notes, and alert events. No transcript, photo, health profile, or Ayushman data. The PIN is not stored here; pinSha256 is a hint. The page compares demo digits, and a real build checks the hash on the server.",
+  "demo": true,
+  "label": "Demo",
+  "asOf": "2026-09-26",
+  "pinSha256": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+  "medicines": [
+    {"name": "Metformin", "time": "08:00"},
+    {"name": "Amlodipine", "time": "09:00"},
+    {"name": "Metformin", "time": "20:00"}
+  ],
+  "doses": [
+    {"day": "2026-09-26", "medicine": "Metformin", "time": "08:00", "status": "taken"},
+    {"day": "2026-09-26", "medicine": "Amlodipine", "time": "09:00", "status": "missed"},
+    {"day": "2026-09-26", "medicine": "Metformin", "time": "20:00", "status": "upcoming"},
+    {"day": "2026-09-25", "medicine": "Metformin", "time": "08:00", "status": "taken"},
+    {"day": "2026-09-25", "medicine": "Amlodipine", "time": "09:00", "status": "taken"},
+    {"day": "2026-09-25", "medicine": "Metformin", "time": "20:00", "status": "missed"},
+    {"day": "2026-09-24", "medicine": "Metformin", "time": "08:00", "status": "missed"},
+    {"day": "2026-09-24", "medicine": "Amlodipine", "time": "09:00", "status": "taken"},
+    {"day": "2026-09-24", "medicine": "Metformin", "time": "20:00", "status": "taken"}
+  ],
+  "notes": [
+    {"priority": "medium", "text": "Evening tablet is with food."},
+    {"priority": "high", "text": "Morning blood-pressure tablet with water, before tea."}
+  ],
+  "alerts": [
+    {"kind": "missed_dose", "medicine": "Amlodipine", "time": "09:00"},
+    {"kind": "unanswered_call", "time": "09:05"},
+    {"kind": "new_prescription", "medicine": "Amlodipine", "time": "09:00"}
+  ],
+  "familyOnly": {
+    "alertLabel": "Demo alert number (not a real phone)"
+  }
+}

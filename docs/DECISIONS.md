@@ -84,7 +84,9 @@ reading the wrong screen. One failure marks the Space unreachable for the sessio
 
 ### ADR-6 · `shared_preferences` now, Firestore for medical data later
 This build keeps everything on the phone as JSON. The shapes in `MedicineStore`, `DoseLogStore`
-and `VisitRepository` are the documents a Firestore migration would write.
+and `VisitRepository` are the documents a Firestore migration would write. The family portal does
+not copy those documents. ADR-64 keeps any later cloud slice to caretaker fields, and the site
+stays static until a Firebase project is approved.
 
 ### ADR-14 · Phone, OTP, PIN — all local in this build
 The OTP is `1234`, and the screen says so: phone auth needs Firebase's paid plan. The PIN is
@@ -265,3 +267,19 @@ the motor. `Haptics.on(callback)` returns null for a null callback, so a disable
 disabled. Primary buttons are wrapped in `Pressable`, which shrinks to 0.97 under the finger via a
 `Listener` (outside the gesture arena, so taps and semantics are untouched) and is exactly 1 at
 rest, so no golden moves. Saving shows a spinner in the button at once — never a dead tap.
+
+---
+
+## The family portal
+
+### ADR-64 · The portal gets a caretaker copy; the phone stays the record
+`portal/` is a static site — overview, alerts, an APK page, and a demo switch — not a second app.
+The phone remains the source of truth. Until a Firebase project is approved, the overview reads a
+labeled demo fixture and nothing is deployed.
+
+A later cloud copy, if one is approved, holds dose status, medicine name, time, and alert events
+for a linked caretaker. It does not hold transcripts, photos, the health profile, or Ayushman data.
+Family can read that copy. A commercial caretaker can read it only after the patient's PIN: the
+demo page compares four digits locally, and a real build checks the hash on the server. Only the
+patient device can write. Hosting is pointed at `portal/` with site id `myrapidrx`. Deploy is
+manual and was not run.
