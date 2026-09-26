@@ -230,6 +230,18 @@ forged code is possible in this build. A real backend signs codes.
 "I'll do this later" is remembered, so a relaunch goes to the caretaker home (which offers the
 QR again) instead of trapping them on the QR screen.
 
+### ADR-63 · A paid caretaker types the patient's PIN on every open
+The patient sets a 4-digit PIN when they scan a non-family caretaker. That phone keeps the hash.
+The caretaker's phone gets a copy at confirm time: `LocalPairingChannel` remembers it in this
+process, and the WhatsApp message ends with `RXPIN` plus the hash so a second phone can paste the
+whole message. The caretaker still types the PIN the patient told them; the hash only checks it.
+
+Five wrong tries lock the view for five minutes. The lock is stored. The "open" flag is not, so
+the next launch asks again. Family caretakers are not asked. Their home leads with missed doses
+and prescriptions from the last seven days. A paid caretaker, once the PIN is right, sees today's
+doses, the schedule and notes — not the alert number or the share button. Approved visits have no
+"unverified" flag, so "new" means added this week.
+
 ---
 
 ## The voice agent

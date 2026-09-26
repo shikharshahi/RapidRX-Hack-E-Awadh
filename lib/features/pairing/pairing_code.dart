@@ -162,6 +162,26 @@ abstract final class PairingCode {
   static DateTime expiresAt(int issuedAt) =>
       DateTime.fromMillisecondsSinceEpoch(issuedAt * 1000).add(validFor);
 
+  /// The 4-digit code, and a commercial PIN hash if [raw] is the WhatsApp
+  /// message (`RXPIN` plus 64 hex digits). A bare 4-digit string has no hash.
+  static ({String? code, String? pinHash}) readConfirm(String raw) {
+    final hashMatch = RegExp(r'RXPIN ([0-9a-f]{64})').firstMatch(raw);
+    final hash = hashMatch?.group(1);
+    // The hash is hex, so it contains digit runs. Strip it before looking
+    // for the 4-digit code, or a hash can win over the real code.
+    final body = hashMatch == null
+        ? raw
+        : raw.replaceRange(hashMatch.start, hashMatch.end, ' ');
+    final trimmed = body.trim();
+    if (RegExp(r'^\d{4}$').hasMatch(trimmed)) {
+      return (code: trimmed, pinHash: hash);
+    }
+    final codes = RegExp(
+      r'(?<!\d)(\d{4})(?!\d)',
+    ).allMatches(body).map((m) => m.group(1)!).toList();
+    return (code: codes.isEmpty ? null : codes.last, pinHash: hash);
+  }
+
   /// The 4 digits the patient's phone shows after a successful scan. Derived
   /// from the caretaker id alone, so the caretaker's phone can check it with
   /// no network.
@@ -178,8 +198,9 @@ abstract final class PairingCode {
 
   static String newCaretakerId([Random? random]) {
     final r = random ?? Random.secure();
-    return [for (var i = 0; i < 10; i++) _alphabet[r.nextInt(_alphabet.length)]]
-        .join();
+    return [
+      for (var i = 0; i < 10; i++) _alphabet[r.nextInt(_alphabet.length)],
+    ].join();
   }
 
   static int epochSeconds(DateTime t) => t.millisecondsSinceEpoch ~/ 1000;

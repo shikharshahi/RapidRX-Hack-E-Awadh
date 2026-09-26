@@ -93,6 +93,7 @@ class BigTextField extends StatelessWidget {
     this.autofocus = false,
     this.keyboardType,
     this.prefixText,
+    this.maxLines = 1,
   });
 
   final TextEditingController controller;
@@ -106,6 +107,7 @@ class BigTextField extends StatelessWidget {
   final bool autofocus;
   final TextInputType? keyboardType;
   final String? prefixText;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +125,7 @@ class BigTextField extends StatelessWidget {
               LengthLimitingTextInputFormatter(digits),
             ],
       style: const TextStyle(fontSize: 24, letterSpacing: .5),
+      maxLines: maxLines,
       onSubmitted: onSubmitted,
       decoration: InputDecoration(
         hintText: hint,

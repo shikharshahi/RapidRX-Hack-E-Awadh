@@ -192,6 +192,7 @@ class PatientPairing extends ChangeNotifier {
     _confirmation = await channel.patientLinked(
       c,
       patientName: prefs.name ?? '',
+      pinHash: pinHash,
     );
     _busy = false;
     _step = ScanStep.done;

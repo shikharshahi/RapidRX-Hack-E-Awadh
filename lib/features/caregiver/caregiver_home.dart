@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
+import '../../core/feedback/haptics.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/l10n/strings_caretaker.dart';
 import '../../core/plain_language.dart';
+import '../../core/storage/app_prefs.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/app_bar_actions.dart';
+import '../../core/widgets/onboarding_scaffold.dart';
 import '../../core/widgets/rx_logo.dart';
 import '../../domain/schedule_engine.dart';
 import '../../domain/scheduled_medicine.dart';
@@ -17,7 +21,9 @@ import '../medicines/medicine_store.dart';
 import '../pairing/caretaker_pairing.dart';
 import '../pairing/open_pairing.dart';
 import 'family.dart';
+import 'family_brief.dart';
 import 'plan_summary.dart';
+import 'view_gate.dart';
 import 'whatsapp_alerts.dart';
 
 /// The caregiver's half: today at a glance, the family number, and the plan in
@@ -46,6 +52,10 @@ class _CaregiverHomeState extends State<CaregiverHome> {
   MedicineStore? _store;
   DoseLogStore? _logs;
   late final WhatsAppAlerts _alerts = widget.alerts ?? WhatsAppAlerts();
+  ViewGate? _gate;
+  final _pin = TextEditingController();
+  final _message = TextEditingController();
+  String? _gateError;
 
   @override
   void initState() {
@@ -53,6 +63,48 @@ class _CaregiverHomeState extends State<CaregiverHome> {
     _store = widget.store;
     _logs = widget.logs;
     if (_store == null || _logs == null) _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _gate ??= ViewGate(AppScope.of(context).prefs, clock: widget.clock);
+  }
+
+  @override
+  void dispose() {
+    _pin.dispose();
+    _message.dispose();
+    super.dispose();
+  }
+
+  Future<void> _acceptMessage() async {
+    final ok = await _gate!.acceptMessage(_message.text);
+    if (!mounted) return;
+    final s = L10n.of(context);
+    setState(() => _gateError = ok ? null : s.viewPinPasteBad);
+    ok ? Haptics.confirm() : Haptics.error();
+  }
+
+  Future<void> _tryPin() async {
+    final gate = _gate!;
+    final attempt = await gate.submit(_pin.text);
+    if (!mounted) return;
+    final s = L10n.of(context);
+    setState(() {
+      _gateError = switch (attempt) {
+        GateAttempt.opened => null,
+        GateAttempt.wrong => s.viewPinWrong,
+        GateAttempt.locked => s.viewPinLocked(gate.minutesLeft()),
+        GateAttempt.noHash => s.viewPinNoHash,
+      };
+    });
+    if (attempt == GateAttempt.opened) {
+      Haptics.confirm();
+      _pin.clear();
+    } else {
+      Haptics.error();
+    }
   }
 
   Future<void> _load() async {
@@ -159,9 +211,15 @@ class _CaregiverHomeState extends State<CaregiverHome> {
     final state = AppScope.of(context);
     final phone = state.prefs.alertPhone;
     final now = widget.clock();
+    final paid = state.prefs.caretakerType == CaretakerType.commercial;
+    final family = state.prefs.caretakerType == CaretakerType.family;
     final due = _logs == null
         ? const <DoseSlot, List<ScheduledMedicine>>{}
         : ScheduleEngine.dueOn(_meds, now);
+    final gate = _gate;
+    if (paid && gate != null && !gate.isOpen) {
+      return _pinScaffold(s, text, gate);
+    }
 
     return VoicePrompt(
       text: '${s.todaysDoses}. ${s.alertsWhy}',
@@ -187,6 +245,13 @@ class _CaregiverHomeState extends State<CaregiverHome> {
               onShowQr: _openPairing,
             ),
             const SizedBox(height: 16),
+            if (family && _logs != null)
+              _FamilyBriefView(
+                medicines: _meds,
+                logs: _logs!,
+                records: _store?.records() ?? const [],
+                now: now,
+              ),
             // A High-priority note from the patient's side is the first
             // thing a caretaker sees.
             for (final r in _notes.where((r) => r.notePriority == 'high')) ...[
@@ -212,29 +277,34 @@ class _CaregiverHomeState extends State<CaregiverHome> {
                 ],
               ),
             if (due.isEmpty && _meds.isNotEmpty) _Muted(s.nothingDueToday),
-            const SizedBox(height: 22),
-            Text(s.alerts, style: text.titleLarge),
-            Text(s.alertsWhy, style: text.labelMedium?.copyWith(fontSize: 16)),
-            const SizedBox(height: 10),
-            _NumberRow(
-              phone: phone,
-              emptyText: s.noFamilyYet,
-              changeLabel: s.change,
-              onChange: _changeNumber,
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              icon: const Icon(Icons.chat_rounded),
-              label: Text(s.sendStatus),
-              onPressed: _logs == null ? null : _sendStatus,
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.ios_share_rounded),
-              label: Text(s.sharePlan),
-              onPressed: () => sharePlan(context, _meds),
-            ),
-            const SizedBox(height: 26),
+            if (!paid) ...[
+              const SizedBox(height: 22),
+              Text(s.alerts, style: text.titleLarge),
+              Text(
+                s.alertsWhy,
+                style: text.labelMedium?.copyWith(fontSize: 16),
+              ),
+              const SizedBox(height: 10),
+              _NumberRow(
+                phone: phone,
+                emptyText: s.noFamilyYet,
+                changeLabel: s.change,
+                onChange: _changeNumber,
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                icon: const Icon(Icons.chat_rounded),
+                label: Text(s.sendStatus),
+                onPressed: _logs == null ? null : _sendStatus,
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.ios_share_rounded),
+                label: Text(s.sharePlan),
+                onPressed: () => sharePlan(context, _meds),
+              ),
+              const SizedBox(height: 26),
+            ],
             if (_notes.any((r) => r.notePriority != 'high')) ...[
               Text(s.caretakerNotes, style: text.titleLarge),
               const SizedBox(height: 8),
@@ -258,6 +328,111 @@ class _CaregiverHomeState extends State<CaregiverHome> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _pinScaffold(AppStrings s, TextTheme text, ViewGate gate) {
+    final locked = gate.isLocked();
+    return Scaffold(
+      appBar: AppBar(
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            const RxLogo(size: 32),
+            const SizedBox(width: 12),
+            Text(s.appName),
+          ],
+        ),
+        actions: appBarActions(context, onRestart: widget.onRestart),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        children: [
+          Text(s.viewPinTitle, style: text.titleLarge),
+          const SizedBox(height: 8),
+          Text(s.viewPinWhy, style: const TextStyle(fontSize: 18)),
+          if (!gate.hasHash) ...[
+            const SizedBox(height: 16),
+            BigTextField(
+              controller: _message,
+              hint: s.pastePatientMessage,
+              keyboardType: TextInputType.multiline,
+              maxLines: 4,
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(onPressed: _acceptMessage, child: Text(s.checkCode)),
+          ],
+          const SizedBox(height: 16),
+          BigTextField(
+            controller: _pin,
+            hint: s.viewPinTitle,
+            digits: 4,
+            obscure: true,
+            errorText: locked
+                ? s.viewPinLocked(gate.minutesLeft())
+                : _gateError,
+            onSubmitted: locked ? null : (_) => _tryPin(),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: locked ? null : _tryPin,
+            child: Text(s.continueLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Missed doses and new prescriptions, for a family caretaker only.
+class _FamilyBriefView extends StatelessWidget {
+  const _FamilyBriefView({
+    required this.medicines,
+    required this.logs,
+    required this.records,
+    required this.now,
+  });
+
+  final List<ScheduledMedicine> medicines;
+  final DoseLogStore logs;
+  final List<PrescriptionRecord> records;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = L10n.of(context);
+    final text = Theme.of(context).textTheme;
+    final missed = FamilyBrief.missed(
+      now: now,
+      medicines: medicines,
+      logs: logs,
+    );
+    final today = dayOf(now);
+    final todayMisses = [
+      for (final m in missed)
+        if (dayOf(m.day) == today) m,
+    ];
+    final recent = FamilyBrief.recent(records, now);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(s.familyMissedToday, style: text.titleLarge),
+        const SizedBox(height: 6),
+        if (todayMisses.isEmpty)
+          _Muted(s.familyNothingMissed)
+        else
+          for (final m in todayMisses)
+            _Muted('• ${PlainLanguage.slot(m.slot, s)}'),
+        const SizedBox(height: 6),
+        _Muted(s.familyMissedWeek(missed.length)),
+        if (recent.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(s.familyNewPrescriptions, style: text.titleLarge),
+          const SizedBox(height: 6),
+          for (final r in recent) _Muted('• ${r.medicineNames.join(', ')}'),
+        ],
+        const SizedBox(height: 16),
+      ],
     );
   }
 }
@@ -327,8 +502,9 @@ class _Muted extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: Theme.of(context).textTheme.bodyMedium
-        ?.copyWith(color: AppColors.muted),
+    style: Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
   );
 }
 

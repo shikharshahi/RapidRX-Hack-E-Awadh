@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/feedback/haptics.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/l10n/strings_caretaker.dart';
+import '../../core/storage/app_prefs.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/onboarding_scaffold.dart';
 import 'caretaker_pairing.dart';
@@ -29,29 +31,39 @@ class CaretakerConfirmScreen extends StatefulWidget {
 class _CaretakerConfirmScreenState extends State<CaretakerConfirmScreen> {
   final _name = TextEditingController();
   final _code = TextEditingController();
+  final _paste = TextEditingController();
   ConfirmError? _error;
   bool _busy = false;
+
+  bool get _paid =>
+      widget.pairing.prefs.caretakerType == CaretakerType.commercial;
 
   @override
   void dispose() {
     _name.dispose();
     _code.dispose();
+    _paste.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (_busy) return;
     setState(() => _busy = true);
+    final pasted = _paste.text.trim();
     final error = await widget.pairing.confirm(
       patientName: _name.text,
-      code: _code.text,
+      code: pasted.isNotEmpty ? pasted : _code.text,
     );
     if (!mounted) return;
     setState(() {
       _busy = false;
       _error = error;
     });
-    if (error != null) return;
+    if (error != null) {
+      Haptics.error();
+      return;
+    }
+    Haptics.confirm();
     final s = L10n.of(context);
     await showDialog<void>(
       context: context,
@@ -103,6 +115,17 @@ class _CaretakerConfirmScreenState extends State<CaretakerConfirmScreen> {
           },
           onSubmitted: (_) => _submit(),
         ),
+        if (_paid) ...[
+          const SizedBox(height: 16),
+          BigTextField(
+            controller: _paste,
+            hint: s.pastePatientMessage,
+            keyboardType: TextInputType.multiline,
+            maxLines: 4,
+          ),
+          const SizedBox(height: 8),
+          Text(s.pastePatientMessageWhy, style: const TextStyle(fontSize: 16)),
+        ],
         const SizedBox(height: 28),
         FilledButton(onPressed: _submit, child: Text(s.connect)),
         if (widget.onBack != null) ...[

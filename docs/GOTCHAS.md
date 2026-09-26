@@ -34,6 +34,7 @@ Every trap already hit, with the fix. When something looks impossible, look here
 | An arrow (`→`) in on-screen text is a box in the golden, in English and Hindi | The bundled Noto faces have no arrow glyph | Say it in words ("open RapidRX and tap …"); arrows are fine in test names |
 | "✓" and "✗" are boxes in a golden | The bundled Noto faces have no such glyphs; offline there is no fallback to fetch | Icons beside the words, never the characters (`AlarmScreen`) |
 | `test/failures/*.png` appear after a golden fails | The golden comparator writes its diffs next to the test | Delete them; never commit them |
+| A pasted pairing message links, but the paid PIN gate says there is no check | The 4-digit field keeps digits only, so it strips the `RXPIN` line | Paste into the message box, which allows more than one line. The hash is hex, so the code reader strips `RXPIN` before it looks for the 4 digits |
 
 ## Layout
 

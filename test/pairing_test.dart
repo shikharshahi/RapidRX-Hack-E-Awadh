@@ -218,6 +218,15 @@ void main() {
       }
     });
 
+    test('a pasted message yields the code, not four digits from the hash', () {
+      final hash = '${'a' * 60}1234';
+      final read = PairingCode.readConfirm('Your code: 4821\nRXPIN $hash');
+      expect(read.code, '4821');
+      expect(read.pinHash, hash);
+      expect(PairingCode.readConfirm('4821').pinHash, isNull);
+      expect(PairingCode.readConfirm('12').code, isNull);
+    });
+
     test('both phones derive the same 4-digit confirmation code', () {
       final a = PairingCode.confirmationCode('K7Q2XMPA3B');
       expect(a, matches(RegExp(r'^\d{4}$')));
@@ -307,6 +316,45 @@ void main() {
       expect(p.linked!.name, 'Ramesh');
       expect(p.linked!.caretakerId, id);
     });
+
+    test(
+      'a pasted WhatsApp message copies the paid caretaker PIN hash',
+      () async {
+        LocalPairingChannel.debugForgetPins();
+        final p = pairing();
+        final id = p.code().caretakerId;
+        final hash = AppPrefs.hashPin('4321');
+        final code = PairingCode.confirmationCode(id);
+        final message = AppStrings(
+          AppLanguage.en,
+        ).pairingWhatsApp('Ramesh', code, pinHash: hash);
+        expect(await p.confirm(patientName: 'Ramesh', code: message), isNull);
+        expect(prefs.caretakerViewPinHash, hash);
+      },
+    );
+
+    test(
+      'typing the 4 digits copies a hash remembered in this process',
+      () async {
+        LocalPairingChannel.debugForgetPins();
+        final p = pairing();
+        final hash = AppPrefs.hashPin('1111');
+        final id = p.code().caretakerId;
+        await p.channel.patientLinked(
+          p.code(),
+          patientName: 'Ramesh',
+          pinHash: hash,
+        );
+        expect(
+          await p.confirm(
+            patientName: 'Ramesh',
+            code: PairingCode.confirmationCode(id),
+          ),
+          isNull,
+        );
+        expect(prefs.caretakerViewPinHash, hash);
+      },
+    );
 
     test('the patient phone and the caretaker phone agree offline', () async {
       final p = pairing();
@@ -657,31 +705,27 @@ void main() {
       });
     }
 
-    testWidgets(
-      'typing a family code links them and shows the confirm digits',
-      (t) async {
-        FakeHaptics.install();
-        usePhoneSurface(t);
-        final (state, p) = await patientSetup(AppLanguage.en);
-        await t.pumpWidget(themed(scanScreen(p), state: state));
-        expect(
-          find.text(
-            'This device cannot scan. Type or paste the code the caretaker sent you.',
-          ),
-          findsOne,
-        );
-        await t.enterText(
-          find.byType(TextField),
-          PairingCode.encode(payload()),
-        );
-        await t.tap(find.text('Check code'));
-        await t.pump();
-        expect(find.text('Sunita — Family member'), findsOne);
-        await t.tap(find.text('Link Sunita'));
-        await t.pumpAndSettle();
-        expect(find.text('Caretaker connection successful'), findsOne);
-        expect(p.confirmationCode, PairingCode.confirmationCode('K7Q2XMPA3B'));
-      },
-    );
+    testWidgets('typing a family code links them and shows the confirm digits', (
+      t,
+    ) async {
+      FakeHaptics.install();
+      usePhoneSurface(t);
+      final (state, p) = await patientSetup(AppLanguage.en);
+      await t.pumpWidget(themed(scanScreen(p), state: state));
+      expect(
+        find.text(
+          'This device cannot scan. Type or paste the code the caretaker sent you.',
+        ),
+        findsOne,
+      );
+      await t.enterText(find.byType(TextField), PairingCode.encode(payload()));
+      await t.tap(find.text('Check code'));
+      await t.pump();
+      expect(find.text('Sunita — Family member'), findsOne);
+      await t.tap(find.text('Link Sunita'));
+      await t.pumpAndSettle();
+      expect(find.text('Caretaker connection successful'), findsOne);
+      expect(p.confirmationCode, PairingCode.confirmationCode('K7Q2XMPA3B'));
+    });
   });
 }

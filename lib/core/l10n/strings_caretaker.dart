@@ -92,6 +92,41 @@ extension CaretakerStrings on AppStrings {
   String linkedPatientLine(String name) =>
       pick('Linked to $name', '$name से जुड़े हैं');
 
+  // ── Paid caretaker: PIN before the patient view ─────────────────────────
+  String get viewPinTitle =>
+      pick('Enter the patient\'s PIN', 'मरीज़ का PIN डालें');
+  String get viewPinWhy => pick(
+    'The patient set this PIN. You type it each time you open their doses.',
+    'मरीज़ ने यह PIN रखा है। हर बार उनकी दवाइयाँ खोलते समय इसे डालें।',
+  );
+  String get viewPinWrong =>
+      pick('That PIN is not right.', 'यह PIN सही नहीं है।');
+  String viewPinLocked(int minutes) => pick(
+    minutes == 1
+        ? 'Too many tries. Wait 1 minute, then try again.'
+        : 'Too many tries. Wait $minutes minutes, then try again.',
+    'बहुत बार गलत हुआ। $minutes मिनट रुकें, फिर दोबारा कोशिश करें।',
+  );
+  String get viewPinNoHash => pick(
+    'Paste the WhatsApp message from the patient first. It carries the PIN '
+        'check. The PIN itself is what they told you.',
+    'पहले मरीज़ का WhatsApp संदेश पेस्ट करें। उसी में PIN की जाँच है। PIN '
+        'वही है जो उन्होंने आपको बताया।',
+  );
+  String get viewPinPasteBad => pick(
+    'That message has no PIN check. Ask the patient to send it again.',
+    'इस संदेश में PIN की जाँच नहीं है। मरीज़ से दोबारा भेजने को कहें।',
+  );
+  String get familyMissedToday => pick('Missed today', 'आज छूटी हुई दवाइयाँ');
+  String get familyNothingMissed =>
+      pick('Nothing missed today.', 'आज कोई दवाई नहीं छूटी।');
+  String familyMissedWeek(int count) => pick(
+    count == 1 ? '1 missed dose this week.' : '$count missed doses this week.',
+    'इस हफ़्ते $count बार दवाई छूटी।',
+  );
+  String get familyNewPrescriptions =>
+      pick('New this week', 'इस हफ़्ते की नई पर्चियाँ');
+
   // ── Patient: scan caretaker QR ──────────────────────────────────────────
   String get scanCaretakerQr =>
       pick('Scan caretaker QR', 'देखभालकर्ता का QR स्कैन करें');
@@ -120,7 +155,8 @@ extension CaretakerStrings on AppStrings {
   );
   String get tryAgain => pick('Try again', 'दोबारा कोशिश करें');
   String get orTypeCode => pick('Or type the code', 'या कोड लिखें');
-  String get codeFieldHint => pick('Paste the code here', 'कोड यहाँ पेस्ट करें');
+  String get codeFieldHint =>
+      pick('Paste the code here', 'कोड यहाँ पेस्ट करें');
   String get checkCode => pick('Check code', 'कोड जाँचें');
   String get codeMalformed => pick(
     'This is not a RapidRX caretaker code.',
@@ -181,19 +217,30 @@ extension CaretakerStrings on AppStrings {
   );
   String get sendCodeWhatsApp =>
       pick('Send the code on WhatsApp', 'कोड WhatsApp पर भेजें');
-  String pairingWhatsApp(String patient, String code) => pick(
-    'RapidRX: $patient linked you as their caretaker. Enter this code on '
-        'your phone: $code',
-    'RapidRX: $patient ने आपको देखभालकर्ता के रूप में जोड़ा है। अपने फ़ोन '
-        'में यह कोड डालें: $code',
+  String pairingWhatsApp(String patient, String code, {String? pinHash}) {
+    final line = pick(
+      'RapidRX: $patient linked you as their caretaker. Enter this code on '
+          'your phone: $code',
+      'RapidRX: $patient ने आपको देखभालकर्ता के रूप में जोड़ा है। अपने फ़ोन '
+          'में यह कोड डालें: $code',
+    );
+    if (pinHash == null || pinHash.isEmpty) return line;
+    return '$line\nRXPIN $pinHash';
+  }
+
+  String get pastePatientMessage =>
+      pick('Paste the WhatsApp message', 'WhatsApp का संदेश पेस्ट करें');
+  String get pastePatientMessageWhy => pick(
+    'A paid caretaker: paste the whole message so this phone can check the '
+        'PIN the patient set.',
+    'पैसे लेकर देखभाल करने वाले: पूरा संदेश पेस्ट करें, ताकि यह फ़ोन मरीज़ '
+        'का रखा PIN जाँच सके।',
   );
 
   // ── Patient: the linked caretaker, in the account sheet ─────────────────
   String get yourCaretaker => pick('Your caretaker', 'आपके देखभालकर्ता');
-  String get noCaretakerLinked => pick(
-    'No caretaker linked yet.',
-    'अभी कोई देखभालकर्ता नहीं जुड़ा है।',
-  );
+  String get noCaretakerLinked =>
+      pick('No caretaker linked yet.', 'अभी कोई देखभालकर्ता नहीं जुड़ा है।');
   String get unlink => pick('Unlink', 'हटाएँ');
   String unlinkQuestion(String name) =>
       pick('Unlink $name?', '$name को हटाएँ?');

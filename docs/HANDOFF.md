@@ -81,17 +81,21 @@ There is still **no backend** for pairing, OTP, or medical records. UI says
 
 Priority for the next session. Do not start 5–8 until 1–4 are green.
 
-### 1. Commercial caretaker PIN gate (still Phase 1)
+### 1. Commercial caretaker PIN gate — done on this branch
 
-The **patient** sets the PIN at scan time. The **caretaker home does not
-ask for it** and does not hide health/Ayushman/photos. Needed:
+The patient still sets the PIN at scan time. The paid caretaker home now
+asks for it on every launch (the open flag is not stored). Five wrong
+tries lock the view for five minutes. After the right PIN they see today’s
+doses, the schedule and notes, not the alert number or share button.
 
-- PIN entry every time the paid caretaker opens the patient view.
-- 5 wrong tries → 5 minute lock.
-- Restricted view: today’s doses, schedule, caretaker notes only.
+Family caretakers are not asked. Their home leads with missed doses and
+prescriptions added in the last seven days. Approved visits have no
+“unverified” flag, so “new” means added this week.
 
-Without a server, copy the PIN hash onto the caretaker phone during the
-existing 4-digit confirm, or keep a local demo seam on `PairingChannel`.
+The PIN hash reaches the caretaker phone in two ways (ADR-63): a
+process-local map on `LocalPairingChannel`, and an `RXPIN` line at the end
+of the WhatsApp message, pasted into the message box (the 4-digit field
+strips it). There is still no server.
 
 ### 2. Encrypted local records + restore (~5 s check)
 

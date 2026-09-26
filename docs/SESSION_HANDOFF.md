@@ -42,13 +42,24 @@ The other `worktree-agent-*` branches were already merged; leftover “WIP”
 commits are merge parents on `main`. Do not rebase them off history unless
 you rewrite with the team’s agreement.
 
-## Stopped work — not in this commit
+## 26 Sep 2026, later — PIN gate
 
-See [`HANDOFF.md`](HANDOFF.md) for the full leftover list. Nothing below
-was started in this wrap-up:
+Paid caretaker home asks for the patient’s PIN on every launch, locks for
+five minutes after five wrong tries, and then shows doses, schedule and
+notes only. Family home leads with misses and prescriptions from this week.
+Hash copy: process map plus an `RXPIN` line in the WhatsApp message (ADR-63).
+Tests: `test/caretaker_gate_test.dart` and the pairing confirm cases. 40
+targeted tests passed on Flutter 3.47.5. Older screen goldens differ by
+glyph antialiasing on this Linux host; they were not regenerated.
 
-- Commercial caretaker **PIN gate** and restricted home (patient still sets
-  the PIN; the caretaker home does not lock).
+Four other branches are being built in separate worktrees (encrypted
+records, data wipe, missed-dose calls, family portal). They are not merged
+yet. Do not deploy Firebase. Do not install Stitch.
+
+## Stopped work — not in the earlier wrap-up
+
+See [`HANDOFF.md`](HANDOFF.md) for the full leftover list. The PIN gate
+above is no longer in that list. Still open after it:
 - Encrypted medical vault, restore check, demo user.
 - After-verify data wipe.
 - Twilio / Cloud Functions / family portal (`myrapidrx.web.app`).

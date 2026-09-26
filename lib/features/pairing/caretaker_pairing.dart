@@ -120,19 +120,19 @@ class CaretakerPairing extends ChangeNotifier {
   }) async {
     final name = patientName.trim();
     if (name.isEmpty) return ConfirmError.nameMissing;
-    final digits = code.trim();
-    if (!RegExp(r'^\d{4}$').hasMatch(digits)) return ConfirmError.codeShort;
+    final read = PairingCode.readConfirm(code);
+    if (read.code == null) return ConfirmError.codeShort;
     final id = this.code().caretakerId;
-    final outcome = await channel.caretakerConfirm(
-      caretakerId: id,
-      code: digits,
-    );
-    if (outcome != ConfirmOutcome.linked) return ConfirmError.wrongCode;
+    final result = await channel.caretakerConfirm(caretakerId: id, code: code);
+    if (!result.linked) return ConfirmError.wrongCode;
     await prefs.setLinkedPatientJson(
       jsonEncode(
         LinkedPatient(name: name, caretakerId: id, pairedAt: _clock()).toJson(),
       ),
     );
+    if (result.pinHash != null) {
+      await prefs.setCaretakerViewPinHash(result.pinHash);
+    }
     await prefs.setCaretakerPairLater(false);
     notifyListeners();
     return null;

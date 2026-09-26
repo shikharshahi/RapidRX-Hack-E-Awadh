@@ -149,6 +149,9 @@ class AppPrefs {
   static const _caretakerIssuedAt = 'caretaker_code_issued_at';
   static const _caretakerLater = 'caretaker_pair_later';
   static const _linkedPatient = 'linked_patient';
+  static const _viewPinHash = 'caretaker_view_pin_hash';
+  static const _viewPinFails = 'caretaker_view_pin_fails';
+  static const _viewPinLocked = 'caretaker_view_pin_locked_until';
 
   CaretakerType? get caretakerType =>
       CaretakerType.fromName(_prefs.getString(_caretakerType));
@@ -172,6 +175,22 @@ class AppPrefs {
   String? get linkedPatientJson => _prefs.getString(_linkedPatient);
   Future<void> setLinkedPatientJson(String? json) =>
       _setOrRemoveString(_linkedPatient, json);
+
+  /// Hash of the PIN a paid caretaker must type to open the patient view.
+  /// Copied at confirm time. Null for family, and until the message arrives.
+  String? get caretakerViewPinHash => _prefs.getString(_viewPinHash);
+  Future<void> setCaretakerViewPinHash(String? hash) =>
+      _setOrRemoveString(_viewPinHash, hash);
+
+  int get caretakerViewPinFails => _prefs.getInt(_viewPinFails) ?? 0;
+  Future<void> setCaretakerViewPinFails(int n) =>
+      n <= 0 ? _prefs.remove(_viewPinFails) : _prefs.setInt(_viewPinFails, n);
+
+  /// Epoch milliseconds. Null when the gate is not locked.
+  int? get caretakerViewPinLockedUntil => _prefs.getInt(_viewPinLocked);
+  Future<void> setCaretakerViewPinLockedUntil(int? epochMs) => epochMs == null
+      ? _prefs.remove(_viewPinLocked)
+      : _prefs.setInt(_viewPinLocked, epochMs);
 
   // Patient side: the caretaker this patient linked by scanning their QR.
   static const _linkedCaretaker = 'linked_caretaker';
@@ -214,6 +233,9 @@ class AppPrefs {
     _caretakerLater,
     _linkedPatient,
     _linkedCaretaker,
+    _viewPinHash,
+    _viewPinFails,
+    _viewPinLocked,
   ];
 
   /// Forget who this phone belongs to. Device choices stay.

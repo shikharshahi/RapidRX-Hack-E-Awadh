@@ -85,7 +85,11 @@ class _PatientScanScreenState extends State<PatientScanScreen> {
     final s = L10n.of(context);
     await _alerts.openInWhatsApp(
       found.phone,
-      s.pairingWhatsApp(p.prefs.name ?? '', code),
+      s.pairingWhatsApp(
+        p.prefs.name ?? '',
+        code,
+        pinHash: LinkedCaretaker.of(p.prefs)?.pinHash,
+      ),
     );
   }
 

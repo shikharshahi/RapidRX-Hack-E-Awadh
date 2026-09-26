@@ -57,6 +57,8 @@ was taken, and tells the family on WhatsApp what was missed.
  ONBOARDING  language · voice help · phone + OTP · name · PIN · role
              patient: health profile (age, optional height/weight/Ayushman mock)
              caretaker: family or paid → QR for the patient to scan
+             family sees misses and new prescriptions; a paid caretaker
+             types the patient's PIN each time, then doses, schedule and notes
       │
       ▼
  NEW PRESCRIPTION — eight steps
