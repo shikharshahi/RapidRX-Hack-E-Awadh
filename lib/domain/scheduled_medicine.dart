@@ -10,6 +10,7 @@ class ScheduledMedicine {
     this.strength,
     this.active = true,
     this.purpose,
+    this.imagePath,
   });
 
   final String id;
@@ -26,6 +27,11 @@ class ScheduledMedicine {
   /// Quoted from the doctor, never inferred.
   final String? purpose;
 
+  /// A photo of this medicine's strip, when one was kept. Nothing stores one
+  /// yet; the alarm screen shows it when present and a form pictogram when
+  /// not.
+  final String? imagePath;
+
   ScheduledMedicine copyWith({Sig? sig, bool? active, DateTime? startDate}) =>
       ScheduledMedicine(
         id: id,
@@ -35,6 +41,7 @@ class ScheduledMedicine {
         startDate: startDate ?? this.startDate,
         active: active ?? this.active,
         purpose: purpose,
+        imagePath: imagePath,
       );
 
   Map<String, Object?> toJson() => {
@@ -45,6 +52,7 @@ class ScheduledMedicine {
     'startDate': startDate.toIso8601String(),
     'active': active,
     if (purpose != null) 'purpose': purpose,
+    if (imagePath != null) 'imagePath': imagePath,
   };
 
   factory ScheduledMedicine.fromJson(Map<String, Object?> j) =>
@@ -56,6 +64,7 @@ class ScheduledMedicine {
         startDate: DateTime.parse(j['startDate']! as String),
         active: j['active'] as bool? ?? true,
         purpose: j['purpose'] as String?,
+        imagePath: j['imagePath'] as String?,
       );
 }
 

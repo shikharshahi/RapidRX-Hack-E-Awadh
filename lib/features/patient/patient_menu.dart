@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/dev_flags.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/l10n/strings_alarm.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/app_bar_actions.dart';
@@ -10,6 +13,7 @@ import '../../ai/gemini_client.dart';
 import '../../core/app_state.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../platform/dose_reminders.dart';
+import '../doses/alarm_launcher.dart';
 import '../doses/reminder_sync.dart';
 import '../caregiver/family.dart';
 import '../doses/dose_log_store.dart';
@@ -35,11 +39,15 @@ class PatientMenu extends StatelessWidget {
     required this.onRestart,
     this.onNewPrescription,
     this.onSchedule,
+    this.demoTools = DevFlags.demoTools,
   });
 
   final VoidCallback onRestart;
   final VoidCallback? onNewPrescription;
   final VoidCallback? onSchedule;
+
+  /// The small "Demo" link under the tiles (DevFlags.demoTools).
+  final bool demoTools;
 
   @override
   Widget build(BuildContext context) {
@@ -87,8 +95,12 @@ class PatientMenu extends StatelessWidget {
                 // they would squash their text, so scroll instead.
                 const minTile = 150.0;
                 const header = 56.0;
+                // The demo link sits below the tiles, and must not push them
+                // off the screen.
+                final footer = demoTools ? _DemoLink.height : 0.0;
                 final fits =
-                    (constraints.maxHeight - header - 32) / 3 >= minTile;
+                    (constraints.maxHeight - header - footer - 32) / 3 >=
+                    minTile;
                 final heading = Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Column(
@@ -112,6 +124,7 @@ class PatientMenu extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: SizedBox(height: minTile, child: t),
                         ),
+                      if (demoTools) const _DemoLink(),
                     ],
                   );
                 }
@@ -123,6 +136,7 @@ class PatientMenu extends StatelessWidget {
                       if (i > 0) const SizedBox(height: 16),
                       Expanded(child: tiles[i]),
                     ],
+                    if (demoTools) const _DemoLink(),
                   ],
                 );
               },
@@ -230,6 +244,96 @@ Future<void> openWizard(BuildContext context) async {
     medicines: store.active(),
     logs: await DoseLogStore.load(),
     strings: strings,
+  );
+}
+
+/// Demo tools, kept small and out of the patient's way: one link under the
+/// tiles, which opens a sheet with the two ways to fire the dose alarm.
+class _DemoLink extends StatelessWidget {
+  const _DemoLink();
+
+  static const height = 64.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = L10n.of(context);
+    return SizedBox(
+      height: height,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.hairline,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                s.demoSection.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.muted,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            TextButton.icon(
+              icon: const Icon(Icons.alarm_rounded),
+              label: Text(s.doseDemo),
+              onPressed: () => _showDemoSheet(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showDemoSheet(BuildContext context) {
+  final s = L10n.of(context);
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.paper,
+    showDragHandle: true,
+    builder: (sheet) => SafeArea(
+      child: Padding(
+        padding: AppTheme.pagePadding,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(s.doseDemo, style: Theme.of(sheet).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              icon: const Icon(Icons.alarm_on_rounded),
+              label: Text(s.doseDemoNow),
+              onPressed: () {
+                Navigator.pop(sheet);
+                openDoseDemo(context);
+              },
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.lock_clock_outlined),
+              label: Text(s.doseDemoRing),
+              onPressed: () {
+                Navigator.pop(sheet);
+                openDoseDemo(context, ring: true);
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              s.doseDemoRingWhy,
+              textAlign: TextAlign.center,
+              style: Theme.of(sheet).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 }
 

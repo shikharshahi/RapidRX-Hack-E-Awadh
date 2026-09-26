@@ -1,5 +1,6 @@
 import '../core/l10n/app_strings.dart';
 import '../core/plain_language.dart';
+import 'dose_alarm.dart';
 import 'dose_clock.dart';
 import 'schedule_engine.dart';
 import 'scheduled_medicine.dart';
@@ -24,6 +25,10 @@ class PlannedReminder {
   final DateTime at;
   final String title;
   final String body;
+
+  /// Which slot on which day: what the alarm screen opens for when the
+  /// notification is tapped, or wakes the phone.
+  String get payload => AlarmPayload(slot: slot, date: at).encode();
 }
 
 /// Which alarms should exist right now. Pure, and plugin-free, so all of it is
