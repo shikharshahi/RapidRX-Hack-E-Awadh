@@ -3,19 +3,34 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../core/storage/app_prefs.dart';
+import '../sync/sync_queue.dart';
+import '../sync/sync_service.dart';
 import 'health_profile.dart';
 import 'pmjay_client.dart';
 
-enum PmjayState { idle, fetching, found, notFound, badFormat, confirmed }
+enum PmjayState {
+  idle,
+  fetching,
+  found,
+  notFound,
+  badFormat,
+  confirmed,
+
+  /// No signal: the lookup waits in the sync queue.
+  queued,
+}
 
 /// The health screen's decisions, with no widgets: validation, the PM-JAY
 /// lookup, and the "yes, this is me" confirmation.
 class HealthProfileController extends ChangeNotifier {
-  HealthProfileController({required this.prefs, PmjayClient? pmjay})
+  HealthProfileController({required this.prefs, PmjayClient? pmjay, this.sync})
     : pmjay = pmjay ?? MockPmjayClient();
 
   final AppPrefs prefs;
   final PmjayClient pmjay;
+
+  /// With no signal, the lookup is queued rather than failed.
+  final SyncService? sync;
 
   PmjayState state = PmjayState.idle;
   AyushmanCard? card;
@@ -27,6 +42,22 @@ class HealthProfileController extends ChangeNotifier {
   Future<void> fetch(String id) async {
     if (!PmjayClient.validFormat(id)) {
       state = PmjayState.badFormat;
+      card = null;
+      notifyListeners();
+      return;
+    }
+    final s = sync;
+    if (s != null && !await s.network.isOnline()) {
+      await s.enqueue(
+        SyncJob(
+          id: 'pmjay',
+          kind: 'pmjay',
+          payload: {'id': PmjayClient.clean(id)},
+          createdAt: DateTime.now(),
+        ),
+      );
+      await s.savedOffline();
+      state = PmjayState.queued;
       card = null;
       notifyListeners();
       return;

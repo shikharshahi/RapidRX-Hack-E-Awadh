@@ -153,6 +153,16 @@ the tick-and-edit list. A skipped step is recorded on the visit as not provided.
 The note for the caretaker (with Low / Medium / High) travels on the prescription record, and a
 High note is the first thing on the caretaker's home.
 
+### ADR-41 · Save first, sync later — and nothing late changes a schedule
+With no signal, a session is saved on the phone and the person carries on: a banner and one
+notification say so, nothing is blocked, and the on-device analysis still gives a result at once.
+Work that needs the network — the online handwriting read, the PM-JAY lookup — waits in a
+persisted `SyncQueue` and drains in order when the connection returns, retrying with backoff
+(15 s doubling, capped at 30 min) and dropping jobs that can never succeed. WhatsApp alerts keep
+their own `AlertOutbox` (ADR-36). Anything that arrives after approval is **attached for review**:
+a late handwriting reading marks the prescription "new reading to review" and a late PM-JAY card
+waits for "yes, this is me". Neither changes the schedule on its own.
+
 ### ADR-26 · Two notifications on approval
 "Prescription saved" and "Schedule updated" are two different facts.
 

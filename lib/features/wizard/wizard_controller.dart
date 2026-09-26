@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../ai/ai_config.dart';
 import '../../domain/content_gate.dart';
 import '../../domain/mention.dart';
 import '../../domain/mention_extractor.dart';
@@ -12,6 +15,8 @@ import '../../domain/sig.dart';
 import '../../domain/sig_parser.dart';
 import '../../platform/text_recogniser.dart';
 import '../medicines/medicine_store.dart';
+import '../sync/sync_queue.dart';
+import '../sync/sync_service.dart';
 import '../visit/media_store.dart';
 import '../visit/visit.dart';
 import '../visit/visit_repository.dart';
@@ -28,7 +33,10 @@ class VisitWizardController extends ChangeNotifier {
     MediaStore? media,
     TextRecogniser? recogniser,
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now {
+    this.sync,
+    bool? readOnlineLater,
+  }) : _clock = clock ?? DateTime.now,
+       _readOnlineLater = readOnlineLater ?? AiConfig.hasGeminiKey {
     _media = media;
     _recogniser = recogniser;
   }
@@ -130,6 +138,30 @@ class VisitWizardController extends ChangeNotifier {
 
   // ── Steps 1 and 4: words ────────────────────────────────────────────────
 
+  // ── Offline ────────────────────────────────────────────────────────────
+
+  /// Saves the session when there is no signal, and syncs later. Optional:
+  /// without it, everything still works on the phone.
+  final SyncService? sync;
+
+  /// Queue the online handwriting read when there is no signal at approval.
+  final bool _readOnlineLater;
+
+  /// True once a capture happened with no connection. The screen shows a
+  /// banner; nothing is blocked.
+  bool offline = false;
+
+  /// Called after every capture: saved already, so only check the signal.
+  Future<void> _captured() async {
+    final s = sync;
+    if (s == null) return;
+    final online = await s.network.isOnline();
+    if (online == !offline) return;
+    offline = !online;
+    if (offline) await s.savedOffline();
+    notifyListeners();
+  }
+
   void setWords(SourceKind who, String text) {
     if (who == SourceKind.doctor) {
       visit.doctorWords = text;
@@ -138,6 +170,7 @@ class VisitWizardController extends ChangeNotifier {
     }
     repository.save(visit);
     notifyListeners();
+    _captured();
   }
 
   String wordsOf(SourceKind who) =>
@@ -153,6 +186,7 @@ class VisitWizardController extends ChangeNotifier {
     }
     await repository.save(visit);
     notifyListeners();
+    await _captured();
   }
 
   // ── Steps 2 and 5: takeaways ────────────────────────────────────────────
@@ -337,6 +371,7 @@ class VisitWizardController extends ChangeNotifier {
   /// Add photos from the camera, the gallery or the recent-photo scan, and
   /// read each one straight away. [hint] is what the user said it is.
   Future<void> addPhotos(Iterable<XFile> files, {PhotoLabel? hint}) async {
+    unawaited(_captured());
     final added = <PhotoCandidate>[];
     for (final f in files) {
       final c = PhotoCandidate(
@@ -570,8 +605,30 @@ class VisitWizardController extends ChangeNotifier {
           : visit.caretakerNote.trim(),
       notePriority: visit.notePriority.name,
     );
+    await _queueOnlineRead();
     await repository.clear();
     return approved;
+  }
+
+  /// No signal at approval: the handwriting read waits in the queue. What it
+  /// finds is attached to this prescription for review — never merged into
+  /// the schedule on its own.
+  Future<void> _queueOnlineRead() async {
+    final s = sync;
+    if (s == null || !_readOnlineLater || await s.network.isOnline()) return;
+    final photos = [
+      for (final p in visit.photosOf(PhotoLabel.prescription)) p.path,
+    ];
+    if (photos.isEmpty) return;
+    await s.enqueue(
+      SyncJob(
+        id: 'gemini-${visit.id}',
+        kind: 'gemini',
+        payload: {'photos': photos},
+        createdAt: _clock(),
+        visitId: visit.id,
+      ),
+    );
   }
 
   @override

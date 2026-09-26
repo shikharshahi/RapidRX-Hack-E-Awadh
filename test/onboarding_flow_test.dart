@@ -29,6 +29,7 @@ void main() {
     stageDelay: const Duration(milliseconds: 10),
     pmjay: MockPmjayClient(delay: Duration.zero),
     resumeOnboarding: resume,
+    enableSync: false,
   );
 
   testWidgets('the whole chain in Hindi: … PIN → role → health → menu', (

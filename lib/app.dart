@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import 'core/app_state.dart';
@@ -12,6 +15,11 @@ import 'features/caregiver/caregiver_home.dart';
 import 'features/health/health_profile_controller.dart';
 import 'features/health/health_profile_screen.dart';
 import 'features/health/pmjay_client.dart';
+import 'features/medicines/medicine_store.dart';
+import 'features/sync/sync_queue.dart';
+import 'features/sync/sync_service.dart';
+import 'platform/network_status.dart';
+import 'platform/notices.dart';
 import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/phone_screens.dart';
 import 'features/onboarding/role_screen.dart';
@@ -44,6 +52,7 @@ class RapidRxApp extends StatefulWidget {
     this.voice,
     this.pmjay,
     this.resumeOnboarding = false,
+    this.enableSync = true,
   });
 
   final AppPrefs prefs;
@@ -64,6 +73,9 @@ class RapidRxApp extends StatefulWidget {
   /// so the rule itself can be tested.
   final bool resumeOnboarding;
 
+  /// Off in tests that do not exercise syncing.
+  final bool enableSync;
+
   @override
   State<RapidRxApp> createState() => _RapidRxAppState();
 }
@@ -76,6 +88,27 @@ class _RapidRxAppState extends State<RapidRxApp> {
   void initState() {
     super.initState();
     _syncVoice();
+    _startSync();
+  }
+
+  /// Offline save and sync for the whole app: drains the queue whenever the
+  /// connection comes back.
+  Future<void> _startSync() async {
+    if (!widget.enableSync) return;
+    final queue = await SyncQueue.load();
+    final store = await MedicineStore.load();
+    if (!mounted) return;
+    _state.sync = SyncService(
+      queue: queue,
+      network: NetworkStatus(),
+      notices: Notices(),
+      strings: AppStrings(_state.language),
+      store: store,
+      pmjay: widget.pmjay,
+      onPmjayCard: (card) =>
+          _prefs.setFoundAyushmanCard(jsonEncode(card.toJson())),
+    )..start();
+    unawaited(_state.sync!.drainNow());
   }
 
   /// Voice speaks only when the build allows it and the user asked for it.
@@ -118,6 +151,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
 
   @override
   void dispose() {
+    _state.sync?.dispose();
     _voice.stopAll();
     _state.dispose();
     super.dispose();
@@ -242,6 +276,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
           controller: HealthProfileController(
             prefs: _prefs,
             pmjay: widget.pmjay,
+            sync: _state.sync,
           ),
           onDone: () => _go(_Stage.ready),
         );

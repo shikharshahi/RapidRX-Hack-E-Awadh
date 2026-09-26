@@ -13,6 +13,8 @@ import '../../platform/dose_reminders.dart';
 import '../doses/reminder_sync.dart';
 import '../caregiver/family.dart';
 import '../doses/dose_log_store.dart';
+import '../health/found_card_banner.dart';
+import '../sync/sync_queue.dart';
 import '../doses/schedule_screen.dart';
 import '../medicines/medicine_store.dart';
 import '../visit/visit.dart';
@@ -89,9 +91,16 @@ class PatientMenu extends StatelessWidget {
                     (constraints.maxHeight - header - 32) / 3 >= minTile;
                 final heading = Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    s.menuQuestion,
-                    style: Theme.of(context).textTheme.titleLarge,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // A PM-JAY card found after an offline lookup.
+                      const FoundCardBanner(),
+                      Text(
+                        s.menuQuestion,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
                   ),
                 );
                 if (!fits) {
@@ -128,9 +137,17 @@ class PatientMenu extends StatelessWidget {
 Future<void> openPrescriptions(BuildContext context) async {
   final navigator = Navigator.of(context);
   final store = await MedicineStore.load();
+  final queue = await SyncQueue.load();
+  final records = store.records();
   await navigator.push(
     MaterialPageRoute<void>(
-      builder: (_) => PrescriptionsScreen(records: store.records()),
+      builder: (_) => PrescriptionsScreen(
+        records: records,
+        waiting: {
+          for (final r in records)
+            if (queue.waitingFor(r.id)) r.id,
+        },
+      ),
     ),
   );
 }
@@ -184,6 +201,7 @@ Future<void> openSchedule(BuildContext context) async {
 Future<void> openWizard(BuildContext context) async {
   final navigator = Navigator.of(context);
   final strings = AppStrings(AppScope.of(context).language);
+  final sync = AppScope.maybeOf(context)?.sync;
   final repository = await VisitRepository.load();
   final store = await MedicineStore.load();
   // One client per visit: its budget of calls is per visit.
@@ -192,6 +210,7 @@ Future<void> openWizard(BuildContext context) async {
     visit: repository.loadDraft() ?? Visit.start(),
     repository: repository,
     store: store,
+    sync: sync,
   );
   await navigator.push(
     MaterialPageRoute<void>(

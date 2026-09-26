@@ -68,6 +68,7 @@ class PrescriptionRecord {
     this.evidence = const [],
     this.caretakerNote,
     this.notePriority = 'low',
+    this.onlineReading,
   });
 
   final String id;
@@ -81,6 +82,20 @@ class PrescriptionRecord {
   final String? caretakerNote;
   final String notePriority;
 
+  /// A handwriting reading that finished after approval, as JSON. Kept for a
+  /// person to review; it never changes the schedule on its own.
+  final String? onlineReading;
+
+  PrescriptionRecord withOnlineReading(String json) => PrescriptionRecord(
+    id: id,
+    addedAt: addedAt,
+    medicineNames: medicineNames,
+    evidence: evidence,
+    caretakerNote: caretakerNote,
+    notePriority: notePriority,
+    onlineReading: json,
+  );
+
   Map<String, Object?> toJson() => {
     'id': id,
     'addedAt': addedAt.toIso8601String(),
@@ -90,6 +105,7 @@ class PrescriptionRecord {
       'caretakerNote': caretakerNote,
       'notePriority': notePriority,
     },
+    if (onlineReading != null) 'onlineReading': onlineReading,
   };
 
   factory PrescriptionRecord.fromJson(
@@ -101,6 +117,7 @@ class PrescriptionRecord {
     evidence: [for (final e in j['evidence'] as List? ?? const []) e as String],
     caretakerNote: j['caretakerNote'] as String?,
     notePriority: j['notePriority'] as String? ?? 'low',
+    onlineReading: j['onlineReading'] as String?,
   );
 }
 

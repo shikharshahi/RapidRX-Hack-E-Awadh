@@ -79,6 +79,22 @@ class AppPrefs {
   static const _weight = 'health_weight_kg';
   static const _ayushmanId = 'ayushman_id';
   static const _ayushmanCard = 'ayushman_card';
+  static const _ayushmanFound = 'ayushman_card_found';
+
+  /// A card looked up in the background, waiting for "yes, this is me".
+  String? get foundAyushmanCardJson => _prefs.getString(_ayushmanFound);
+
+  Future<void> setFoundAyushmanCard(String? json) =>
+      _setOrRemoveString(_ayushmanFound, json);
+
+  /// The patient said the found card is theirs.
+  Future<void> confirmFoundAyushmanCard(String pmjayId) async {
+    final json = foundAyushmanCardJson;
+    if (json == null) return;
+    await _prefs.setString(_ayushmanCard, json);
+    await _prefs.setString(_ayushmanId, pmjayId);
+    await _prefs.remove(_ayushmanFound);
+  }
 
   /// Required for a patient; null until the health screen is done.
   int? get age => _prefs.getInt(_age);
@@ -120,6 +136,7 @@ class AppPrefs {
     _weight,
     _ayushmanId,
     _ayushmanCard,
+    _ayushmanFound,
   ];
 
   /// Forget who this phone belongs to. Device choices stay.

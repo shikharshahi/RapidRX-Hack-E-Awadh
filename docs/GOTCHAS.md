@@ -28,6 +28,7 @@ Every trap already hit, with the fix. When something looks impossible, look here
 | `There is no current invoker` at load | An external resource (`AudioPlayer`, `http.Client`, an ML Kit recogniser) built in a constructor | Build lazily: `_injected ?? (_lazy ??= Thing())` |
 | `Looking up a deactivated widget's ancestor is unsafe` | `dispose()` reading an inherited widget | Cache it in `didChangeDependencies` (`VoicePrompt`) |
 | A pushed route cannot find `L10n` or the voice | Scopes placed around `home` | Put them in `MaterialApp.builder` — and mirror that in the harness |
+| A widget test of `RapidRxApp` throws from the connectivity plugin | `connectivity_plus` has no implementation on the test runner | `RapidRxApp(enableSync: false)`; sync is tested with `FakeNetworkStatus` |
 | `pumpAndSettle` never settles on a screen with a loading bar | The bar animates forever | `pump()` with a duration instead |
 
 ## Layout

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'l10n/app_language.dart';
+import '../features/sync/sync_service.dart';
 import 'storage/app_prefs.dart';
 
 /// The few app-wide choices every screen can see: language, voice and role.
@@ -14,6 +15,9 @@ class AppState extends ChangeNotifier {
       _role = prefs.role;
 
   final AppPrefs prefs;
+
+  /// Offline save and sync. Null in tests that do not need it.
+  SyncService? sync;
 
   AppLanguage _language;
   bool _voiceHelp;

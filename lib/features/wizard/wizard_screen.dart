@@ -194,7 +194,13 @@ class _WizardScreenState extends State<WizardScreen> {
               ),
             ),
           ),
-          body: _body(),
+          body: Column(
+            children: [
+              // Nothing is blocked: the session is saved, and syncs later.
+              if (c.offline) _OfflineBanner(text: s.offlineSaved),
+              Expanded(child: _body()),
+            ],
+          ),
           bottomNavigationBar: _BottomBar(
             wide: last,
             left: c.canSkip
@@ -275,6 +281,31 @@ class _BottomBar extends StatelessWidget {
           Expanded(flex: wide ? 3 : 1, child: right),
         ],
       ),
+    ),
+  );
+}
+
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+    color: AppColors.amberSoft,
+    child: Row(
+      children: [
+        const Icon(Icons.cloud_off_rounded, color: AppColors.amberDark),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
     ),
   );
 }

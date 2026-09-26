@@ -10,9 +10,16 @@ import '../wizard/wizard_widgets.dart';
 /// Every approved visit, one card each: when it was added, the medicines it
 /// carried, and what it was built from.
 class PrescriptionsScreen extends StatelessWidget {
-  const PrescriptionsScreen({super.key, this.records = const []});
+  const PrescriptionsScreen({
+    super.key,
+    this.records = const [],
+    this.waiting = const {},
+  });
 
   final List<PrescriptionRecord> records;
+
+  /// Visits with something still in the sync queue.
+  final Set<String> waiting;
 
   @override
   Widget build(BuildContext context) {
@@ -25,16 +32,20 @@ class PrescriptionsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               itemCount: records.length,
               separatorBuilder: (_, _) => const SizedBox(height: 14),
-              itemBuilder: (_, i) => _RecordCard(record: records[i]),
+              itemBuilder: (_, i) => _RecordCard(
+                record: records[i],
+                waiting: waiting.contains(records[i].id),
+              ),
             ),
     );
   }
 }
 
 class _RecordCard extends StatelessWidget {
-  const _RecordCard({required this.record});
+  const _RecordCard({required this.record, required this.waiting});
 
   final PrescriptionRecord record;
+  final bool waiting;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +76,19 @@ class _RecordCard extends StatelessWidget {
           Text(
             names.join(', '),
             style: text.bodyMedium?.copyWith(color: AppColors.muted),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              Pill(
+                waiting ? s.waitingToSync : s.syncedLabel,
+                tone: waiting ? PillTone.warn : PillTone.green,
+              ),
+              if (record.onlineReading != null)
+                Pill(s.reviewReading, tone: PillTone.strong),
+            ],
           ),
           if (record.evidence.isNotEmpty) ...[
             const SizedBox(height: 10),

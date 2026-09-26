@@ -129,6 +129,10 @@ class _HealthProfileScreenState extends State<HealthProfileScreen> {
             _ => null,
           },
         ),
+        if (c.state == PmjayState.queued) ...[
+          const SizedBox(height: 8),
+          HintPill(text: s.pmjayQueued, icon: Icons.cloud_off_rounded),
+        ],
         const SizedBox(height: 10),
         OutlinedButton.icon(
           icon: c.state == PmjayState.fetching

@@ -60,6 +60,15 @@ class MedicineStore {
     await _write(_records, [for (final r in records) r.toJson()]);
   }
 
+  /// Attach a reading that arrived after approval, for review.
+  Future<void> attachOnlineReading(String visitId, String json) async {
+    final records = [
+      for (final r in _readList(_records, PrescriptionRecord.fromJson))
+        r.id == visitId ? r.withOnlineReading(json) : r,
+    ];
+    await _write(_records, [for (final r in records) r.toJson()]);
+  }
+
   Future<void> stop(String id) async {
     final all = [
       for (final m in medicines()) m.id == id ? m.copyWith(active: false) : m,
