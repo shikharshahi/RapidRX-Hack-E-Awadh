@@ -204,6 +204,20 @@ void main() {
       expect(l.sig.unitsPerDose, 2);
     });
 
+    test('printed, a single digit before TAB is a strength: AMLONG 5 TAB', () {
+      final l = SigParser.parseLine(
+        '3 AMLONG 5 TAB  30 NOS  60.00',
+        printed: true,
+      );
+      expect(l.name, 'AMLONG 5');
+      expect(l.form, 'tab');
+      expect(l.sig.unitsPerDose, 1);
+    });
+
+    test('said aloud, the count still keeps its dosage form as evidence', () {
+      expect(line('Crocin 2 tab SOS').form, 'tab');
+    });
+
     test('a variant stays in the name: GLYCOMET GP 1 is not GLYCOMET', () {
       expect(line('Tab Glycomet GP1 BD').name, 'GLYCOMET GP1');
     });

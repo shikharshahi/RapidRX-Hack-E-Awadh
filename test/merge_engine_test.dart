@@ -79,11 +79,20 @@ void main() {
 
     test('amber: nobody said when', () {
       final r = MergeEngine.merge([
+        mention(rx, 'Tab Ecosprin 75'),
         mention(bill, 'ECOSPRIN 75 TAB'),
-        mention(strip, 'ECOSPRIN 75'),
       ]).single;
       expect(r.verdict, Verdict.amber);
       expect(r.reasons, [AmberReason.noTiming]);
+    });
+
+    test('red: on the bill, but nobody prescribed it', () {
+      final r = MergeEngine.merge([
+        mention(bill, 'AMLONG 5 TAB  30 NOS'),
+        mention(strip, 'AMLONG 5'),
+      ]).single;
+      expect(r.verdict, Verdict.red);
+      expect(r.conflicts.single.field, ConflictField.notPrescribed);
     });
 
     test('amber: words the parser could not place', () {

@@ -5,8 +5,11 @@ import '../../core/theme/app_theme.dart';
 import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/app_bar_actions.dart';
 import '../../core/widgets/big_choice_tile.dart';
+import '../medicines/medicine_store.dart';
+import '../visit/visit.dart';
 import '../visit/visit_repository.dart';
-import '../visit/visit_screen.dart';
+import '../wizard/wizard_controller.dart';
+import '../wizard/wizard_screen.dart';
 import 'prescriptions_screen.dart';
 
 /// Where the patient lands: three things they can do, all visible at once.
@@ -34,7 +37,7 @@ class PatientMenu extends StatelessWidget {
         icon: Icons.add_a_photo_outlined,
         title: s.newPrescription,
         subtitle: s.newPrescriptionWhy,
-        onTap: onNewPrescription ?? () => _openVisit(context),
+        onTap: onNewPrescription ?? () => openWizard(context),
       ),
       _MenuTile(
         icon: Icons.description_outlined,
@@ -111,14 +114,23 @@ class PatientMenu extends StatelessWidget {
   }
 }
 
-Future<void> _openVisit(BuildContext context) async {
+/// Start (or resume) a new prescription. A visit left half-way is picked up
+/// where it was, because it was saved after every capture.
+Future<void> openWizard(BuildContext context) async {
   final navigator = Navigator.of(context);
   final repository = await VisitRepository.load();
+  final store = await MedicineStore.load();
+  final controller = VisitWizardController(
+    visit: repository.loadDraft() ?? Visit.start(),
+    repository: repository,
+    store: store,
+  );
   await navigator.push(
     MaterialPageRoute<void>(
-      builder: (_) => VisitScreen(repository: repository),
+      builder: (_) => WizardScreen(controller: controller),
     ),
   );
+  controller.dispose();
 }
 
 class _MenuTile extends StatelessWidget {

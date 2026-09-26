@@ -117,6 +117,25 @@ Rx
     });
   });
 
+  test('no medicine on a bill is ever silently dropped', () {
+    final names = read(
+      '1 TELMA 40 TAB  30 NOS  255.00\n'
+      '2 AMLONG 5 TAB  30 NOS  60.00\n'
+      '3 ECOSPRIN 75 TAB  14 NOS  7.00',
+      SourceKind.bill,
+    ).map((m) => m.name);
+    expect(names, ['TELMA 40', 'AMLONG 5', 'ECOSPRIN 75']);
+  });
+
+  test('advice is a note, and never changes a course', () {
+    final x = MentionExtractor.extractWithNotes(
+      'Glycomet 500 subah aur raat. Come back after ten days for review.',
+      SourceKind.doctor,
+    );
+    expect(x.mentions.single.sig.durationDays, isNull);
+    expect(x.notes, ['Come back after ten days for review']);
+  });
+
   test('a substitution at the counter becomes a row a person ticks', () {
     final rows = MergeEngine.merge([
       ...read('TELMA 40 TAB  30 NOS', SourceKind.bill),

@@ -23,7 +23,16 @@ enum AmberReason {
   sameSourceTwice,
 }
 
-enum ConflictField { strength, timing, food, interval, asNeeded }
+enum ConflictField {
+  strength,
+  timing,
+  food,
+  interval,
+  asNeeded,
+
+  /// Sold at the counter, but no doctor and no prescription mentions it.
+  notPrescribed,
+}
 
 /// Two or more sources that disagree about one thing. Every side is kept.
 class Conflict {
@@ -201,6 +210,15 @@ abstract final class MergeEngine {
 
   static List<Conflict> _conflicts(List<Mention> group, List<Mention> timed) {
     final out = <Conflict>[];
+
+    // On the bill or a strip, but nobody who can prescribe mentioned it.
+    const prescribers = {SourceKind.doctor, SourceKind.prescription};
+    if (group.every((m) => !prescribers.contains(m.source)) &&
+        group.any(
+          (m) => m.source == SourceKind.bill || m.source == SourceKind.strip,
+        )) {
+      out.add(Conflict(ConflictField.notPrescribed, group));
+    }
 
     final strengths = [
       for (final m in group)

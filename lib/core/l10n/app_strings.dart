@@ -207,6 +207,252 @@ class AppStrings {
   String get consentAgree => _t('I agree, continue', 'मैं सहमत हूँ, आगे बढ़ें');
   String get consentDecline => _t('Not now', 'अभी नहीं');
 
+  // ── Plain language for a schedule ───────────────────────────────────────
+  String get morning => _t('Morning', 'सुबह');
+  String get afternoon => _t('Afternoon', 'दोपहर');
+  String get evening => _t('Evening', 'शाम');
+  String get night => _t('Night', 'रात');
+  String get beforeFood => _t('before food', 'खाने से पहले');
+  String get afterFood => _t('after food', 'खाने के बाद');
+  String get whenNeeded => _t('When needed', 'ज़रूरत पड़ने पर');
+  String get onceNow => _t('Once, now', 'एक बार, अभी');
+  String get timingUnknown =>
+      _t('Nobody said when', 'कब लेनी है, किसी ने नहीं बताया');
+  String forDays(int d) => _t('for $d days', '$d दिन तक');
+  String everyNDays(int n) => n == 2
+      ? _t('every other day', 'एक दिन छोड़कर')
+      : _t('every $n days', 'हर $n दिन');
+  String get halfTablet => _t('half a tablet', 'आधी गोली');
+  String tablets(num n) => _t('$n tablets', '$n गोली');
+
+  // ── Wizard: frame ───────────────────────────────────────────────────────
+  String stepOf(int n, int total) => _t('Step $n of $total', 'चरण $n / $total');
+  String get approve => _t('Approve and add', 'मंज़ूर करें और जोड़ें');
+
+  // ── Step 1 and 4: words ─────────────────────────────────────────────────
+  String get doctorWordsTitle =>
+      _t('What did the doctor say?', 'डॉक्टर ने क्या कहा?');
+  String get doctorWordsWhy => _t(
+    'Record it, or type it. You can skip this and use the photo instead.',
+    'बोलकर बताएँ या लिखें। चाहें तो इसे छोड़कर सिर्फ़ फ़ोटो से भी काम चलेगा।',
+  );
+  String get pharmacyTitle => _t('Pharmacy page', 'दवाई की दुकान');
+  String get pharmacyWhy => _t(
+    'What did the chemist say? Speak it or write it. The bill photo was '
+        'added in the photo step.',
+    'केमिस्ट ने क्या कहा? बोलकर या लिखकर बताएँ। बिल की फ़ोटो पिछले चरण में '
+        'जुड़ गई है।',
+  );
+  String get speak => _t('Speak', 'बोलें');
+  String get listening =>
+      _t('Listening… tap to stop', 'सुन रहे हैं… रोकने के लिए दबाएँ');
+  String get writeIt => _t('Write it', 'लिखें');
+  String get nothingWrittenYet =>
+      _t('Nothing written yet', 'अभी कुछ नहीं लिखा');
+  String get alsoSaveAudio => _t('Also save the audio', 'आवाज़ भी सेव करें');
+  String get alsoSaveAudioWhy => _t(
+    'Keeps the recording so a family member can listen later. It is not '
+        'turned into text.',
+    'रिकॉर्डिंग रख ली जाएगी ताकि परिवार वाले बाद में सुन सकें। इसे टेक्स्ट '
+        'में नहीं बदला जाता।',
+  );
+  String get audioSaved => _t('Audio saved', 'आवाज़ सेव हो गई');
+  String get dictationUnavailable => _t(
+    'Speaking is not available on this device. Write it instead.',
+    'इस डिवाइस पर बोलकर लिखना उपलब्ध नहीं है। लिखकर बताएँ।',
+  );
+  String get writeNoteTitle =>
+      _t('Write what was said', 'जो कहा गया, वो लिखें');
+  String get writeNoteHint => _t(
+    'For example: Telma 40 subah, khane ke baad',
+    'जैसे: Telma 40 subah, khane ke baad',
+  );
+
+  // ── Step 2 and 5: takeaways ─────────────────────────────────────────────
+  String get takeawaysTitle =>
+      _t('Is this what was said?', 'क्या यही कहा गया था?');
+  String get takeawaysWhy => _t(
+    'Read on this phone, with no internet. Tick what is correct, fix what '
+        'is not.',
+    'इसी फ़ोन पर, बिना इंटरनेट के पढ़ा गया। जो सही है उस पर टिक करें, जो '
+        'गलत है उसे ठीक करें।',
+  );
+  String get chemistTakeawaysTitle =>
+      _t('Is this what the chemist said?', 'क्या केमिस्ट ने यही कहा था?');
+  String get looksClear => _t('Looks clear', 'साफ़ है');
+  String get pleaseCheck => _t('Please check', 'जाँच लें');
+  String get edit => _t('Edit', 'बदलें');
+  String get medicineName => _t('Medicine name', 'दवाई का नाम');
+  String get medicineNameWhy => _t(
+    'In English letters, as printed on the pack',
+    'अंग्रेज़ी अक्षरों में, जैसा पत्ते पर छपा है',
+  );
+  String get whenToTake => _t('When to take it', 'कब लेनी है');
+  String get nothingToCheck => _t(
+    'Nothing was said to check. You can go on.',
+    'जाँचने के लिए कुछ नहीं कहा गया। आप आगे बढ़ सकते हैं।',
+  );
+  String get addRow => _t('Add a medicine', 'दवाई जोड़ें');
+
+  // ── Step 3: photos ──────────────────────────────────────────────────────
+  String get photosTitle => _t('Photos', 'फ़ोटो');
+  String get photosWhy => _t(
+    'The prescription, the bill, and the strips. RapidRX reads each one on '
+        'this phone and labels it - check the labels before continuing.',
+    'पर्ची, बिल और दवाई के पत्ते। RapidRX हर फ़ोटो को इसी फ़ोन पर पढ़कर '
+        'पहचानता है - आगे बढ़ने से पहले पहचान जाँच लें।',
+  );
+  String get findRecent => _t('Find recent photos', 'हाल की फ़ोटो ढूँढें');
+  String get camera => _t('Camera', 'कैमरा');
+  String get gallery => _t('Gallery', 'गैलरी');
+  String get areTheseRight => _t('Are these right?', 'क्या ये सही हैं?');
+  String nSelected(int n) => _t('$n selected', '$n चुनी गईं');
+  String get labelPrescription => _t('Prescription', 'पर्ची');
+  String get labelBill => _t('Bill', 'बिल');
+  String get labelStrip => _t('Strip', 'पत्ता');
+  String get notMedicalReason => _t(
+    'This does not look like a prescription, bill or strip.',
+    'यह पर्ची, बिल या दवाई का पत्ता नहीं लगता।',
+  );
+  String get useAnyway => _t('Use it anyway', 'फिर भी इस्तेमाल करें');
+  String get reading => _t('Reading…', 'पढ़ रहे हैं…');
+  String get couldNotRead => _t(
+    'This build cannot read photos. They are kept with the visit.',
+    'यह ऐप फ़ोटो नहीं पढ़ सकता। फ़ोटो विज़िट के साथ रखी गई हैं।',
+  );
+  String get needPrescription => _t(
+    'Tick at least one prescription photo to continue.',
+    'आगे बढ़ने के लिए कम से कम एक पर्ची की फ़ोटो चुनें।',
+  );
+  String get scanUnsupported => _t(
+    'Finding recent photos only works in the Android app. Use Camera or '
+        'Gallery.',
+    'हाल की फ़ोटो ढूँढना सिर्फ़ Android ऐप में होता है। कैमरा या गैलरी '
+        'इस्तेमाल करें।',
+  );
+  String get scanDenied => _t(
+    'RapidRX was not allowed to look at your photos. Use Camera or Gallery.',
+    'RapidRX को फ़ोटो देखने की अनुमति नहीं मिली। कैमरा या गैलरी इस्तेमाल करें।',
+  );
+  String get scanNothing => _t(
+    'No recent photos looked like a prescription or bill.',
+    'हाल की कोई फ़ोटो पर्ची या बिल जैसी नहीं लगी।',
+  );
+
+  // ── Step 6: processing ──────────────────────────────────────────────────
+  String get processingTitle => _t('Reading everything', 'सब कुछ पढ़ रहे हैं');
+  String get stageJudge => _t(
+    'Judge - what do we have, and how clear is it',
+    'जाँच - हमारे पास क्या है, और कितना साफ़ है',
+  );
+  String get stageExtract =>
+      _t('Extract - medicines, doses, timings', 'निकालना - दवाई, खुराक, समय');
+  String get stageVerify =>
+      _t('Verify - cross-check every source', 'मिलान - हर स्रोत से मिलाना');
+  String get onDeviceOnly => _t(
+    'Done on this phone. Online reading of handwriting is not set up yet, '
+        'so photos are kept with the visit for now.',
+    'यह सब इसी फ़ोन पर हुआ। हाथ की लिखावट ऑनलाइन पढ़ना अभी चालू नहीं है, '
+        'इसलिए फ़ोटो अभी विज़िट के साथ रखी गई हैं।',
+  );
+  String get onDeviceBadge => _t('On this phone only', 'सिर्फ़ इसी फ़ोन पर');
+  String foundMedicines(int n) =>
+      _t(n == 1 ? 'Found 1 medicine' : 'Found $n medicines', '$n दवाई मिलीं');
+  String get foundNothing => _t(
+    'No medicine could be read. Go back and add a clearer photo, or write '
+        'what the doctor said.',
+    'कोई दवाई पढ़ी नहीं जा सकी। पीछे जाकर साफ़ फ़ोटो जोड़ें, या डॉक्टर की '
+        'बात लिखें।',
+  );
+
+  // ── Step 7: medicines ───────────────────────────────────────────────────
+  String get medicinesTitle => _t('Your medicines', 'आपकी दवाइयाँ');
+  String get medicinesWhy => _t(
+    'Each card shows what every source said. Confirm the ones that are '
+        'right, fix the ones that are not.',
+    'हर कार्ड दिखाता है कि हर स्रोत ने क्या कहा। जो सही हैं उन्हें पक्का '
+        'करें, जो गलत हैं उन्हें ठीक करें।',
+  );
+  String get confirm => _t('Confirm', 'पक्का करें');
+  String get confirmed => _t('Confirmed', 'पक्का');
+  String get sourceBill => _t('Bill', 'बिल');
+  String get sourcePrescription => _t('Rx', 'पर्ची');
+  String get sourceDoctor => _t('Doctor', 'डॉक्टर');
+  String get sourceChemist => _t('Chemist', 'केमिस्ट');
+  String get sourceStrip => _t('Strip', 'पत्ता');
+  String get agreeTwoPlus =>
+      _t('Two or more sources agree', 'दो या ज़्यादा स्रोत सहमत हैं');
+  String get notPrescribed => _t(
+    'On the bill, but nobody prescribed it',
+    'बिल पर है, पर किसी ने लिखी नहीं',
+  );
+  String get onlySpoken =>
+      _t('Only spoken - not on the bill', 'सिर्फ़ बोली गई - बिल पर नहीं');
+  String get onlyOnPrescription => _t(
+    'Only on the prescription - not on the bill',
+    'सिर्फ़ पर्ची पर - बिल पर नहीं',
+  );
+  String get onlyOneSource => _t('Only one source', 'सिर्फ़ एक स्रोत');
+  String get noTimingGiven =>
+      _t('Nobody said when to take it', 'कब लेनी है, किसी ने नहीं बताया');
+  String get wordsToCheck =>
+      _t('Some words need a check', 'कुछ शब्द जाँचने हैं');
+  String get readerUnsure =>
+      _t('The reading was not certain', 'पढ़ाई पक्की नहीं थी');
+  String get listedTwice => _t('Listed twice', 'दो बार लिखी है');
+  String get disagreeStrength => _t(
+    'The sources show different strengths',
+    'स्रोतों में ताक़त अलग-अलग है',
+  );
+  String get disagreeTiming =>
+      _t('The sources disagree on when', 'स्रोतों में समय अलग-अलग है');
+  String get disagreeFood => _t(
+    'Before or after food? The sources disagree',
+    'खाने से पहले या बाद? स्रोत अलग कहते हैं',
+  );
+  String get disagreeInterval => _t(
+    'Every day or not? The sources disagree',
+    'रोज़ या नहीं? स्रोत अलग कहते हैं',
+  );
+  String get disagreeAsNeeded => _t(
+    'Fixed time or only when needed? The sources disagree',
+    'तय समय पर या ज़रूरत पर? स्रोत अलग कहते हैं',
+  );
+  String get chooseOne => _t('Which one is right?', 'कौन सा सही है?');
+  String get keepThis => _t('Keep this one', 'यही रखें');
+  String get leaveOut => _t('Leave it out', 'इसे हटाएँ');
+  String get leftOut => _t('Left out', 'हटा दी गई');
+  String get putBack => _t('Put it back', 'वापस जोड़ें');
+  String get confirmAllFirst => _t(
+    'Confirm or leave out every card to continue.',
+    'आगे बढ़ने के लिए हर कार्ड को पक्का करें या हटाएँ।',
+  );
+
+  // ── Step 8: placement ───────────────────────────────────────────────────
+  String get placementTitle => _t('Where they fit', 'कब-कब लेनी हैं');
+  String get placementWhy => _t(
+    'Checked against what you already take.',
+    'जो आप पहले से ले रहे हैं, उससे मिलाया गया।',
+  );
+  String get placementKept =>
+      _t('Timing as prescribed', 'जैसा लिखा गया, वही समय');
+  String get placementSuggested => _t(
+    'Suggested time - nobody said when',
+    'सुझाया गया समय - किसी ने नहीं बताया',
+  );
+  String get placementDuplicate =>
+      _t('Already on your list', 'पहले से आपकी सूची में है');
+  String get placementBusy =>
+      _t('Many medicines at this time', 'इस समय कई दवाइयाँ हैं');
+  String get placementFoodClash => _t(
+    'Empty stomach, among after-food medicines',
+    'खाली पेट वाली, खाने के बाद वाली दवाइयों के साथ',
+  );
+  String get placementCourse => _t('Stops on its own', 'अपने आप बंद हो जाएगी');
+  String get prescriptionSaved => _t('Prescription saved', 'पर्ची सेव हो गई');
+  String get scheduleUpdated =>
+      _t('Schedule updated', 'दवाई का समय अपडेट हो गया');
+
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');
   String get back => _t('Back', 'पीछे');

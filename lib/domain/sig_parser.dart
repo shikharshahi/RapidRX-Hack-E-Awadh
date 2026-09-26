@@ -36,12 +36,18 @@ class ParsedLine {
 abstract final class SigParser {
   static Sig parseSig(String text) => parseLine(text, expectName: false).sig;
 
-  static ParsedLine parseLine(String text, {bool expectName = true}) {
+  /// [printed] is true for a bill or a strip: machine-printed text, where a
+  /// number after a name is a strength and never a count of tablets.
+  static ParsedLine parseLine(
+    String text, {
+    bool expectName = true,
+    bool printed = false,
+  }) {
     var s = normalise(text);
 
     String? name, strength, form;
     if (expectName) {
-      final cut = _cutName(s);
+      final cut = _cutName(s, printed: printed);
       name = cut.name;
       strength = cut.strength;
       form = cut.form;
@@ -370,8 +376,9 @@ abstract final class SigParser {
   static final _strengthRe = RegExp(r'^\d+(?:\.\d+)?(?:mg|mcg|ml|gm|g|iu|%)?$');
 
   static ({String? name, String? strength, String? form, String rest}) _cutName(
-    String s,
-  ) {
+    String s, {
+    required bool printed,
+  }) {
     final tokens = s.split(' ').where((t) => t.isNotEmpty).toList();
     var i = 0;
     String? form;
@@ -409,12 +416,20 @@ abstract final class SigParser {
       final t = tokens[i];
       final next = i + 1 < tokens.length ? tokens[i + 1] : '';
       final singleDigit = RegExp(r'^\d$').hasMatch(t);
-      // "Crocin 2 tab" is two tablets; "Amlo 5" is a strength.
+      // Said aloud, "Crocin 2 tab" is two tablets. Printed, "AMLONG 5 TAB" is
+      // always a strength — reading it as a count once dropped the medicine
+      // from the bill altogether, because the line was left with no strength
+      // and no dosage form to show it was a medicine at all.
       final isCount =
-          singleDigit && (forms.contains(next) || _doContext.contains(next));
+          !printed &&
+          singleDigit &&
+          (forms.contains(next) || _doContext.contains(next));
       if (!isCount) {
         strength = t;
         i++;
+      } else if (forms.contains(next)) {
+        // Still a dosage form, still evidence; the count stays for the sig.
+        form = next;
       }
     }
     final variant = <String>[];
@@ -738,6 +753,10 @@ abstract final class SigParser {
     'strip',
     'strips',
     'daily',
+    // "Only" narrows; it never changes the time that follows it.
+    'sirf',
+    'only',
+    'just',
   };
 
   static final _phrases = <(RegExp, void Function(_SigBuilder, Match))>[

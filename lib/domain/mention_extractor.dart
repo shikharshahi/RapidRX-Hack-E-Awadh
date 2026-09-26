@@ -2,24 +2,92 @@ import 'mention.dart';
 import 'sig.dart';
 import 'sig_parser.dart';
 
+/// Mentions of medicines, plus the advice that is not about a medicine.
+class Extraction {
+  const Extraction(this.mentions, this.notes);
+
+  final List<Mention> mentions;
+
+  /// "Come back after ten days for review". Shown to a person, never turned
+  /// into a dose.
+  final List<String> notes;
+}
+
 /// Turns one source's text into mentions of medicines.
 ///
 /// Photos arrive as OCR lines; speech arrives as one run-on sentence. Both are
 /// cut into segments, and each segment is either a new medicine (it has a
-/// name that looks like one) or more instruction for the medicine before it —
-/// a handwritten prescription usually puts "1-0-1 x 5 days" on the next line.
+/// name that looks like one), more instruction for the medicine before it — a
+/// handwritten prescription usually puts "1-0-1 x 5 days" on the next line —
+/// or, when it opens with an advice word, a note.
 abstract final class MentionExtractor {
-  static List<Mention> extract(String text, SourceKind source) {
-    final segments = _segments(text, speech: _isSpeech(source));
-    final out = <Mention>[];
+  static List<Mention> extract(String text, SourceKind source) =>
+      extractWithNotes(text, source).mentions;
+
+  /// Words that open advice rather than a medicine. A sentence starting with
+  /// one is a note, and is never attached to the medicine above it: "come
+  /// back after ten days" must not become a ten-day course.
+  static const adviceWords = {
+    'come',
+    'review',
+    'follow',
+    'visit',
+    'check',
+    'test',
+    'tests',
+    'get',
+    'avoid',
+    'walk',
+    'drink',
+    'eat',
+    'exercise',
+    'sleep',
+    'rest',
+    'reduce',
+    'stop',
+    'dobara',
+    'wapas',
+    'aaiye',
+    'aana',
+    'milna',
+    'miliye',
+    'jaanch',
+    'karwa',
+    'karwaiye',
+    'parhez',
+    'mat',
+    'bachein',
+    'bachiye',
+    'kam',
+    'paani',
+    'pani',
+    'namak',
+    'cheeni',
+    'report',
+    'x-ray',
+    'xray',
+    'blood',
+  };
+
+  static Extraction extractWithNotes(String text, SourceKind source) {
+    final speech = _isSpeech(source);
+    final segments = _segments(text, speech: speech);
+    final mentions = <Mention>[];
+    final notes = <String>[];
     Mention? current;
 
     for (final seg in segments) {
-      final line = SigParser.parseLine(seg);
+      final first = SigParser.normalise(seg).split(' ').first;
+      if (adviceWords.contains(first)) {
+        if (speech) notes.add(seg.trim());
+        continue;
+      }
+
+      final line = SigParser.parseLine(seg, printed: _isPrinted(source));
       if (line.name != null) {
         final evidence = _hasEvidence(line);
-        if (evidence || _isSpeech(source)) {
-          if (current != null) out.add(current);
+        if (evidence || speech) {
+          if (current != null) mentions.add(current);
           current = Mention(
             source: source,
             name: line.name!,
@@ -42,17 +110,22 @@ abstract final class MentionExtractor {
           sig.everyNDays != null;
       if (current != null && (carries || line.purpose != null)) {
         current = current.copyWith(
-          sig: _combine(current.sig, sig),
+          sig: current.sig.fillFrom(sig),
           raw: '${current.raw}  ${seg.trim()}',
           purpose: current.purpose ?? line.purpose,
           // "Telma, subah ek": the instruction that follows is the evidence.
           needsCorroboration: current.needsCorroboration && !carries,
         );
+      } else if (speech && seg.trim().split(' ').length > 2) {
+        notes.add(seg.trim());
       }
     }
-    if (current != null) out.add(current);
-    return out;
+    if (current != null) mentions.add(current);
+    return Extraction(mentions, notes);
   }
+
+  static bool _isPrinted(SourceKind s) =>
+      s == SourceKind.bill || s == SourceKind.strip;
 
   static bool _isSpeech(SourceKind s) =>
       s == SourceKind.doctor || s == SourceKind.chemist;
@@ -66,7 +139,8 @@ abstract final class MentionExtractor {
         for (final l in lines)
           ...l.split(
             RegExp(
-              r'[.;।]|,(?!\s*\d)|\b(?:and then|aur phir|aur fir|then|phir|uske baad)\b',
+              r'[.;।]|,(?!\s*\d)'
+              r'|\b(?:and then|aur phir|aur fir|then|phir|uske baad)\b',
               caseSensitive: false,
             ),
           ),
@@ -79,13 +153,11 @@ abstract final class MentionExtractor {
   }
 
   /// A name alone is not enough: "Dr Sharma" and "Patient Ramesh" have names.
-  /// A medicine line has a dosage form, a strength, or an instruction.
+  /// A medicine line has a dosage form, a strength, or an instruction — and a
+  /// duration alone is not an instruction.
   static bool _hasEvidence(ParsedLine line) =>
       line.form != null ||
       line.strength != null ||
       line.sig.hasTiming ||
-      line.sig.food != FoodTiming.unspecified ||
-      line.sig.durationDays != null;
-
-  static Sig _combine(Sig a, Sig b) => a.fillFrom(b);
+      line.sig.food != FoodTiming.unspecified;
 }
