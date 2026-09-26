@@ -91,4 +91,118 @@ extension CaretakerStrings on AppStrings {
   String get showMyQr => pick('Show my QR code', 'मेरा QR कोड दिखाएँ');
   String linkedPatientLine(String name) =>
       pick('Linked to $name', '$name से जुड़े हैं');
+
+  // ── Patient: scan caretaker QR ──────────────────────────────────────────
+  String get scanCaretakerQr =>
+      pick('Scan caretaker QR', 'देखभालकर्ता का QR स्कैन करें');
+  String get scanCaretakerQrWhy => pick(
+    'Link a family member or caretaker',
+    'परिवार के सदस्य या देखभालकर्ता को जोड़ें',
+  );
+  String get pointCamera => pick(
+    'Point the camera at the QR code on the caretaker\'s phone.',
+    'कैमरा देखभालकर्ता के फ़ोन पर दिख रहे QR कोड की ओर करें।',
+  );
+  String get torch => pick('Torch', 'टॉर्च');
+  String get cannotScanHere => pick(
+    'This device cannot scan. Type or paste the code the caretaker sent you.',
+    'यह डिवाइस स्कैन नहीं कर सकता। देखभालकर्ता का भेजा कोड लिखें या पेस्ट करें।',
+  );
+  String get cameraDenied => pick(
+    'RapidRX is not allowed to use the camera. Allow it in Settings, then '
+        'try again — or type the code below.',
+    'RapidRX को कैमरा इस्तेमाल करने की अनुमति नहीं है। सेटिंग में अनुमति दें, '
+        'फिर दोबारा कोशिश करें — या नीचे कोड लिखें।',
+  );
+  String get cameraFailed => pick(
+    'The camera did not start. Try again, or type the code below.',
+    'कैमरा चालू नहीं हुआ। दोबारा कोशिश करें, या नीचे कोड लिखें।',
+  );
+  String get tryAgain => pick('Try again', 'दोबारा कोशिश करें');
+  String get orTypeCode => pick('Or type the code', 'या कोड लिखें');
+  String get codeFieldHint => pick('Paste the code here', 'कोड यहाँ पेस्ट करें');
+  String get checkCode => pick('Check code', 'कोड जाँचें');
+  String get codeMalformed => pick(
+    'This is not a RapidRX caretaker code.',
+    'यह RapidRX देखभालकर्ता का कोड नहीं है।',
+  );
+  String get codeVersion => pick(
+    'This code is from a different version of RapidRX. Update the app on '
+        'both phones.',
+    'यह कोड RapidRX के दूसरे संस्करण का है। दोनों फ़ोन में ऐप अपडेट करें।',
+  );
+  String get codeChecksum => pick(
+    'Part of this code is wrong. Scan it again, or check each letter.',
+    'इस कोड का कुछ हिस्सा गलत है। दोबारा स्कैन करें, या हर अक्षर जाँचें।',
+  );
+  String get codeExpired => pick(
+    'This code has expired. Ask the caretaker to make a new one.',
+    'इस कोड का समय खत्म हो गया। देखभालकर्ता से नया कोड बनवाएँ।',
+  );
+  String get codeClock => pick(
+    'The time on one of the phones is wrong. Check the time on both phones.',
+    'किसी एक फ़ोन में समय गलत है। दोनों फ़ोन का समय जाँचें।',
+  );
+  String whoIsIt(String name, CaretakerType t) =>
+      '$name — ${caretakerTypeLabel(t)}';
+  String familySees(String name) => pick(
+    '$name will see your medicines, health details and prescriptions, and '
+        'get your alerts on WhatsApp.',
+    '$name आपकी दवाइयाँ, सेहत की जानकारी और पर्चियाँ देख पाएँगे, और '
+        'WhatsApp पर आपके अलर्ट पाएँगे।',
+  );
+  String commercialSees(String name) => pick(
+    '$name will see today\'s doses, your schedule and notes — not your '
+        'health details. You set a PIN they must enter.',
+    '$name आज की दवाइयाँ, दवाई का समय और नोट देख पाएँगे — आपकी सेहत की '
+        'जानकारी नहीं। आप एक PIN रखेंगे जो उन्हें डालना होगा।',
+  );
+  String linkName(String name) => pick('Link $name', '$name को जोड़ें');
+  String get notThem =>
+      pick('Not them? Scan again', 'ये नहीं हैं? दोबारा स्कैन करें');
+  String pinForTitle(String name) =>
+      pick('Set a PIN for $name', '$name के लिए PIN रखें');
+  String pinForWhy(String name) => pick(
+    '$name types this PIN each time they open your medicines. Tell it to '
+        'them yourself.',
+    '$name हर बार आपकी दवाइयाँ खोलते समय यह PIN डालेंगे। यह उन्हें आप '
+        'खुद बताएँ।',
+  );
+  String get pinAgain => pick('Type the PIN again', 'PIN दोबारा लिखें');
+  String get caretakerPinShort =>
+      pick('The PIN has 4 digits', 'PIN 4 अंकों का है');
+  String get caretakerPinMismatch =>
+      pick('The two PINs are different.', 'दोनों PIN अलग हैं।');
+  String showCodeTo(String name) => pick(
+    'Show this code to $name. They type it on their phone, with your name, '
+        'to finish.',
+    'यह कोड $name को दिखाएँ। वे इसे आपके नाम के साथ अपने फ़ोन में डालेंगे, '
+        'तब जुड़ाव पूरा होगा।',
+  );
+  String get sendCodeWhatsApp =>
+      pick('Send the code on WhatsApp', 'कोड WhatsApp पर भेजें');
+  String pairingWhatsApp(String patient, String code) => pick(
+    'RapidRX: $patient linked you as their caretaker. Enter this code on '
+        'your phone: $code',
+    'RapidRX: $patient ने आपको देखभालकर्ता के रूप में जोड़ा है। अपने फ़ोन '
+        'में यह कोड डालें: $code',
+  );
+
+  // ── Patient: the linked caretaker, in the account sheet ─────────────────
+  String get yourCaretaker => pick('Your caretaker', 'आपके देखभालकर्ता');
+  String get noCaretakerLinked => pick(
+    'No caretaker linked yet.',
+    'अभी कोई देखभालकर्ता नहीं जुड़ा है।',
+  );
+  String get unlink => pick('Unlink', 'हटाएँ');
+  String unlinkQuestion(String name) =>
+      pick('Unlink $name?', '$name को हटाएँ?');
+  String get unlinkWhy => pick(
+    'They will stop getting your alerts. You can scan their code again '
+        'any time.',
+    'उन्हें आपके अलर्ट मिलने बंद हो जाएँगे। आप कभी भी उनका कोड दोबारा स्कैन '
+        'कर सकते हैं।',
+  );
+  String unlinked(String name) =>
+      pick('$name is unlinked.', '$name को हटा दिया गया।');
 }
