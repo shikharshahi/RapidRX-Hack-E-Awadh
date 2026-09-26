@@ -125,8 +125,25 @@ class MedicineDecision {
   bool confirmed = false;
   bool leftOut = false;
 
-  /// On a red card, the side the person picked.
+  /// On a red card, the side the person picked for *when* to take it.
   Mention? chosen;
+
+  /// The reading a person picked for *what* the medicine is — its name and
+  /// strength. Set by a pick on the card or an answer to a pharmacy question;
+  /// the timing still comes from the doctor and the prescription.
+  Mention? identity;
+
+  /// A person said the bill's count is right, so the course is as many days
+  /// as the tablets sold last.
+  int? courseDays;
+
+  /// This bill row is the same medicine as another card — the stand-in a
+  /// person accepted — and is counted there, not twice.
+  String? foldedInto;
+
+  /// Set by an answer rather than a tap, so a later answer can undo it.
+  bool identityByAnswer = false;
+  bool outByAnswer = false;
 
   /// A person's own fix, which beats every source.
   String? editedName;

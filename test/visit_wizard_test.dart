@@ -2,6 +2,7 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rapidrx/domain/mention.dart';
 import 'package:rapidrx/domain/merge_engine.dart';
+import 'package:rapidrx/domain/pharmacy_check.dart';
 import 'package:rapidrx/domain/placement_advisor.dart';
 import 'package:rapidrx/domain/sig.dart';
 import 'package:rapidrx/features/visit/visit.dart';
@@ -41,8 +42,13 @@ void main() {
 
     await c.next(); // medicines
     expect(c.canGoNext, isFalse, reason: 'every card must be decided');
+    // The bill sold 15 GLYCOMET for a 60-tablet course: a person is asked,
+    // and says the course is right (they will buy the rest).
+    final question = c.questionsToAsk.single;
+    expect(question.kind, PharmacyIssueKind.quantity);
+    await c.answer(question, PharmacyChoice.a);
     for (final r in c.rows) {
-      c.confirm(r);
+      if (!c.decisionOf(r).confirmed) c.confirm(r);
     }
     expect(c.canGoNext, isTrue);
 

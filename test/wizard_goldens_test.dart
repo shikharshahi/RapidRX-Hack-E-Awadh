@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rapidrx/core/l10n/app_language.dart';
 import 'package:rapidrx/domain/mention.dart';
+import 'package:rapidrx/domain/pharmacy_check.dart';
 import 'package:rapidrx/domain/scheduled_medicine.dart';
 import 'package:rapidrx/domain/sig.dart';
 import 'package:rapidrx/features/wizard/wizard_controller.dart';
@@ -167,8 +168,12 @@ void main() {
     await c.next();
     await c.skip();
     await c.next();
+    // The bill's 15 GLYCOMET against a 60-tablet course: the course stands.
+    for (final q in c.questionsToAsk) {
+      await c.answer(q, PharmacyChoice.a);
+    }
     for (final r in c.rows) {
-      c.confirm(r);
+      if (!c.decisionOf(r).confirmed) c.confirm(r);
     }
     await c.next();
     await shoot(t, c, 'wizard_6_placement_en', height: 1000);
