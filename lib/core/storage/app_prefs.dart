@@ -67,7 +67,8 @@ class AppPrefs {
   String? get name => _prefs.getString(_name);
   Future<void> setName(String name) => _prefs.setString(_name, name.trim());
 
-  /// The family member's number. This is where caregiver alerts go.
+  /// The family member's number from before pairing existed. Only a
+  /// fallback now: alerts go to [alertPhone].
   String? get backupPhone => _prefs.getString(_backupPhone);
   Future<void> setBackupPhone(String? phone) async {
     if (phone == null || phone.trim().isEmpty) {
@@ -156,6 +157,29 @@ class AppPrefs {
   Future<void> setLinkedPatientJson(String? json) =>
       _setOrRemoveString(_linkedPatient, json);
 
+  // Patient side: the caretaker this patient linked by scanning their QR.
+  static const _linkedCaretaker = 'linked_caretaker';
+
+  /// {id, name, phone, type, pinHash?, linkedAt}, as JSON.
+  String? get linkedCaretakerJson => _prefs.getString(_linkedCaretaker);
+  Future<void> setLinkedCaretakerJson(String? json) =>
+      _setOrRemoveString(_linkedCaretaker, json);
+
+  /// Where WhatsApp alerts go: the linked caretaker's own verified number,
+  /// or — for data from before pairing — the old family number.
+  String? get alertPhone {
+    final raw = linkedCaretakerJson;
+    if (raw != null) {
+      try {
+        final phone = (jsonDecode(raw) as Map)['phone'];
+        if (phone is String && phone.isNotEmpty) return phone;
+      } catch (_) {
+        // A damaged record: fall back rather than alert nobody.
+      }
+    }
+    return backupPhone;
+  }
+
   static const _identityKeys = [
     _role,
     _phone,
@@ -172,6 +196,7 @@ class AppPrefs {
     _caretakerIssuedAt,
     _caretakerLater,
     _linkedPatient,
+    _linkedCaretaker,
   ];
 
   /// Forget who this phone belongs to. Device choices stay.
