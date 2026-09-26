@@ -7,6 +7,20 @@ import '../l10n/app_language.dart';
 
 enum AppRole { patient, caregiver }
 
+/// Who a caretaker is to the patient. It decides what they may see: family
+/// sees everything; a paid (commercial) caretaker sees today's doses, the
+/// schedule and notes, behind a PIN the patient sets.
+enum CaretakerType {
+  family,
+  commercial;
+
+  static CaretakerType? fromName(String? name) => switch (name) {
+    'family' => family,
+    'commercial' => commercial,
+    _ => null,
+  };
+}
+
 /// Device choices and identity, in `shared_preferences`.
 ///
 /// Everything here is local to this phone. A production build moves the
@@ -109,6 +123,39 @@ class AppPrefs {
   Future<void> _setOrRemoveString(String key, String? v) =>
       v == null || v.isEmpty ? _prefs.remove(key) : _prefs.setString(key, v);
 
+  // ── Caretaker pairing (ADR-45) ──────────────────────────────────────────
+  // Caretaker side: who they are to the patient, their stable pairing id, when
+  // the current QR code was issued, whether they chose "later", and the
+  // patient they are linked to.
+  static const _caretakerType = 'caretaker_type';
+  static const _caretakerId = 'caretaker_id';
+  static const _caretakerIssuedAt = 'caretaker_code_issued_at';
+  static const _caretakerLater = 'caretaker_pair_later';
+  static const _linkedPatient = 'linked_patient';
+
+  CaretakerType? get caretakerType =>
+      CaretakerType.fromName(_prefs.getString(_caretakerType));
+  Future<void> setCaretakerType(CaretakerType t) =>
+      _prefs.setString(_caretakerType, t.name);
+
+  String? get caretakerId => _prefs.getString(_caretakerId);
+  Future<void> setCaretakerId(String id) => _prefs.setString(_caretakerId, id);
+
+  /// Epoch seconds.
+  int? get caretakerCodeIssuedAt => _prefs.getInt(_caretakerIssuedAt);
+  Future<void> setCaretakerCodeIssuedAt(int epochSeconds) =>
+      _prefs.setInt(_caretakerIssuedAt, epochSeconds);
+
+  /// "I'll do this later" — resume goes to the caretaker home, not the QR.
+  bool get caretakerPairLater => _prefs.getBool(_caretakerLater) ?? false;
+  Future<void> setCaretakerPairLater(bool later) =>
+      _prefs.setBool(_caretakerLater, later);
+
+  /// The patient this caretaker is linked to, as JSON.
+  String? get linkedPatientJson => _prefs.getString(_linkedPatient);
+  Future<void> setLinkedPatientJson(String? json) =>
+      _setOrRemoveString(_linkedPatient, json);
+
   static const _identityKeys = [
     _role,
     _phone,
@@ -120,6 +167,11 @@ class AppPrefs {
     _weight,
     _ayushmanId,
     _ayushmanCard,
+    _caretakerType,
+    _caretakerId,
+    _caretakerIssuedAt,
+    _caretakerLater,
+    _linkedPatient,
   ];
 
   /// Forget who this phone belongs to. Device choices stay.

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rapidrx/app.dart';
 import 'package:rapidrx/core/storage/app_prefs.dart';
 import 'package:rapidrx/features/health/pmjay_client.dart';
+import 'package:rapidrx/features/pairing/pairing_code.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/golden_harness.dart';
@@ -78,22 +79,110 @@ void main() {
     await tester.pump(const Duration(milliseconds: 20));
   });
 
-  testWidgets('a caretaker is not asked about health', (tester) async {
-    usePhoneSurface(tester);
-    SharedPreferences.setMockInitialValues({
+  group('a caretaker', () {
+    final caretaker = <String, Object>{
       'app_language': 'en',
       'voice_help': false,
-      'phone_number': '9876543210',
+      'phone_number': '9812345678',
       'user_name': 'Sunita',
       'pin_hash': AppPrefs.hashPin('1111'),
+    };
+
+    testWidgets('role → who are you → QR → later → home, no health', (
+      tester,
+    ) async {
+      usePhoneSurface(tester);
+      SharedPreferences.setMockInitialValues(caretaker);
+      final p = await prefs();
+      await tester.pumpWidget(app(p));
+      await tester.pumpAndSettle();
+      expect(find.text('Who is using this app?'), findsOneWidget);
+      await tapText(tester, 'CAREGIVER');
+      expect(find.text('A little about your health'), findsNothing);
+      expect(p.age, isNull);
+
+      expect(find.text('Who are you to the patient?'), findsOneWidget);
+      await tapText(tester, 'Family member');
+      expect(p.caretakerType, CaretakerType.family);
+
+      expect(find.text('Your caretaker QR code'), findsOneWidget);
+      expect(
+        find.text(
+          'Ask the patient to open RapidRX and tap "Scan caretaker QR".',
+        ),
+        findsOneWidget,
+      );
+      await tapText(tester, "I'll do this later");
+      expect(p.caretakerPairLater, isTrue);
+      expect(find.text('Not linked to a patient yet.'), findsOneWidget);
     });
-    final p = await prefs();
-    await tester.pumpWidget(app(p));
-    await tester.pumpAndSettle();
-    expect(find.text('Who is using this app?'), findsOneWidget);
-    await tapText(tester, 'CAREGIVER');
-    expect(find.text('A little about your health'), findsNothing);
-    expect(p.age, isNull);
+
+    testWidgets("QR → the patient's code → linked, and home says so", (
+      tester,
+    ) async {
+      usePhoneSurface(tester);
+      SharedPreferences.setMockInitialValues({
+        ...caretaker,
+        'app_role': 'caregiver',
+        'caretaker_type': 'commercial',
+      });
+      final p = await prefs();
+      await tester.pumpWidget(app(p));
+      await tester.pumpAndSettle();
+      expect(find.text('Your caretaker QR code'), findsOneWidget);
+      await tapText(tester, "Enter the patient's code");
+      await enter(tester, 'Ramesh');
+      await enter(tester, PairingCode.confirmationCode(p.caretakerId!), at: 1);
+      await tapText(tester, 'Connect');
+      expect(find.text('Caretaker connection successful'), findsOneWidget);
+      expect(find.text('You are now linked to Ramesh.'), findsOneWidget);
+      await tapText(tester, 'OK');
+      expect(find.text('Linked to Ramesh'), findsOneWidget);
+    });
+
+    group('resume', () {
+      Future<void> resumeAt(
+        WidgetTester tester,
+        Map<String, Object> values,
+        String expected,
+      ) async {
+        usePhoneSurface(tester);
+        SharedPreferences.setMockInitialValues({
+          ...caretaker,
+          'app_role': 'caregiver',
+          ...values,
+        });
+        await tester.pumpWidget(app(await prefs()));
+        await tester.pumpAndSettle();
+        expect(find.text(expected), findsOneWidget);
+      }
+
+      testWidgets('no type yet → who are you', (t) async {
+        await resumeAt(t, {}, 'Who are you to the patient?');
+      });
+
+      testWidgets('a type, not linked → the QR code', (t) async {
+        await resumeAt(t, {
+          'caretaker_type': 'family',
+        }, 'Your caretaker QR code');
+      });
+
+      testWidgets('"later" is never a trap → home', (t) async {
+        await resumeAt(t, {
+          'caretaker_type': 'family',
+          'caretaker_pair_later': true,
+        }, 'Not linked to a patient yet.');
+      });
+
+      testWidgets('linked → home', (t) async {
+        await resumeAt(t, {
+          'caretaker_type': 'family',
+          'linked_patient':
+              '{"name":"Ramesh","caretakerId":"K7Q2XMPA3B",'
+              '"pairedAt":"2026-09-26T10:00:00.000"}',
+        }, 'Linked to Ramesh');
+      });
+    });
   });
 
   group('resume', () {

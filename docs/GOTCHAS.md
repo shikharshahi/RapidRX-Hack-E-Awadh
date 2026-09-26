@@ -29,6 +29,8 @@ Every trap already hit, with the fix. When something looks impossible, look here
 | `Looking up a deactivated widget's ancestor is unsafe` | `dispose()` reading an inherited widget | Cache it in `didChangeDependencies` (`VoicePrompt`) |
 | A pushed route cannot find `L10n` or the voice | Scopes placed around `home` | Put them in `MaterialApp.builder` — and mirror that in the harness |
 | `pumpAndSettle` never settles on a screen with a loading bar | The bar animates forever | `pump()` with a duration instead |
+| A string getter in a `strings_<feature>.dart` extension shows the wrong text, with no error | A member of `AppStrings` with the same name wins over the extension, silently | Grep `app_strings.dart` for each new getter name before adding it |
+| An arrow (`→`) in on-screen text is a box in the golden, in English and Hindi | The bundled Noto faces have no arrow glyph | Say it in words ("open RapidRX and tap …"); arrows are fine in test names |
 
 ## Layout
 

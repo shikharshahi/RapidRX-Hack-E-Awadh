@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/l10n/strings_caretaker.dart';
 import '../../core/plain_language.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -13,6 +14,8 @@ import '../../domain/scheduled_medicine.dart';
 import '../../domain/sig.dart';
 import '../doses/dose_log_store.dart';
 import '../medicines/medicine_store.dart';
+import '../pairing/caretaker_pairing.dart';
+import '../pairing/open_pairing.dart';
 import 'family.dart';
 import 'plan_summary.dart';
 import 'whatsapp_alerts.dart';
@@ -137,6 +140,14 @@ class _CaregiverHomeState extends State<CaregiverHome> {
     });
   }
 
+  Future<void> _openPairing() async {
+    await openCaretakerPairing(
+      context,
+      pairing: CaretakerPairing(prefs: AppScope.of(context).prefs),
+    );
+    if (mounted) setState(() {});
+  }
+
   void _say(String m) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(m)));
@@ -169,6 +180,13 @@ class _CaregiverHomeState extends State<CaregiverHome> {
         body: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
+            _LinkCard(
+              patient: LinkedPatient.fromJsonString(
+                state.prefs.linkedPatientJson,
+              ),
+              onShowQr: _openPairing,
+            ),
+            const SizedBox(height: 16),
             // A High-priority note from the patient's side is the first
             // thing a caretaker sees.
             for (final r in _notes.where((r) => r.notePriority == 'high')) ...[
@@ -239,6 +257,63 @@ class _CaregiverHomeState extends State<CaregiverHome> {
                 ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Who this caretaker is linked to — or the way to link.
+class _LinkCard extends StatelessWidget {
+  const _LinkCard({required this.patient, required this.onShowQr});
+
+  final LinkedPatient? patient;
+  final VoidCallback onShowQr;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = L10n.of(context);
+    final linked = patient != null;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      decoration: BoxDecoration(
+        color: linked ? AppColors.greenSoft : AppColors.amberSoft,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        border: Border.all(
+          color: linked ? AppColors.green : AppColors.amberBorder,
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                linked ? Icons.link_rounded : Icons.link_off_rounded,
+                color: linked ? AppColors.green : AppColors.ink,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  linked ? s.linkedPatientLine(patient!.name) : s.notLinkedYet,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!linked) ...[
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.qr_code_2_rounded),
+              label: Text(s.showMyQr),
+              onPressed: onShowQr,
+            ),
+          ],
+        ],
       ),
     );
   }
