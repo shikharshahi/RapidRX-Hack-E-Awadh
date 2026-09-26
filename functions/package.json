@@ -1,0 +1,11 @@
+{
+  "name": "rapidrx-calls",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "test": "node --test dose_call.test.js"
+  }
+}

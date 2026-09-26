@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/dev_flags.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/l10n/strings_alarm.dart';
+import '../../core/l10n/strings_calls.dart';
 import '../../core/l10n/strings_caretaker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -14,6 +15,9 @@ import '../../ai/gemini_client.dart';
 import '../../core/app_state.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../platform/dose_reminders.dart';
+import '../calls/call_demo.dart';
+import '../calls/call_gateway.dart';
+import '../calls/missed_dose_calls.dart';
 import '../doses/alarm_launcher.dart';
 import '../doses/reminder_sync.dart';
 import '../caregiver/family.dart';
@@ -204,6 +208,19 @@ Future<void> openSchedule(BuildContext context) async {
         onOpened: (meds, now) async {
           await family.drainOutbox(now: now);
           await family.checkMissed(meds, logs, now: now);
+          await MissedDoseCaller(
+            gateway: HttpCallGateway(),
+            ledger: CallLedger(state.prefs.raw),
+            alerts: family,
+            patientName: state.prefs.name ?? '',
+            strings: strings,
+          ).check(
+            medicines: meds,
+            logs: logs,
+            now: now,
+            phone: state.prefs.phoneNumber,
+            language: state.language,
+          );
         },
         onConfirmed: (slot, date) async {
           // The nudge must never fire for a dose already taken.
@@ -269,7 +286,8 @@ Future<void> openWizard(BuildContext context) async {
 }
 
 /// Demo tools, kept small and out of the patient's way: one link under the
-/// tiles, which opens a sheet with the two ways to fire the dose alarm.
+/// tiles, which opens a sheet: the dose alarm, and a call to the number
+/// already on the profile.
 class _DemoLink extends StatelessWidget {
   const _DemoLink();
 
@@ -301,10 +319,19 @@ class _DemoLink extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            TextButton.icon(
-              icon: const Icon(Icons.alarm_rounded),
-              label: Text(s.doseDemo),
-              onPressed: () => _showDemoSheet(context),
+            Flexible(
+              child: TextButton.icon(
+                icon: const Icon(Icons.alarm_rounded),
+                label: Text(s.doseDemo, overflow: TextOverflow.ellipsis),
+                onPressed: () => _showDemoSheet(context),
+              ),
+            ),
+            Flexible(
+              child: TextButton.icon(
+                icon: const Icon(Icons.call_outlined),
+                label: Text(s.callDemo, overflow: TextOverflow.ellipsis),
+                onPressed: () => openCallDemo(context),
+              ),
             ),
           ],
         ),

@@ -300,3 +300,19 @@ flagged `needsAudio`) keeps that file; other raw audio and transcript fields are
 queued payloads so they cannot leave later. When the job finishes or is dropped, the clip goes
 too. The encrypted store itself is a separate piece of work: this step only deletes raw capture,
 and it does not replace `MedicineStore` or `DoseLogStore`.
+
+---
+
+## Missed-dose calls
+
+### ADR-66 · The phone requests a call; Twilio's token stays in Functions
+After the existing missed window the app asks a Cloud Function to ring the patient. It does not
+call Twilio itself. The function URL and the shared-secret header come from `--dart-define`
+(`CALL_FUNCTION_URL`, `CALL_FUNCTION_SECRET`). An empty URL does nothing, and the demo says calls
+are not configured.
+
+The Twilio auth token stays in Functions config. It is not in `lib/`, assets, or any file that
+ships in the APK. The phone sends the medicine names, the language, the slot, and the number
+already on the profile — never a transcript or a note. The call speaks those names. Press 1 logs
+the dose taken, 2 leaves it due, 9 tells the caretaker. Silence logs nothing. One call per slot
+per day, one retry an hour later, then the caretaker alert.

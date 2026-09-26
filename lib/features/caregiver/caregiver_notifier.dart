@@ -98,6 +98,15 @@ class CaregiverNotifier {
     return out;
   }
 
+  /// A dose-call alert on the same once-per-slot path as a missed dose.
+  /// [kind] is `call` when nobody answered, `help` when they pressed 9.
+  Future<NotifyResult> callAlert(
+    DoseSlot slot,
+    DateTime date,
+    String body, {
+    required String kind,
+  }) => _notify(keyFor(date, slot, kind), body);
+
   /// Send what the outbox is holding.
   Future<int> drainOutbox({required DateTime now}) => outbox.drain((a) async {
     final r = await alerts.sendAutomatic(a.to, a.body);
