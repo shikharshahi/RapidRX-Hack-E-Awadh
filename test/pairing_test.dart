@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:rapidrx/core/app_state.dart';
 import 'package:rapidrx/core/l10n/app_language.dart';
 import 'package:rapidrx/core/l10n/app_strings.dart';
@@ -71,6 +72,16 @@ void main() {
       final p = PairingCode.decode(code, now: now).payload!;
       expect(p.name, 'सुनीता');
       expect(p.type, CaretakerType.commercial);
+      // The caretaker's QR uses medium correction. A long name must still fit.
+      expect(
+        () => QrCode.fromData(
+          data: PairingCode.encode(
+            payload(name: 'सुनीता देवी शर्मा', type: CaretakerType.commercial),
+          ),
+          errorCorrectLevel: QrErrorCorrectLevel.M,
+        ),
+        returnsNormally,
+      );
     });
 
     test('the payload is versioned JSON with the agreed fields', () {
@@ -325,9 +336,8 @@ void main() {
         final id = p.code().caretakerId;
         final hash = AppPrefs.hashPin('4321');
         final code = PairingCode.confirmationCode(id);
-        final message = AppStrings(
-          AppLanguage.en,
-        ).pairingWhatsApp('Ramesh', code, pinHash: hash);
+        final message = AppStrings(AppLanguage.en)
+            .pairingWhatsApp('Ramesh', code, pinHash: hash);
         expect(await p.confirm(patientName: 'Ramesh', code: message), isNull);
         expect(prefs.caretakerViewPinHash, hash);
       },
@@ -705,27 +715,31 @@ void main() {
       });
     }
 
-    testWidgets('typing a family code links them and shows the confirm digits', (
-      t,
-    ) async {
-      FakeHaptics.install();
-      usePhoneSurface(t);
-      final (state, p) = await patientSetup(AppLanguage.en);
-      await t.pumpWidget(themed(scanScreen(p), state: state));
-      expect(
-        find.text(
-          'This device cannot scan. Type or paste the code the caretaker sent you.',
-        ),
-        findsOne,
-      );
-      await t.enterText(find.byType(TextField), PairingCode.encode(payload()));
-      await t.tap(find.text('Check code'));
-      await t.pump();
-      expect(find.text('Sunita — Family member'), findsOne);
-      await t.tap(find.text('Link Sunita'));
-      await t.pumpAndSettle();
-      expect(find.text('Caretaker connection successful'), findsOne);
-      expect(p.confirmationCode, PairingCode.confirmationCode('K7Q2XMPA3B'));
-    });
+    testWidgets(
+      'typing a family code links them and shows the confirm digits',
+      (t) async {
+        FakeHaptics.install();
+        usePhoneSurface(t);
+        final (state, p) = await patientSetup(AppLanguage.en);
+        await t.pumpWidget(themed(scanScreen(p), state: state));
+        expect(
+          find.text(
+            'This device cannot scan. Type or paste the code the caretaker sent you.',
+          ),
+          findsOne,
+        );
+        await t.enterText(
+          find.byType(TextField),
+          PairingCode.encode(payload()),
+        );
+        await t.tap(find.text('Check code'));
+        await t.pump();
+        expect(find.text('Sunita — Family member'), findsOne);
+        await t.tap(find.text('Link Sunita'));
+        await t.pumpAndSettle();
+        expect(find.text('Caretaker connection successful'), findsOne);
+        expect(p.confirmationCode, PairingCode.confirmationCode('K7Q2XMPA3B'));
+      },
+    );
   });
 }

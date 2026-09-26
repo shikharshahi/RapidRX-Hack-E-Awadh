@@ -180,7 +180,7 @@ void main() {
 
     testWidgets('a demo writes nothing, whichever is pressed', (tester) async {
       await pushAlarm(tester, alarm([telma], demo: true));
-      expect(find.text('Demo — nothing on this screen is saved'), findsOne);
+      expect(find.text('Nothing on this screen is saved'), findsOne);
       await tester.tap(find.text('Yes, taken'));
       await tester.pumpAndSettle();
       expect(logs.logFor(now, m), isNull);
@@ -335,7 +335,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(opened, isTrue);
       expect(find.text(DoseAlarm.demoMedicine.name), findsOneWidget);
-      expect(find.text('Demo — nothing on this screen is saved'), findsOne);
+      expect(find.text('Nothing on this screen is saved'), findsOne);
     });
   });
 

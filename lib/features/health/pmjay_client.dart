@@ -21,7 +21,7 @@ class AyushmanCard {
   final String cover;
   final String validTill;
 
-  /// Returned by the mock. The screen says "Demo data" while this is true.
+  /// Returned by the mock.
   final bool demo;
 
   Map<String, Object?> toJson() => {

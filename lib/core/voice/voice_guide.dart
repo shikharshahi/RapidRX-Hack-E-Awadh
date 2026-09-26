@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../l10n/app_language.dart';
-import 'kokoro_tts.dart';
 import 'speech_engine.dart';
 
 /// Which engine said the last sentence, and how long the user waited for it.
@@ -44,10 +43,9 @@ class VoiceStatus {
 /// stops the voice on its way out only if it still owns it; and a sentence that
 /// finishes loading after its screen has gone is simply dropped.
 class VoiceGuide extends ChangeNotifier {
-  VoiceGuide({SpeechEngine? engine, this.enabled = false})
-    : _engine =
-          engine ??
-          ChainEngine([KokoroEngine(tts: KokoroTts()), DeviceTtsEngine()]);
+  VoiceGuide({SpeechEngine? engine, bool enabled = false})
+    : _engine = engine ?? DeviceTtsEngine(),
+      _enabled = enabled;
 
   /// Show the one-line voice status on every [VoicePrompt]. Off unless
   /// `main.dart` turns it on in a debug build; tests (and so goldens, which
@@ -56,12 +54,26 @@ class VoiceGuide extends ChangeNotifier {
 
   final SpeechEngine _engine;
 
-  bool enabled;
+  bool _enabled;
+
+  /// Whether screens may speak. Notifying lets the page already on screen
+  /// start as soon as the user picks Yes, instead of waiting out the repeat.
+  bool get enabled => _enabled;
+  set enabled(bool value) {
+    if (_enabled == value) return;
+    _enabled = value;
+    notifyListeners();
+  }
 
   Object? _speaker;
 
   /// Who holds the voice right now.
   Object? get speaker => _speaker;
+
+  /// The sentence already being fetched. A screen repeats every ten seconds;
+  /// stopping that fetch throws away a Kokoro clip that is about to play.
+  Future<SpeakResult?>? _pending;
+  String? _pendingText;
 
   /// The last sentence the current owner asked for, and who said it. Null
   /// until something has been spoken.
@@ -77,13 +89,22 @@ class VoiceGuide extends ChangeNotifier {
     AppLanguage language,
   ) async {
     if (!enabled || text.trim().isEmpty) return null;
+    if (identical(_speaker, owner) &&
+        _pendingText == text &&
+        _pending != null) {
+      return _pending;
+    }
     final previous = _speaker;
     _speaker = owner;
+    _pendingText = text;
     if (previous != null) await _engine.stop();
     // Another screen may have claimed the voice while we were stopping.
     if (!identical(_speaker, owner)) return null;
     final watch = Stopwatch()..start();
-    final result = await _engine.speak(text, language);
+    final pending = _engine.speak(text, language);
+    _pending = pending;
+    final result = await pending;
+    if (identical(_pending, pending)) _pending = null;
     if (identical(_speaker, owner) && !result.superseded) {
       status.value = VoiceStatus(
         text: text,
@@ -99,11 +120,15 @@ class VoiceGuide extends ChangeNotifier {
   Future<void> stopIfSpeaking(Object owner) async {
     if (!identical(_speaker, owner)) return;
     _speaker = null;
+    _pending = null;
+    _pendingText = null;
     await _engine.stop();
   }
 
   Future<void> stopAll() async {
     _speaker = null;
+    _pending = null;
+    _pendingText = null;
     await _engine.stop();
   }
 

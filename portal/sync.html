@@ -4,27 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fffdf5">
-  <title>Notification bay · RapidRX</title>
+  <title>Sync from the app · RapidRX</title>
   <link rel="icon" href="logo_mark.png">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body data-page="alerts">
+<body data-page="sync">
   <div class="phone">
     <header class="appbar">
       <a class="back" href="index.html" aria-label="Portal">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>
       </a>
-      <span class="name">Notification bay</span>
+      <span class="name">Sync from the app</span>
     </header>
     <main class="screen scroll">
-      <p class="deck">Missed doses, unanswered calls, and new prescriptions from the caretaker copy.</p>
-      <ul class="queue" id="alert-list">
-        <li class="qrow"><div class="msg"><b>Loading…</b></div></li>
-      </ul>
-      <div class="actions">
-        <button type="button" class="btn amber" id="turn-on-alerts">Turn on alerts</button>
-      </div>
-      <p id="alerts-permission" class="muted" role="status"></p>
+      <p class="lede">Asks Firebase for the caretaker copy the phone published: dose status, medicine name, time, and alerts. Notes stay on the phone.</p>
+      <button type="button" class="btn amber" id="sync-app">Sync from the app</button>
+      <p class="muted" id="sync-status" role="status"></p>
+      <button type="button" class="btn quiet" id="load-demo">Show the labeled demo</button>
     </main>
   </div>
   <script src="app.js"></script>

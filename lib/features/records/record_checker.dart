@@ -40,26 +40,17 @@ class RecordChecker {
 
   Future<RecordDecision> decide() async {
     final store = await _open();
-    if (store.hasRecords && !DevFlags.demoRestore) {
-      return const RecordDecision(RecordPrompt.done);
-    }
+    // Always ask. A record already on the device, or a No from an earlier
+    // launch, used to skip this screen.
     if (DevFlags.demoRestore && !prefs.demoUser) {
       return RecordDecision(
         RecordPrompt.demo,
         preview: DemoRecords.preview(now),
       );
     }
-    if (store.hasRecords) return const RecordDecision(RecordPrompt.done);
 
     final copy = await store.backup.read();
     if (copy != null) {
-      if (prefs.restoreDeclined) {
-        return RecordDecision(
-          store.fault == VaultFault.none
-              ? RecordPrompt.done
-              : RecordPrompt.corrupt,
-        );
-      }
       if (copy.manifest == null || !backupCanUnlock(copy.vault)) {
         return const RecordDecision(RecordPrompt.corrupt);
       }
@@ -68,7 +59,6 @@ class RecordChecker {
     if (store.fault != VaultFault.none) {
       return const RecordDecision(RecordPrompt.corrupt);
     }
-    if (prefs.demoDeclined) return const RecordDecision(RecordPrompt.done);
     return RecordDecision(RecordPrompt.demo, preview: DemoRecords.preview(now));
   }
 

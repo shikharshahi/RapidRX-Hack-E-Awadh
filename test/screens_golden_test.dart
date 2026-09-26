@@ -217,7 +217,7 @@ void main() {
       expect(find.byType(ListView), findsNothing);
       // The demo link sits under the tiles, on screen too.
       expect(
-        tester.getRect(find.text('Dose demo')).bottom,
+        tester.getRect(find.text('Medicine alarm')).bottom,
         lessThan(phoneSize.height),
       );
     });
@@ -230,7 +230,7 @@ void main() {
       await tester.pumpWidget(
         themed(PatientMenu(onRestart: () {}, demoTools: false), state: state),
       );
-      expect(find.text('Dose demo'), findsNothing);
+      expect(find.text('Medicine alarm'), findsNothing);
     });
 
     testWidgets('the dose demo shows the alarm, and saves nothing', (
@@ -241,17 +241,17 @@ void main() {
       await tester.pumpWidget(
         themed(PatientMenu(onRestart: () {}), state: state),
       );
-      await tester.tap(find.text('Dose demo'));
+      await tester.tap(find.text('Medicine alarm'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Show the alarm now'));
       await tester.pumpAndSettle();
 
       // An empty schedule: the clearly named demo medicine.
-      expect(find.text('DEMO MEDICINE 500'), findsOneWidget);
-      expect(find.text('Demo — nothing on this screen is saved'), findsOne);
+      expect(find.text('TELMA 40'), findsOneWidget);
+      expect(find.text('Nothing on this screen is saved'), findsOne);
       await tester.tap(find.text('Yes, taken'));
       await tester.pumpAndSettle();
-      expect(find.text('Demo finished. Nothing was saved.'), findsOneWidget);
+      expect(find.text('Nothing was saved.'), findsOneWidget);
       expect(state.prefs.raw.getString('dose_logs'), isNull);
     });
 
@@ -261,7 +261,7 @@ void main() {
       await tester.pumpWidget(
         themed(PatientMenu(onRestart: () {}), state: state),
       );
-      await tester.tap(find.text('Dose demo'));
+      await tester.tap(find.text('Medicine alarm'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Ring in 15 seconds'));
       await tester.pumpAndSettle();

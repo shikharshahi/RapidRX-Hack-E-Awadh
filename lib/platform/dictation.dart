@@ -19,13 +19,20 @@ class Dictation {
 
   bool get listening => _available == true && _stt.isListening;
 
-  /// Whether this device can dictate at all. Asked once.
+  /// Whether this device can dictate at all. A failure is not remembered:
+  /// the next tap tries again (a denied mic, or a browser that lost the tap).
   Future<bool> available() async {
-    if (_available != null) return _available!;
+    if (_available == true) return true;
     try {
-      return _available = await _stt.initialize();
+      // No headset. Requesting BLUETOOTH_CONNECT without declaring it makes
+      // initialize() throw on Android 12+, and dictation never starts.
+      final ok = await _stt.initialize(
+        options: [SpeechToText.androidNoBluetooth],
+      );
+      if (ok) _available = true;
+      return ok;
     } catch (_) {
-      return _available = false;
+      return false;
     }
   }
 
@@ -39,12 +46,16 @@ class Dictation {
     required void Function(String words, bool done) onWords,
     void Function(double level)? onLevel,
   }) async {
-    if (!await available()) return false;
+    // A browser only starts the mic in the same turn as the tap. Awaiting a
+    // ready engine still yields, and Chrome then rejects start().
+    if (_available != true && !await available()) return false;
     final scale = SoundLevelScale();
     try {
       await _stt.listen(
         listenOptions: SpeechListenOptions(
-          localeId: language.locale.replaceAll('-', '_'),
+          // BCP 47 (`en-IN`). Android rewrites `_` to `-`; the browser does not,
+          // and `en_IN` makes Chrome refuse the recognizer.
+          localeId: language.locale,
           // A doctor explaining three medicines takes a while, and pauses
           // to think; six seconds of quiet is not the end of the visit.
           listenFor: const Duration(minutes: 2),

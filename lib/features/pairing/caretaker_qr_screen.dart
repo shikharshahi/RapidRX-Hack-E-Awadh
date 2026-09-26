@@ -87,7 +87,9 @@ class _CaretakerQrScreenState extends State<CaretakerQrScreen> {
               child: QrImageView(
                 data: code,
                 size: 236,
-                padding: EdgeInsets.zero,
+                // Medium correction, and the widget's own quiet zone. Level L
+                // with no margin is a code a second phone often cannot read.
+                errorCorrectionLevel: QrErrorCorrectLevel.M,
                 backgroundColor: Colors.white,
                 semanticsLabel: s.pairingQrTitle,
               ),

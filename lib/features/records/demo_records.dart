@@ -15,7 +15,7 @@ import 'secure_record_store.dart';
 /// The doses below are stated here. Nothing is read off a slip and nothing
 /// is filled in because a field was empty.
 abstract final class DemoRecords {
-  static const name = 'Demo user';
+  static const name = 'Geeta Mishra';
   static const age = 72;
   static const phone = '9000000001';
   static const pin = '1357';

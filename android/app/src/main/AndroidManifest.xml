@@ -27,7 +27,9 @@
     <application
         android:label="RapidRX"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
+        <!-- Demo Medicine Call posts to the laptop bay over http. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -80,6 +82,15 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Android 11+ hides the speech recognizer unless it is declared.
+             Without this, dictation's initialize() always fails. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+        <!-- Android 11+ hides the on-device speech engine unless it is declared. -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
     </queries>
 </manifest>

@@ -2,12 +2,26 @@ import 'app_strings.dart';
 
 /// Missed-dose calls. The call itself says the medicine name, not these lines.
 extension CallStrings on AppStrings {
-  String get callDemo => pick('Call demo', 'कॉल डेमो');
+  String get callDemo => pick('Demo Medicine Call', 'डेमो दवाई कॉल');
 
-  String callDemoConfirm(String phone, String medicines) => pick(
-    'Request a call to $phone about $medicines? The call says that name only.',
-    '$phone पर $medicines के लिए कॉल का अनुरोध करें? कॉल में सिर्फ़ यही नाम बोला जाएगा।',
+  String get bayUpdated =>
+      pick('Shown in the notification bay.', 'नोटिफिकेशन बे में दिख गया।');
+
+  String get bayMissed => pick(
+    'The notification bay did not update.',
+    'नोटिफिकेशन बे अपडेट नहीं हुआ।',
   );
+
+  String get whatsAppSent =>
+      pick('WhatsApp alert sent.', 'WhatsApp अलर्ट भेज दिया।');
+
+  String get whatsAppNeedsSender => pick(
+    'WhatsApp needs the Twilio sender number.',
+    'WhatsApp के लिए Twilio का नंबर सेट नहीं है।',
+  );
+
+  String get whatsAppFailed =>
+      pick('WhatsApp was not sent.', 'WhatsApp नहीं गया।');
 
   String get callNotConfigured => pick(
     'Calls are not configured. No call was placed.',

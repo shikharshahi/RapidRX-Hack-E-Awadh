@@ -1,12 +1,35 @@
 {
-  "_comment": "Deploy is manual and was not run. Do not run firebase deploy until a Firebase project is approved. Hosting site id is myrapidrx. Public directory is portal/.",
+  "_comment": "Hosting only. Site rapidrx-portal on project rapidrx-portal. myrapidrx.web.app is reserved by another project. Do not deploy functions from here.",
   "hosting": {
-    "site": "myrapidrx",
+    "site": "rapidrx-portal",
     "public": "portal",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "overview.html",
+      "alerts.html",
+      "sync.html",
+      "demo.html",
+      "apk.html",
+      "app.js",
+      "demo-family.json",
+      "rules_test.md"
+    ],
+    "headers": [
+      {
+        "source": "rapidrx.package",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/vnd.android.package-archive"
+          },
+          {
+            "key": "Content-Disposition",
+            "value": "attachment; filename=\"rapidrx.apk\""
+          }
+        ]
+      }
     ]
   },
   "firestore": {

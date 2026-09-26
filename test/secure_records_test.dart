@@ -281,10 +281,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect((await MedicineStore.load()).medicines().single.name, 'TELMA 40');
-      expect(
-        find.text('Which language are you comfortable in?'),
-        findsOneWidget,
-      );
+      expect(find.text('Do you need voice help?'), findsOneWidget);
     });
 
     testWidgets('found, No, leaves the file and continues', (tester) async {
@@ -297,10 +294,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(sink.vault, before);
-      expect(
-        find.text('Which language are you comfortable in?'),
-        findsOneWidget,
-      );
+      expect(find.text('Do you need voice help?'), findsOneWidget);
       expect((await MedicineStore.load()).medicines(), isEmpty);
     });
 
@@ -309,10 +303,64 @@ void main() {
       await tester.pumpWidget(appOf(await prefs()));
       await _pastSplash(tester);
       expect(
-        find.text('No saved medical files on this phone. Load the demo user?'),
+        find.text(
+          'No saved medical files on this phone. Load a sample profile?',
+        ),
         findsOneWidget,
       );
       expect(find.textContaining('2 medicines'), findsOneWidget);
+    });
+
+    testWidgets('records already on the device still ask yes or no', (
+      tester,
+    ) async {
+      usePhoneSurface(tester);
+      final file = MemoryRecordFile();
+      final keys = MemoryKeyBox();
+      final sink = MemoryBackupSink();
+      final p = await prefs();
+      await p.setPhoneNumber('9000000001');
+      final origin = await open(
+        prefs: p.raw,
+        file: file,
+        keyBox: keys,
+        backup: sink,
+        clock: () => now,
+      );
+      await origin.write(MedicalKeys.medicines, '["telma"]');
+      await origin.rewrap('1357');
+      RecordHooks.file = file;
+      RecordHooks.keyBox = keys;
+      RecordHooks.backup = sink;
+      RecordHooks.kdfIterations = _kdf;
+      SecureRecordStore.debugReset();
+
+      await tester.pumpWidget(appOf(p));
+      await _pastSplash(tester);
+
+      expect(
+        find.text('Previous medical files found. Restore and sync them?'),
+        findsOneWidget,
+      );
+      expect(find.text('Yes · हाँ'), findsOneWidget);
+      expect(find.text('No · नहीं'), findsOneWidget);
+    });
+
+    testWidgets('a previous No still asks again', (tester) async {
+      usePhoneSurface(tester);
+      final p = await prefs();
+      await p.setDemoDeclined(true);
+      await tester.pumpWidget(appOf(p));
+      await _pastSplash(tester);
+
+      expect(
+        find.text(
+          'No saved medical files on this phone. Load a sample profile?',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Yes · हाँ'), findsOneWidget);
+      expect(find.text('No · नहीं'), findsOneWidget);
     });
 
     testWidgets('an injected short delay does not hang', (tester) async {
@@ -322,19 +370,30 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1));
       await tester.pump();
-      expect(find.text('Checking for your medical records…'), findsOneWidget);
+      expect(
+        find.text('Which language are you comfortable in?'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('ENGLISH'));
+      await tester.pump();
+      await tester.pump();
+      expect(
+        find.text('Checking Your Device For Pre-Existing Medical Record'),
+        findsOneWidget,
+      );
+      expect(find.text('Fetching Now'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1));
       await tester.pump();
       expect(
-        find.text('No saved medical files on this phone. Load the demo user?'),
+        find.text(
+          'No saved medical files on this phone. Load a sample profile?',
+        ),
         findsOneWidget,
       );
       expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
     });
 
-    testWidgets('demo Yes loads the fixture, Leave demo clears it', (
-      tester,
-    ) async {
+    testWidgets('demo Yes loads the fixture', (tester) async {
       usePhoneSurface(tester);
       RecordHooks.clock = () => now;
       RecordHooks.kdfIterations = _kdf;
@@ -343,8 +402,9 @@ void main() {
       await tester.tap(find.text('Yes · हाँ'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Demo user'), findsWidgets);
-      expect(find.text('Leave demo'), findsOneWidget);
+      expect(find.text('Hello Geeta Mishra'), findsOneWidget);
+      expect(find.text('Clear profile'), findsNothing);
+      expect(find.text('Leave demo'), findsNothing);
       final p = await prefs();
       expect(p.name, DemoRecords.name);
       expect(p.age, DemoRecords.age);
@@ -360,15 +420,6 @@ void main() {
       expect(logs.statusOf(now, today, DoseSlot.night), DoseStatus.notYet);
       final days = logs.all().map((l) => l.date).toSet();
       expect(days, hasLength(7));
-
-      await tester.tap(find.text('Leave demo'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Which language are you comfortable in?'),
-        findsOneWidget,
-      );
-      expect((await MedicineStore.load()).medicines(), isEmpty);
-      expect((await prefs()).name, isNull);
     });
   });
 }
@@ -376,6 +427,9 @@ void main() {
 Future<void> _pastSplash(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 1));
+  await tester.pump();
+  await tester.tap(find.text('ENGLISH'));
+  await tester.pump();
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 1));
   await tester.pump();

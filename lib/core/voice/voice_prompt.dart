@@ -42,12 +42,22 @@ class _VoicePromptState extends State<VoicePrompt> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _guide = VoiceScope.maybeOf(context);
+    final guide = VoiceScope.maybeOf(context);
+    if (!identical(guide, _guide)) {
+      _guide?.removeListener(_onGuide);
+      _guide = guide?..addListener(_onGuide);
+    }
     if (!_started) {
       _started = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _say());
       _repeat = Timer.periodic(widget.repeatEvery, (_) => _say());
     }
+  }
+
+  /// Yes was off when this page appeared. Speak as soon as it turns on.
+  void _onGuide() {
+    if (!mounted || _guide?.enabled != true) return;
+    _say();
   }
 
   @override
@@ -68,6 +78,7 @@ class _VoicePromptState extends State<VoicePrompt> {
   @override
   void dispose() {
     _repeat?.cancel();
+    _guide?.removeListener(_onGuide);
     _guide?.stopIfSpeaking(this);
     super.dispose();
   }

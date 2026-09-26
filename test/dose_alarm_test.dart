@@ -145,7 +145,7 @@ void main() {
       expect(target.slot, DoseSlot.afternoon, reason: 'nearest to 13:00');
       expect(target.demo, isTrue);
       final shown = DoseAlarm.demoMedicines(target, [meftal]);
-      expect(shown.single.name, contains('DEMO'));
+      expect(shown.single.name, DoseAlarm.demoMedicine.name);
       expect(
         DoseAlarm.demoMedicines(AlarmPayload(slot: m, date: start), [telma]),
         [telma],

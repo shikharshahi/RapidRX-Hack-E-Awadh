@@ -14,8 +14,8 @@ import 'demo_records.dart';
 import 'record_checker.dart';
 import 'record_ports.dart';
 
-/// After the splash, before language. Both languages are on the screen,
-/// because none has been chosen yet.
+/// After language is chosen. [lead] is that choice; the other language
+/// stays on the screen as the smaller line.
 class RecordCheckScreen extends StatefulWidget {
   const RecordCheckScreen({
     super.key,
@@ -110,9 +110,26 @@ class _RecordCheckScreenState extends State<RecordCheckScreen> {
     return OnboardingScaffold(
       title: _lead.recordChecking,
       why: _other.recordChecking,
-      voiceText: '${_lead.recordChecking} ${_other.recordChecking}',
-      voiceLanguage: AppLanguage.hi,
-      children: const [Center(child: LoadingBar(width: 160))],
+      voiceText:
+          '${_lead.recordChecking} ${_lead.recordFetching} ${_other.recordChecking}',
+      voiceLanguage: widget.lead,
+      children: [
+        Text(
+          _lead.recordFetching,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _other.recordFetching,
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+        ),
+        const SizedBox(height: 20),
+        const Center(child: LoadingBar(width: 220)),
+      ],
     );
   }
 
@@ -135,7 +152,7 @@ class _RecordCheckScreenState extends State<RecordCheckScreen> {
       title: title,
       why: why,
       voiceText: '$title $why',
-      voiceLanguage: AppLanguage.hi,
+      voiceLanguage: widget.lead,
       children: [
         if (date != null) ...[
           Text(
@@ -178,7 +195,7 @@ class _RecordCheckScreenState extends State<RecordCheckScreen> {
       title: _lead.recordPinTitle,
       why: _other.recordPinTitle,
       voiceText: '${_lead.recordPinTitle} ${_other.recordPinTitle}',
-      voiceLanguage: AppLanguage.hi,
+      voiceLanguage: widget.lead,
       children: [
         BigTextField(
           controller: _pinController,
@@ -206,7 +223,7 @@ class _RecordCheckScreenState extends State<RecordCheckScreen> {
       why: _other.recordPinLocked(minutes),
       voiceText:
           '${_lead.recordPinLocked(minutes)} ${_other.recordPinLocked(minutes)}',
-      voiceLanguage: AppLanguage.hi,
+      voiceLanguage: widget.lead,
       children: [
         Pressable(
           child: OutlinedButton(
@@ -223,7 +240,7 @@ class _RecordCheckScreenState extends State<RecordCheckScreen> {
       title: _lead.recordCorrupt,
       why: _other.recordCorrupt,
       voiceText: '${_lead.recordCorrupt} ${_other.recordCorrupt}',
-      voiceLanguage: AppLanguage.hi,
+      voiceLanguage: widget.lead,
       children: [
         Pressable(
           child: FilledButton(

@@ -56,9 +56,9 @@ extension CaretakerStrings on AppStrings {
       pick('Enter the patient\'s code', 'मरीज़ का कोड डालें');
   String get doThisLater => pick('I\'ll do this later', 'यह बाद में करूँगा');
   String get pairingDemoHint => pick(
-    'Demo: there is no server. After scanning, the patient\'s phone shows a '
+    'There is no server. After scanning, the patient\'s phone shows a '
         '4-digit code that completes the link.',
-    'डेमो: कोई सर्वर नहीं है। स्कैन के बाद मरीज़ के फ़ोन पर 4 अंकों का '
+    'कोई सर्वर नहीं है। स्कैन के बाद मरीज़ के फ़ोन पर 4 अंकों का '
         'कोड आता है, उसी से जुड़ाव पूरा होता है।',
   );
 
@@ -130,10 +130,6 @@ extension CaretakerStrings on AppStrings {
   // ── Patient: scan caretaker QR ──────────────────────────────────────────
   String get scanCaretakerQr =>
       pick('Scan caretaker QR', 'देखभालकर्ता का QR स्कैन करें');
-  String get scanCaretakerQrWhy => pick(
-    'Link a family member or caretaker',
-    'परिवार के सदस्य या देखभालकर्ता को जोड़ें',
-  );
   String get pointCamera => pick(
     'Point the camera at the QR code on the caretaker\'s phone.',
     'कैमरा देखभालकर्ता के फ़ोन पर दिख रहे QR कोड की ओर करें।',

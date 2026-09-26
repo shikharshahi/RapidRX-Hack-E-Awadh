@@ -1,4 +1,6 @@
 {
-  "_comment": "No Firebase project is selected. Hosting site id myrapidrx is set in firebase.json. Deploy is manual and was not run.",
-  "projects": {}
+  "_comment": "Default project rapidrx-portal. Hosting site myrapidrx is reserved elsewhere.",
+  "projects": {
+    "default": "rapidrx-portal"
+  }
 }

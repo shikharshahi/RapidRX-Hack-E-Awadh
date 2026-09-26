@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/feedback/haptics.dart';
@@ -89,7 +91,11 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   Future<void> _askConsent() async {
-    if (c.visit.consent || _asked || !mounted) return;
+    if (c.visit.consent) {
+      unawaited(_dictation.available());
+      return;
+    }
+    if (_asked || !mounted) return;
     _asked = true;
     final ok = await widget.consent(context);
     if (!mounted) return;
@@ -99,6 +105,8 @@ class _WizardScreenState extends State<WizardScreen> {
     }
     c.visit.consent = true;
     await c.repository.save(c.visit);
+    // Ready before Speak is tapped, so the browser still counts that tap.
+    unawaited(_dictation.available());
   }
 
   void _changed() => setState(() {});
@@ -153,6 +161,21 @@ class _WizardScreenState extends State<WizardScreen> {
     WizardStep.placement => s.placementTitle,
   };
 
+  /// What Kokoro reads: the question and why, not only the app-bar title.
+  String _spoken(AppStrings s) {
+    final why = switch (c.step) {
+      WizardStep.doctorWords => s.doctorWordsWhy,
+      WizardStep.doctorTakeaways => s.takeawaysWhy,
+      WizardStep.photos => s.photosWhy,
+      WizardStep.pharmacyWords => s.pharmacyWhy,
+      WizardStep.medicines => s.medicinesWhy,
+      WizardStep.placement => s.placementWhy,
+      _ => null,
+    };
+    final title = _title(s);
+    return why == null ? title : '$title $why';
+  }
+
   Widget _body() => switch (c.step) {
     WizardStep.doctorWords => WordsStep(
       key: const ValueKey('doctor'),
@@ -204,7 +227,7 @@ class _WizardScreenState extends State<WizardScreen> {
       },
       child: VoicePrompt(
         key: ValueKey(c.step),
-        text: _title(s),
+        text: _spoken(s),
         child: Scaffold(
           appBar: AppBar(
             title: Text(_title(s)),

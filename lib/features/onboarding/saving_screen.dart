@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/rx_logo.dart';
 import 'splash_screen.dart';
 
@@ -43,7 +44,9 @@ class _SavingScreenState extends State<SavingScreen> {
   @override
   Widget build(BuildContext context) {
     final s = L10n.of(context);
-    return Scaffold(
+    return VoicePrompt(
+      text: s.savingPreference,
+      child: Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -60,6 +63,7 @@ class _SavingScreenState extends State<SavingScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

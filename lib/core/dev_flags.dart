@@ -12,9 +12,10 @@ abstract final class DevFlags {
 
   /// Let the voice guide speak.
   ///
-  /// Off by default during development: a screen that talks every ten seconds
+  /// On for the demo: Yes on the voice screen reads every later page. Turn
+  /// it off only while debugging — a screen that talks every ten seconds
   /// while you are reading a stack trace is its own kind of punishment.
-  static const bool voiceEnabled = false;
+  static const bool voiceEnabled = true;
 
   /// Show the "Demo" link on the patient menu: fire the dose alarm now, or
   /// in fifteen seconds so it can be watched waking a locked phone.

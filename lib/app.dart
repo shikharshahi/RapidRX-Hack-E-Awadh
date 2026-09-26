@@ -78,7 +78,7 @@ class RapidRxApp extends StatefulWidget {
   /// real three-second `Future.delayed` under fake test time hangs forever.
   final Duration stageDelay;
 
-  /// How long "Checking for your medical records…" stays up. Same reason.
+  /// How long the device record check stays up. Same reason.
   final Duration recordCheckDelay;
 
   final bool showSplash;
@@ -145,14 +145,21 @@ class _RapidRxAppState extends State<RapidRxApp> {
     unawaited(_state.sync!.drainNow());
   }
 
-  /// Voice speaks only when the build allows it and the user asked for it.
+  /// Voice speaks when the user asked for it, and through onboarding until
+  /// they answer that question. The language screen comes first; it cannot
+  /// wait for a Yes they have not heard.
   void _syncVoice() {
-    final on = DevFlags.voiceEnabled && _state.voiceHelp;
+    final beforeAnswer = _stage.index <= _Stage.voice.index;
+    final on = DevFlags.voiceEnabled && (beforeAnswer || _state.voiceHelp);
     if (_voice.enabled && !on) _voice.stopAll();
     _voice.enabled = on;
   }
 
   late _Stage _stage = widget.showSplash ? _Stage.splash : _resume();
+
+  /// Set when language was just chosen, so the device check that follows
+  /// returns to "saving" instead of asking for a language again.
+  bool _languageJustChosen = false;
 
   // Held between screens during onboarding, written once confirmed.
   String? _phone;
@@ -163,6 +170,15 @@ class _RapidRxAppState extends State<RapidRxApp> {
 
   // This State sits above the L10n scope, so it builds its own strings.
   AppStrings get _strings => AppStrings(_state.language);
+
+  /// Demo values while [DevFlags.demoTools] is on. Null in a store build.
+  String? _demo(String value) => DevFlags.demoTools ? value : null;
+
+  /// Language before the device check: nothing is chosen yet, or this build
+  /// shows onboarding on every launch.
+  bool get _askLanguageFirst =>
+      _prefs.language == null ||
+      (DevFlags.alwaysShowOnboarding && !widget.resumeOnboarding);
 
   /// Where to pick up on launch, in this exact order.
   _Stage _resume() {
@@ -193,7 +209,10 @@ class _RapidRxAppState extends State<RapidRxApp> {
     return _Stage.ready;
   }
 
-  void _go(_Stage stage) => setState(() => _stage = stage);
+  void _go(_Stage stage) {
+    setState(() => _stage = stage);
+    _syncVoice();
+  }
 
   @override
   void dispose() {
@@ -235,14 +254,23 @@ class _RapidRxAppState extends State<RapidRxApp> {
       case _Stage.splash:
         return SplashScreen(
           duration: widget.stageDelay,
-          onDone: () => _go(_Stage.recordCheck),
+          onDone: () =>
+              _go(_askLanguageFirst ? _Stage.language : _Stage.recordCheck),
         );
 
       case _Stage.recordCheck:
         return RecordCheckScreen(
           duration: widget.recordCheckDelay,
+          lead: _state.language,
           checker: _records ??= RecordChecker(prefs: _prefs),
-          onContinue: () => _go(_resume()),
+          onContinue: () {
+            if (_languageJustChosen) {
+              _languageJustChosen = false;
+              _go(_Stage.saving);
+              return;
+            }
+            _go(_resume());
+          },
           onDemo: () {
             unawaited(_enterDemo());
           },
@@ -252,7 +280,8 @@ class _RapidRxAppState extends State<RapidRxApp> {
         return LanguageScreen(
           onChosen: (language) async {
             await _state.setLanguage(language);
-            _go(_Stage.saving);
+            _languageJustChosen = true;
+            _go(_Stage.recordCheck);
           },
         );
 
@@ -273,7 +302,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
 
       case _Stage.phone:
         return PhoneScreen(
-          initial: _phone ?? _prefs.phoneNumber,
+          initial: _phone ?? _prefs.phoneNumber ?? _demo('9876543210'),
           onSubmitted: (phone) {
             _phone = phone;
             _go(_Stage.phoneOtp);
@@ -283,6 +312,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
       case _Stage.phoneOtp:
         return OtpScreen(
           phone: _phone ?? '',
+          initial: _demo(demoOtp),
           onVerified: () async {
             await _prefs.setPhoneNumber(_phone!);
             _go(_Stage.profile);
@@ -291,7 +321,8 @@ class _RapidRxAppState extends State<RapidRxApp> {
 
       case _Stage.profile:
         return ProfileScreen(
-          initialName: _prefs.name,
+          // Same person the demo PM-JAY ID resolves to.
+          initialName: _prefs.name ?? _demo('Geeta Mishra'),
           onSubmitted: (name) async {
             await _prefs.setName(name);
             _go(_Stage.pin);
@@ -301,6 +332,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
       case _Stage.pin:
         return PinScreen(
           errorText: _pinError,
+          initial: _demo('1234'),
           onSubmitted: (pin) {
             _pendingPin = pin;
             _pinError = null;
@@ -311,6 +343,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
       case _Stage.pinConfirm:
         return PinScreen(
           confirming: true,
+          initial: _demo('1234'),
           onSubmitted: (pin) async {
             if (pin != _pendingPin) {
               Haptics.error();
@@ -338,6 +371,10 @@ class _RapidRxAppState extends State<RapidRxApp> {
             pmjay: widget.pmjay,
             sync: _state.sync,
           ),
+          seedAge: _demo('64'),
+          seedHeight: _demo('165'),
+          seedWeight: _demo('58'),
+          seedPmjay: _demo(MockPmjayClient.demoId),
           onDone: () => _go(_Stage.ready),
         );
 
@@ -371,11 +408,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
         return switch (_state.role) {
           // "Change who is using the app" from a home screen lands here.
           null => RoleScreen(onChosen: _roleChosen),
-          AppRole.patient => PatientMenu(
-            onRestart: _restart,
-            demoUser: _prefs.demoUser,
-            onLeaveDemo: _prefs.demoUser ? () => unawaited(_leaveDemo()) : null,
-          ),
+          AppRole.patient => PatientMenu(onRestart: _restart),
           AppRole.caregiver => CaregiverHome(onRestart: _restart),
         };
     }
@@ -403,15 +436,6 @@ class _RapidRxAppState extends State<RapidRxApp> {
     await _state.setVoiceHelp(_prefs.voiceHelp ?? false);
     await _state.setRole(_prefs.role);
     if (mounted) _go(_Stage.ready);
-  }
-
-  Future<void> _leaveDemo() async {
-    final store = await SecureRecordStore.open();
-    await store.wipe(andBackup: _prefs.demoOwnsBackup);
-    await _prefs.clearIdentity();
-    await _state.setRole(null);
-    _phone = null;
-    if (mounted) _go(_Stage.language);
   }
 
   Future<void> _restart() async {

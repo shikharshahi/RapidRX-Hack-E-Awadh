@@ -42,19 +42,9 @@ class _FoundCardBannerState extends State<FoundCardBanner> {
           children: [
             Text(s.pmjayFoundLater, style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${card.name} · ${card.pmjayId}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (card.demo) Pill(s.demoData, tone: PillTone.warn),
-              ],
+            Text(
+              '${card.name} · ${card.pmjayId}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
             Row(

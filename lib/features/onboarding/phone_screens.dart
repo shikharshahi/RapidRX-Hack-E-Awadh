@@ -75,18 +75,20 @@ class OtpScreen extends StatefulWidget {
     required this.phone,
     required this.onVerified,
     this.title,
+    this.initial,
   });
 
   final String phone;
   final VoidCallback onVerified;
   final String? title;
+  final String? initial;
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final _controller = TextEditingController();
+  late final _controller = TextEditingController(text: widget.initial);
   String? _error;
 
   @override
@@ -195,18 +197,20 @@ class PinScreen extends StatefulWidget {
     required this.onSubmitted,
     this.confirming = false,
     this.errorText,
+    this.initial,
   });
 
   final ValueChanged<String> onSubmitted;
   final bool confirming;
   final String? errorText;
+  final String? initial;
 
   @override
   State<PinScreen> createState() => _PinScreenState();
 }
 
 class _PinScreenState extends State<PinScreen> {
-  final _controller = TextEditingController();
+  late final _controller = TextEditingController(text: widget.initial);
   String? _error;
 
   @override

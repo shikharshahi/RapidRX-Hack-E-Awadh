@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/dev_flags.dart';
 import '../../core/l10n/l10n.dart';
-import '../../core/feedback/pressable.dart';
 import '../../core/l10n/strings_alarm.dart';
 import '../../core/l10n/strings_calls.dart';
-import '../../core/l10n/strings_records.dart';
 import '../../core/l10n/strings_caretaker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -49,17 +47,11 @@ class PatientMenu extends StatelessWidget {
     this.onNewPrescription,
     this.onSchedule,
     this.demoTools = DevFlags.demoTools,
-    this.demoUser = false,
-    this.onLeaveDemo,
   });
 
   final VoidCallback onRestart;
   final VoidCallback? onNewPrescription;
   final VoidCallback? onSchedule;
-
-  /// The fixture patient. Shows the label and [onLeaveDemo].
-  final bool demoUser;
-  final VoidCallback? onLeaveDemo;
 
   /// The small "Demo" link under the tiles (DevFlags.demoTools).
   final bool demoTools;
@@ -71,25 +63,21 @@ class PatientMenu extends StatelessWidget {
       _MenuTile(
         icon: Icons.add_a_photo_outlined,
         title: s.newPrescription,
-        subtitle: s.newPrescriptionWhy,
         onTap: onNewPrescription ?? () => openWizard(context),
       ),
       _MenuTile(
         icon: Icons.description_outlined,
         title: s.myPrescriptions,
-        subtitle: s.myPrescriptionsWhy,
         onTap: () => openPrescriptions(context),
       ),
       _MenuTile(
         icon: Icons.schedule_rounded,
         title: s.medicineSchedule,
-        subtitle: s.medicineScheduleWhy,
         onTap: onSchedule ?? () => openSchedule(context),
       ),
       _MenuTile(
         icon: Icons.qr_code_scanner_rounded,
         title: s.scanCaretakerQr,
-        subtitle: s.scanCaretakerQrWhy,
         onTap: () => openScanCaretaker(context),
       ),
     ];
@@ -120,16 +108,9 @@ class PatientMenu extends StatelessWidget {
                 // The demo link sits below the tiles, and must not push them
                 // off the screen.
                 final footer = demoTools ? _DemoLink.height : 0.0;
-                // The demo label is taller than the fit check's header allowance.
-                // Count it, or the tiles squash and overflow.
-                final demoExtra = demoUser ? 160.0 : 0.0;
                 final n = tiles.length;
                 final fits =
-                    (constraints.maxHeight -
-                            header -
-                            demoExtra -
-                            footer -
-                            16 * (n - 1)) /
+                    (constraints.maxHeight - header - footer - 16 * (n - 1)) /
                         n >=
                     minTile;
                 final heading = Padding(
@@ -139,8 +120,6 @@ class PatientMenu extends StatelessWidget {
                     children: [
                       // A PM-JAY card found after an offline lookup.
                       const FoundCardBanner(),
-                      if (demoUser && onLeaveDemo != null)
-                        _DemoUserBar(onLeave: onLeaveDemo!),
                       Text(
                         s.menuQuestion,
                         style: Theme.of(context).textTheme.titleLarge,
@@ -148,8 +127,7 @@ class PatientMenu extends StatelessWidget {
                     ],
                   ),
                 );
-                // The demo label does not fit in the no-scroll column. Scroll.
-                if (!fits || demoUser) {
+                if (!fits) {
                   return ListView(
                     children: [
                       heading,
@@ -158,7 +136,7 @@ class PatientMenu extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: SizedBox(
                             // 132 leaves the inner column at 104 after the tile's padding.
-                            height: demoUser ? 200 : minTile,
+                            height: minTile,
                             child: t,
                           ),
                         ),
@@ -307,95 +285,39 @@ Future<void> openWizard(BuildContext context) async {
   );
 }
 
-/// The fixture patient: a label, and a way back to a normal empty phone.
-class _DemoUserBar extends StatelessWidget {
-  const _DemoUserBar({required this.onLeave});
-
-  final VoidCallback onLeave;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = L10n.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.amberSoft,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.amberBorder),
-            ),
-            child: Text(
-              s.recordDemoUser,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-          ),
-          const Spacer(),
-          Pressable(
-            child: TextButton(
-              style: TextButton.styleFrom(minimumSize: const Size(64, 64)),
-              onPressed: onLeave,
-              child: Text(s.recordLeaveDemo),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Demo tools, kept small and out of the patient's way: one link under the
-/// tiles, which opens a sheet: the dose alarm, and a call to the number
-/// already on the profile.
+/// Demo tools, kept small and out of the patient's way: the dose alarm, and
+/// Demo Medicine Call.
 class _DemoLink extends StatelessWidget {
   const _DemoLink();
 
-  static const height = 64.0;
+  static const height = 96.0;
 
   @override
   Widget build(BuildContext context) {
     final s = L10n.of(context);
+    final style = TextButton.styleFrom(
+      minimumSize: const Size.fromHeight(48),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+    );
     return SizedBox(
       height: height,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.hairline,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                s.demoSection.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.muted,
-                  letterSpacing: 1,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: TextButton.icon(
-                icon: const Icon(Icons.alarm_rounded),
-                label: Text(s.doseDemo, overflow: TextOverflow.ellipsis),
-                onPressed: () => _showDemoSheet(context),
-              ),
-            ),
-            Flexible(
-              child: TextButton.icon(
-                icon: const Icon(Icons.call_outlined),
-                label: Text(s.callDemo, overflow: TextOverflow.ellipsis),
-                onPressed: () => openCallDemo(context),
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextButton.icon(
+            style: style,
+            icon: const Icon(Icons.alarm_rounded),
+            label: Text(s.doseDemo),
+            onPressed: () => _showDemoSheet(context),
+          ),
+          TextButton.icon(
+            style: style,
+            icon: const Icon(Icons.medication_rounded),
+            label: Text(s.callDemo),
+            onPressed: () => openCallDemo(context),
+          ),
+        ],
       ),
     );
   }
@@ -450,13 +372,11 @@ class _MenuTile extends StatelessWidget {
   const _MenuTile({
     required this.icon,
     required this.title,
-    required this.subtitle,
     this.onTap,
   });
 
   final IconData icon;
   final String title;
-  final String subtitle;
   final VoidCallback? onTap;
 
   @override
@@ -464,7 +384,6 @@ class _MenuTile extends StatelessWidget {
     return BigChoiceTile(
       icon: icon,
       title: title,
-      subtitle: subtitle,
       onTap: onTap,
       iconSize: 60,
       titleStyle: Theme.of(context).textTheme.titleLarge

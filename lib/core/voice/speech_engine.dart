@@ -57,8 +57,9 @@ class AudioPlayersSink implements AudioSink {
 ///
 /// Measured against the real Space, a warm sentence takes five to seven
 /// seconds end to end, and an uncached DNS lookup alone can take eleven (see
-/// docs/GOTCHAS.md). Silence that long reads as a broken app, so a live fetch
-/// gets [liveDeadline] and then steps aside for the next engine. The fetch is
+/// docs/GOTCHAS.md). A deadline shorter than that marks Kokoro slow on the
+/// first page, and every later page skips it. [liveDeadline] waits long
+/// enough for that fetch, then steps aside for the next engine. The fetch is
 /// not abandoned: it finishes in [KokoroTts], lands in the cache, and the
 /// next time the sentence is due it plays from there. A late result is never
 /// played — by then another voice has already said it.
@@ -70,7 +71,7 @@ class KokoroEngine implements SpeechEngine {
   KokoroEngine({
     KokoroTts? tts,
     AudioSink? sink,
-    this.liveDeadline = const Duration(seconds: 4),
+    this.liveDeadline = const Duration(seconds: 20),
   }) : _tts = tts ?? KokoroTts(),
        _sink = sink ?? AudioPlayersSink();
 
@@ -189,50 +190,44 @@ class KokoroEngine implements SpeechEngine {
   }
 }
 
-/// The phone's own TTS. A fallback: robotic, and often without a Hindi voice.
+/// The phone's own TTS. Speaks even when the requested language is missing:
+/// a default voice is better than a silent page.
 class DeviceTtsEngine implements SpeechEngine {
   FlutterTts? _lazy;
   FlutterTts get _tts => _lazy ??= FlutterTts();
 
-  final _supported = <AppLanguage, bool>{};
+  bool _prepared = false;
 
   @override
   String get name => 'device';
 
+  /// Once, after the engine exists: speech stream and a normal rate.
+  /// Navigation usage is what Android will still play during onboarding.
+  Future<void> _prepare() async {
+    if (_prepared) return;
+    _prepared = true;
+    final tts = _tts;
+    try {
+      await tts.setAudioAttributesForNavigation();
+    } catch (_) {}
+    await tts.setVolume(1);
+    await tts.setSpeechRate(0.5);
+    await tts.setPitch(1);
+  }
+
   @override
   Future<SpeakResult> speak(String text, AppLanguage language) async {
     try {
-      if (!await _supports(language)) {
-        return SpeakResult.missed(name, SpeechMiss.noVoice);
+      await _prepare();
+      final set = await _tts.setLanguage(language.locale);
+      if (set != 1) {
+        final broad = await _tts.setLanguage(language.code);
+        if (broad != 1) await _tts.setLanguage('en-US');
       }
-      await _tts.setLanguage(language.locale);
-      await _tts.setSpeechRate(.45);
-      await _tts.speak(text);
+      await _tts.speak(text, focus: true);
       return SpeakResult.spoke(name);
     } catch (_) {
       return SpeakResult.missed(name, SpeechMiss.error);
-    }
-  }
-
-  /// `getLanguages` returns empty on the first call on the web, which once made
-  /// the app announce "no voice" on a browser that had one. Consult the voices
-  /// too, and when both are empty, try anyway.
-  Future<bool> _supports(AppLanguage language) async {
-    final known = _supported[language];
-    if (known != null) return known;
-    try {
-      final languages = (await _tts.getLanguages as List?) ?? const [];
-      final voices = (await _tts.getVoices as List?) ?? const [];
-      if (languages.isEmpty && voices.isEmpty) return true; // optimistic
-      final code = language.code;
-      bool matches(Object? v) =>
-          v.toString().toLowerCase().replaceAll('_', '-').startsWith(code);
-      final ok =
-          languages.any(matches) ||
-          voices.any((v) => v is Map && matches(v['locale']));
-      return _supported[language] = ok;
-    } catch (_) {
-      return true;
     }
   }
 

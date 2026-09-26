@@ -28,6 +28,7 @@ void main() {
     prefs: p,
     showSplash: false,
     stageDelay: const Duration(milliseconds: 10),
+    recordCheckDelay: const Duration(milliseconds: 10),
     pmjay: MockPmjayClient(delay: Duration.zero),
     resumeOnboarding: resume,
     enableSync: false,
@@ -45,6 +46,17 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(p.language?.code, 'hi');
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump();
+    expect(
+      find.text(
+        'इस फ़ोन पर कोई सेव मेडिकल फ़ाइल नहीं मिली। एक नमूना प्रोफ़ाइल खोलें?',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('No · नहीं'));
+    await tester.pump();
+    await tester.pump();
     expect(find.text('आपकी पसंद सेव हो रही है…'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 20));
     await tester.pump();

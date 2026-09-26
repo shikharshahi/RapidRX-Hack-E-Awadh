@@ -12,12 +12,12 @@ extension AlarmStrings on AppStrings {
     'सेव नहीं हुआ। दवाई अभी बाकी है।',
   );
   String get alarmDemoBanner => pick(
-    'Demo — nothing on this screen is saved',
-    'डेमो — इस स्क्रीन से कुछ सेव नहीं होगा',
+    'Nothing on this screen is saved',
+    'इस स्क्रीन से कुछ सेव नहीं होगा',
   );
   String get alarmDemoDone => pick(
-    'Demo finished. Nothing was saved.',
-    'डेमो पूरा हुआ। कुछ सेव नहीं हुआ।',
+    'Nothing was saved.',
+    'कुछ सेव नहीं हुआ।',
   );
   String get alarmOneTablet => pick('one tablet', 'एक गोली');
   String get alarmPressYesOrNo => pick(
@@ -35,8 +35,7 @@ extension AlarmStrings on AppStrings {
   };
 
   // ── Demo tools (DevFlags.demoTools) ────────────────────────────────────
-  String get demoSection => pick('Demo', 'डेमो');
-  String get doseDemo => pick('Dose demo', 'दवाई अलार्म डेमो');
+  String get doseDemo => pick('Medicine alarm', 'दवाई अलार्म');
   String get doseDemoNow => pick('Show the alarm now', 'अलार्म अभी दिखाएँ');
   String get doseDemoRing => pick('Ring in 15 seconds', '15 सेकंड में बजाएँ');
   String get doseDemoRingWhy => pick(

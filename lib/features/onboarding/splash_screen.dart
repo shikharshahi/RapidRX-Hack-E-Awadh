@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/l10n/app_language.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/rx_logo.dart';
 
 /// Three seconds: the mark, the name, and the tagline — first in English, then
@@ -55,7 +56,12 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final strings = AppStrings(_showing);
-    return Scaffold(
+    final en = AppStrings(AppLanguage.en);
+    final hi = AppStrings(AppLanguage.hi);
+    return VoicePrompt(
+      text: '${en.appName}. ${en.tagline}. ${hi.tagline}',
+      language: AppLanguage.en,
+      child: Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -80,6 +86,7 @@ class _SplashScreenState extends State<SplashScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

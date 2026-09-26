@@ -52,11 +52,12 @@ class _PatientScanScreenState extends State<PatientScanScreen> {
   @override
   void dispose() {
     p.removeListener(_changed);
-    _scanner.dispose();
     _typed.dispose();
     _pin.dispose();
     _pinAgain.dispose();
     super.dispose();
+    // After the torch button has dropped its listener.
+    _scanner.dispose();
   }
 
   void _submitScan(String raw) {
@@ -112,9 +113,8 @@ class _PatientScanScreenState extends State<PatientScanScreen> {
       children: [
         SizedBox(
           height: 220,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: _scanner.view(
+          child: _viewfinder(
+            _scanner.view(
               onCode: _submitScan,
               problem: (why) => _problem(why, s),
             ),
@@ -164,6 +164,13 @@ class _PatientScanScreenState extends State<PatientScanScreen> {
         ),
       ],
     );
+  }
+
+  /// A rounded clip blanks the Android camera texture, so the live preview
+  /// stays square. The "cannot scan" box is not a texture.
+  Widget _viewfinder(Widget child) {
+    if (_scanner.supported) return child;
+    return ClipRRect(borderRadius: BorderRadius.circular(16), child: child);
   }
 
   Widget _problem(ScanProblem why, AppStrings s) {

@@ -4,23 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fffdf5">
-  <title>Family overview · RapidRX</title>
+  <title>RapidRX — download the APK</title>
+  <link rel="icon" href="logo_mark.png">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body data-page="overview">
-  <header class="wrap">
-    <p class="brand">RapidRX</p>
-    <nav aria-label="Portal">
-      <a href="index.html" aria-current="page">Overview</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="apk.html">APK</a>
-      <a href="demo.html">Demo</a>
-    </nav>
-  </header>
-  <main class="wrap" id="main">
-    <h1>Family overview</h1>
-    <div id="panel"><p>Loading…</p></div>
-  </main>
-  <script src="app.js"></script>
+<body>
+  <div class="phone">
+    <header class="appbar">
+      <img src="logo_mark.png" alt="" width="40" height="40">
+      <div>
+        <span class="name">RapidRX</span>
+        <span class="tag">Android app</span>
+      </div>
+    </header>
+    <main class="screen scroll">
+      <div class="qr-card">
+        <h1>Install on your phone</h1>
+        <p class="hint">Point the camera at the code</p>
+        <div class="qr-frame">
+          <img src="apk-qr.png" width="328" height="328" alt="QR code. Scan to download the RapidRX Android APK.">
+        </div>
+        <a class="btn amber" href="rapidrx.package" download="rapidrx.apk">Download rapidrx.apk</a>
+        <p class="hint" id="apk-meta">Version 1.0.0 (build 1)</p>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

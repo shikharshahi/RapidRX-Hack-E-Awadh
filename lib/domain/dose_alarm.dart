@@ -69,11 +69,10 @@ class AlarmPayload {
 
 /// The decisions behind the alarm screen. Pure, like the planner.
 abstract final class DoseAlarm {
-  /// The medicine shown when the schedule has nothing to ring for. Its name
-  /// says what it is, in English letters, like every medicine name.
+  /// The medicine shown when the schedule has nothing to ring for.
   static final demoMedicine = ScheduledMedicine(
     id: 'demo-medicine',
-    name: 'DEMO MEDICINE 500',
+    name: 'TELMA 40',
     sig: const Sig(slots: [DoseSlot.morning], food: FoodTiming.after),
     startDate: DateTime(2026),
   );

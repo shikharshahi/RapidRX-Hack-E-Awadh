@@ -14,6 +14,7 @@ class FakeEngine implements SpeechEngine {
   final spoken = <String>[];
   int stops = 0;
   Completer<void>? stopGate;
+  Completer<void>? speakGate;
 
   @override
   String get name => 'fake';
@@ -21,6 +22,7 @@ class FakeEngine implements SpeechEngine {
   @override
   Future<SpeakResult> speak(String text, AppLanguage language) async {
     spoken.add(text);
+    if (speakGate != null) await speakGate!.future;
     return SpeakResult.spoke(name);
   }
 
@@ -84,6 +86,20 @@ void main() {
       expect(engine.spoken.last, 'third');
     });
 
+    test('a repeat of the same sentence does not cancel the one in flight', () async {
+      final owner = Object();
+      engine.speakGate = Completer<void>();
+      final first = guide.speak(owner, 'hello', AppLanguage.en);
+      await Future<void>.delayed(Duration.zero);
+      final second = guide.speak(owner, 'hello', AppLanguage.en);
+      expect(engine.stops, 0);
+      expect(engine.spoken, ['hello']);
+      engine.speakGate!.complete();
+      final results = await Future.wait([first, second]);
+      expect(results[0]?.spokenBy, 'fake');
+      expect(identical(results[0], results[1]), isTrue);
+    });
+
     test('nothing is spoken while voice help is off', () async {
       guide.enabled = false;
       await guide.speak(Object(), 'hello', AppLanguage.en);
@@ -115,6 +131,21 @@ void main() {
       await tester.pumpWidget(host(const SizedBox()));
       await tester.pump(const Duration(seconds: 30));
       expect(engine.spoken, hasLength(2), reason: 'stops repeating once gone');
+    });
+
+    testWidgets('speaks the page already showing when voice is turned on', (
+      tester,
+    ) async {
+      guide.enabled = false;
+      await tester.pumpWidget(
+        host(const VoicePrompt(text: 'hello', child: SizedBox())),
+      );
+      await tester.pump();
+      expect(engine.spoken, isEmpty);
+
+      guide.enabled = true;
+      await tester.pump();
+      expect(engine.spoken, ['hello']);
     });
 
     testWidgets('replacing the screen hands the voice over', (tester) async {

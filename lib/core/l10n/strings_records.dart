@@ -1,13 +1,14 @@
 import 'app_strings.dart';
 
-/// The record check, before a language has been chosen. The screen shows the
-/// English and the Hindi of each line together; [pick] is what a later screen
-/// uses once a language exists.
+/// The record check. The chosen language leads; the other language is the
+/// smaller line under it. [pick] is that lead.
 extension RecordStrings on AppStrings {
   String get recordChecking => pick(
-    'Checking for your medical records…',
-    'आपकी मेडिकल फ़ाइलें खोजी जा रही हैं…',
+    'Checking Your Device For Pre-Existing Medical Record',
+    'आपके डिवाइस पर पहले से मौजूद मेडिकल रिकॉर्ड जाँचे जा रहे हैं',
   );
+
+  String get recordFetching => pick('Fetching Now', 'अभी लाया जा रहा है');
 
   String get recordRestoreQuestion => pick(
     'Previous medical files found. Restore and sync them?',
@@ -25,8 +26,8 @@ extension RecordStrings on AppStrings {
   );
 
   String get recordDemoQuestion => pick(
-    'No saved medical files on this phone. Load the demo user?',
-    'इस फ़ोन पर कोई सेव मेडिकल फ़ाइल नहीं मिली। डेमो उपयोगकर्ता खोलें?',
+    'No saved medical files on this phone. Load a sample profile?',
+    'इस फ़ोन पर कोई सेव मेडिकल फ़ाइल नहीं मिली। एक नमूना प्रोफ़ाइल खोलें?',
   );
 
   String get recordYes => 'Yes · हाँ';
@@ -53,8 +54,4 @@ extension RecordStrings on AppStrings {
   );
 
   String get recordContinue => 'Continue · आगे बढ़ें';
-
-  String get recordDemoUser => pick('Demo user', 'डेमो उपयोगकर्ता');
-
-  String get recordLeaveDemo => pick('Leave demo', 'डेमो छोड़ें');
 }

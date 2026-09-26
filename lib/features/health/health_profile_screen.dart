@@ -18,24 +18,46 @@ class HealthProfileScreen extends StatefulWidget {
     super.key,
     required this.controller,
     required this.onDone,
+    this.seedAge,
+    this.seedHeight,
+    this.seedWeight,
+    this.seedPmjay,
   });
 
   final HealthProfileController controller;
   final VoidCallback onDone;
+
+  /// Shown only when nothing is saved yet. The live demo passes these;
+  /// screenshots leave them null.
+  final String? seedAge;
+  final String? seedHeight;
+  final String? seedWeight;
+  final String? seedPmjay;
 
   @override
   State<HealthProfileScreen> createState() => _HealthProfileScreenState();
 }
 
 class _HealthProfileScreenState extends State<HealthProfileScreen> {
-  late final _age = TextEditingController(text: _s(c.prefs.age));
-  late final _height = TextEditingController(text: _s(c.prefs.heightCm));
-  late final _weight = TextEditingController(text: _s(c.prefs.weightKg));
-  late final _ayushman = TextEditingController(text: c.prefs.ayushmanId);
+  late final _age = TextEditingController(
+    text: _seed(_s(c.prefs.age), widget.seedAge),
+  );
+  late final _height = TextEditingController(
+    text: _seed(_s(c.prefs.heightCm), widget.seedHeight),
+  );
+  late final _weight = TextEditingController(
+    text: _seed(_s(c.prefs.weightKg), widget.seedWeight),
+  );
+  late final _ayushman = TextEditingController(
+    text: _seed(c.prefs.ayushmanId, widget.seedPmjay),
+  );
 
   HealthProfileController get c => widget.controller;
 
   static String _s(int? v) => v?.toString() ?? '';
+
+  static String _seed(String? saved, String? seed) =>
+      (saved != null && saved.isNotEmpty) ? saved : (seed ?? '');
 
   @override
   void initState() {
@@ -225,12 +247,7 @@ class _CardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text(card.name, style: text.titleLarge)),
-              if (card.demo) Pill(s.demoData, tone: PillTone.warn),
-            ],
-          ),
+          Text(card.name, style: text.titleLarge),
           const SizedBox(height: 8),
           _row(s.pmjayIdLabel, card.pmjayId),
           _row(s.familyIdLabel, card.familyId),

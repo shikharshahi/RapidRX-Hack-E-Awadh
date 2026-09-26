@@ -51,10 +51,8 @@ class AppStrings {
   // ── Phone and OTP ───────────────────────────────────────────────────────
   String get phoneTitle => _t('Your mobile number', 'आपका मोबाइल नंबर');
   String get phoneWhy => _t(
-    'Used to link your family member’s phone later. '
-        'No SMS is sent in this demo.',
-    'बाद में आपके परिवार के सदस्य का फ़ोन जोड़ने के लिए। '
-        'इस डेमो में कोई SMS नहीं भेजा जाता।',
+    'Used to link your family member’s phone later. No SMS is sent.',
+    'बाद में आपके परिवार के सदस्य का फ़ोन जोड़ने के लिए। कोई SMS नहीं भेजा जाता।',
   );
   String get phoneHint => _t('Mobile number', 'मोबाइल नंबर');
   String get phoneInvalid =>
@@ -70,8 +68,7 @@ class AppStrings {
     'That code is not right. Try again.',
     'यह कोड सही नहीं है। फिर से लिखें।',
   );
-  String get otpDemoHint =>
-      _t('Demo build: the code is 1234', 'डेमो: कोड 1234 है');
+  String get otpDemoHint => _t('The code is 1234', 'कोड 1234 है');
   String get verify => _t('Verify', 'जाँचें');
 
   // ── Profile ─────────────────────────────────────────────────────────────
@@ -119,16 +116,8 @@ class AppStrings {
   String get menuQuestion =>
       _t('What would you like to do?', 'आप क्या करना चाहते हैं?');
   String get newPrescription => _t('New prescription', 'नई पर्ची');
-  String get newPrescriptionWhy => _t(
-    'Photograph a prescription, bill or strip',
-    'पर्ची, बिल या दवाई के पत्ते की फ़ोटो लें',
-  );
   String get myPrescriptions => _t('My prescriptions', 'मेरी पर्चियाँ');
-  String get myPrescriptionsWhy =>
-      _t('Everything added so far', 'अब तक जोड़ी गई सब पर्चियाँ');
   String get medicineSchedule => _t('Medicine schedule', 'दवाई का समय');
-  String get medicineScheduleWhy =>
-      _t('What to take today, and when', 'आज क्या और कब लेना है');
   String get noPrescriptionsYet => _t(
     'No prescriptions yet. Add one to build your daily plan.',
     'अभी कोई पर्ची नहीं है। एक जोड़िए, फिर रोज़ का प्लान बनेगा।',
@@ -629,7 +618,6 @@ class AppStrings {
     'No card was found for this ID. Check the number on your card.',
     'इस आईडी से कोई कार्ड नहीं मिला। कार्ड पर लिखा नंबर जाँच लें।',
   );
-  String get demoData => _t('Demo data', 'डेमो डेटा');
   String get pmjayIdLabel => _t('PM-JAY ID', 'PM-JAY आईडी');
   String get familyIdLabel => _t('Family ID', 'परिवार आईडी');
   String get stateLabel => _t('State', 'राज्य');

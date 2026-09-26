@@ -22,7 +22,8 @@ function Get-DartDefines {
     'GEMINI_API_KEY',
     'TWILIO_ACCOUNT_SID',
     'TWILIO_AUTH_TOKEN',
-    'TWILIO_WHATSAPP_FROM'
+    'TWILIO_WHATSAPP_FROM',
+    'BAY_URL'
   )
   $values = [ordered]@{}
   foreach ($name in $names) {

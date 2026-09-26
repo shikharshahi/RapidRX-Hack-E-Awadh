@@ -17,9 +17,9 @@ enum ScanProblem {
   failed,
 }
 
-/// Scan a QR code with the camera. `mobile_scanner` on the phone; everywhere
-/// else an honest "this device cannot scan", and the screen offers the typed
-/// code instead. It never pretends a scan happened.
+/// Scan a QR code with the camera. `mobile_scanner` on the phone and on the
+/// web; Windows and the test runner say they cannot scan, and the screen
+/// offers the typed code instead. It never pretends a scan happened.
 abstract class QrScanner {
   factory QrScanner() => platform.createQrScanner();
 

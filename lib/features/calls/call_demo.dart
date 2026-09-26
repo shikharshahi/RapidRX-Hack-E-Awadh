@@ -1,41 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/app_state.dart';
-import '../../core/l10n/l10n.dart';
-import '../../core/l10n/strings_calls.dart';
 import '../../domain/dose_alarm.dart';
 import '../caregiver/whatsapp_alerts.dart';
 import '../doses/dose_log_store.dart';
 import '../medicines/medicine_store.dart';
-import 'call_gateway.dart';
+import 'medicine_demo.dart';
 
-/// Demo tools only. Confirms, then asks the gateway. An empty function URL
-/// shows that calls are not configured and does not pretend one went out.
+/// Demo Medicine Call. Shows the due medicines as big pictures and pill
+/// counts, then asks the laptop bay to send one WhatsApp and add one
+/// notification. The Twilio token stays on that server.
 Future<void> openCallDemo(
   BuildContext context, {
-  CallGateway? gateway,
+  http.Client? client,
+  String? bayUrl,
   DateTime Function() clock = DateTime.now,
 }) async {
-  final messenger = ScaffoldMessenger.of(context);
   final state = AppScope.of(context);
-  final s = L10n.of(context);
-  final calls = gateway ?? HttpCallGateway();
-
-  void say(String text) {
-    messenger.showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  if (!calls.configured) {
-    say(s.callNotConfigured);
-    return;
-  }
-
-  final phone = WhatsAppAlerts.normalise(state.prefs.phoneNumber);
-  if (phone == null) {
-    say(s.callNoPhone);
-    return;
-  }
-
   final store = await MedicineStore.load();
   final logs = await DoseLogStore.load();
   if (!context.mounted) return;
@@ -45,50 +27,22 @@ Future<void> openCallDemo(
     now: now,
     taken: (date, slot) => logs.logFor(date, slot) != null,
   );
-  final names = [
-    for (final m in DoseAlarm.medicinesFor(
-      AlarmPayload(slot: target.slot, date: target.date),
-      store.active(),
-    ))
-      m.name,
-  ];
-  if (names.isEmpty) {
-    say(s.callNoDose);
-    return;
-  }
+  final medicines = DoseAlarm.demoMedicines(
+    AlarmPayload(slot: target.slot, date: target.date, demo: true),
+    store.active(),
+  );
+  final to =
+      WhatsAppAlerts.normalise(state.prefs.alertPhone) ??
+      WhatsAppAlerts.normalise(state.prefs.phoneNumber);
 
-  final yes = await showDialog<bool>(
-    context: context,
-    builder: (dialog) => AlertDialog(
-      title: Text(s.callDemo),
-      content: Text(s.callDemoConfirm(phone, names.join(', '))),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialog, false),
-          child: Text(s.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(dialog, true),
-          child: Text(s.confirm),
-        ),
-      ],
+  await Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => MedicineDemoPage(
+        medicines: medicines,
+        to: to,
+        bayUrl: bayUrl ?? const String.fromEnvironment('BAY_URL'),
+        client: client,
+      ),
     ),
   );
-  if (yes != true || !context.mounted) return;
-
-  final result = await calls.requestCall(
-    CallRequest(
-      to: phone,
-      language: state.language,
-      medicineNames: names,
-      slot: target.slot,
-      day: target.date,
-    ),
-  );
-  if (!context.mounted) return;
-  say(switch (result.status) {
-    CallRequestStatus.notConfigured => s.callNotConfigured,
-    CallRequestStatus.accepted => s.callRequested,
-    CallRequestStatus.failed => s.callFailed,
-  });
 }
