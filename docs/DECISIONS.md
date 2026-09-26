@@ -182,3 +182,19 @@ Nothing runs at 09:01 to record a miss. Status is computed day to day whenever i
 ### ADR-38 · A keypad, not a conversation — and the last rung, not the first
 Designed in [`VOICE_AGENT.md`](VOICE_AGENT.md), not built. A misheard "nahi" logged as *taken*
 is the worst failure this product could produce; a keypress cannot be misheard.
+
+---
+
+## Feedback
+
+### ADR-55 · Four haptic words, one switch, and a button that gives
+Screens never call `HapticFeedback` directly; they call `Haptics` (`lib/core/feedback/haptics.dart`)
+with what happened: **tap** (selection click — a tile, Next, Continue), **confirm** (medium
+impact — "All taken", Approve, the right OTP, a recording kept), **error** (heavy impact and a
+buzz — a wrong OTP or PIN, a missing field, a recording with nothing in it), **alarm** (three
+buzzes). One global `Haptics.enabled` switch silences all of it, for a setting, and a test seam
+(`debugOverride`, wrapped by `test/support/fake_haptics.dart`) records calls instead of running
+the motor. `Haptics.on(callback)` returns null for a null callback, so a disabled button stays
+disabled. Primary buttons are wrapped in `Pressable`, which shrinks to 0.97 under the finger via a
+`Listener` (outside the gesture arena, so taps and semantics are untouched) and is exactly 1 at
+rest, so no golden moves. Saving shows a spinner in the button at once — never a dead tap.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rapidrx/core/feedback/haptics.dart';
 import 'package:rapidrx/core/l10n/app_language.dart';
 import 'package:rapidrx/domain/scheduled_medicine.dart';
 import 'package:rapidrx/domain/sig.dart';
@@ -10,6 +11,7 @@ import 'package:rapidrx/features/medicines/medicine_store.dart';
 import 'package:rapidrx/features/patient/prescriptions_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fake_haptics.dart';
 import 'support/golden_harness.dart';
 
 const m = DoseSlot.morning;
@@ -162,6 +164,7 @@ void main() {
       tester,
     ) async {
       usePhoneSurface(tester);
+      final haptics = FakeHaptics.install();
       final order = <String>[];
       await tester.pumpWidget(
         themed(
@@ -201,6 +204,7 @@ void main() {
       expect(logs.logFor(now, m)!.taken, ['telma-40']);
       expect(order.first, 'alert:true', reason: 'the log is written first');
       expect(find.text('All taken'), findsNothing, reason: 'the screen closed');
+      expect(haptics.calls, [HapticKind.confirm], reason: 'one buzz, on save');
     });
 
     testWidgets('a slot already taken cannot be opened again', (tester) async {

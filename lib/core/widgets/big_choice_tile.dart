@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../feedback/haptics.dart';
+import '../feedback/pressable.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -58,27 +60,30 @@ class BigChoiceTile extends StatelessWidget {
       selected: selected,
       label: [title, ?subtitle].join('. '),
       excludeSemantics: true,
-      child: Material(
-        color: selected ? AppColors.amberSoft : AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radius),
-          side: border,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: minHeight),
-            child: compact
-                ? _row(text)
-                : Align(
-                    alignment: alignTop
-                        ? Alignment.topCenter
-                        : Alignment.center,
-                    widthFactor: 1,
-                    heightFactor: 1,
-                    child: _column(text),
-                  ),
+      child: Pressable(
+        enabled: onTap != null,
+        child: Material(
+          color: selected ? AppColors.amberSoft : AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radius),
+            side: border,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: Haptics.on(onTap),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: minHeight),
+              child: compact
+                  ? _row(text)
+                  : Align(
+                      alignment: alignTop
+                          ? Alignment.topCenter
+                          : Alignment.center,
+                      widthFactor: 1,
+                      heightFactor: 1,
+                      child: _column(text),
+                    ),
+            ),
           ),
         ),
       ),
