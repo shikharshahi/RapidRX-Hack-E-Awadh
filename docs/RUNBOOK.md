@@ -126,8 +126,11 @@ whether full-screen intents are allowed.
   the phones except what the two people carry; the screens say "Demo".
 - **A paid caretaker's PIN is set on the patient's phone, but the caretaker home is not gated
   yet.** Family vs paid is stored; the restricted view is not.
-- **Medical records are still plain SharedPreferences.** The encrypted vault and restore
-  check are not built. See [`HANDOFF.md`](HANDOFF.md).
+- **A restore after reinstall has not been seen on a phone.** The vault is
+  AES-256-GCM with a PIN wrap, and the mirror is MediaStore under
+  `Documents/RapidRX` (ADR-63). Tests use a fake sink. Android 11 may hide
+  another install's files; this build does not request
+  `MANAGE_EXTERNAL_STORAGE`.
 - **The voice agent is designed, not built** ([`VOICE_AGENT.md`](VOICE_AGENT.md)), and it is the
   one part that needs a backend.
 - **Missed-dose alerts fire when the app opens**, not at the minute a dose is missed.

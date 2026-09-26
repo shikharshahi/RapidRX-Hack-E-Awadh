@@ -1,8 +1,7 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../domain/dose_clock.dart';
+import '../records/secure_record_store.dart';
 import '../../domain/schedule_engine.dart';
 import '../../domain/scheduled_medicine.dart';
 import '../../domain/sig.dart';
@@ -52,20 +51,20 @@ class DoseLog {
 /// timestamped date against midnight once made every same-day slot "pending",
 /// and missed doses never appeared on the schedule at all.
 class DoseLogStore {
-  DoseLogStore(this._prefs);
+  DoseLogStore(this._box);
 
-  final SharedPreferences _prefs;
+  final VaultBox _box;
 
-  static const _key = 'dose_logs';
+  static const _key = MedicalKeys.doses;
 
   /// Enough for the calendar and a little more.
   static const keepDays = 120;
 
   static Future<DoseLogStore> load() async =>
-      DoseLogStore(await SharedPreferences.getInstance());
+      DoseLogStore(await SecureRecordStore.open());
 
   List<DoseLog> all() {
-    final raw = _prefs.getString(_key);
+    final raw = _box.read(_key);
     if (raw == null) return [];
     try {
       return [
@@ -100,10 +99,7 @@ class DoseLogStore {
           l,
       DoseLog(date: day, slot: slot, confirmedAt: at, taken: medicineIds),
     ];
-    await _prefs.setString(
-      _key,
-      jsonEncode([for (final l in logs) l.toJson()]),
-    );
+    await _box.write(_key, jsonEncode([for (final l in logs) l.toJson()]));
   }
 
   DoseStatus statusOf(DateTime now, DateTime date, DoseSlot slot) {

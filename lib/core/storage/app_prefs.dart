@@ -196,6 +196,47 @@ class AppPrefs {
     return backupPhone;
   }
 
+  // ── Demo patient and the restore question ───────────────────────────────
+  static const _demoUser = 'demo_user';
+  static const _demoOwnsBackup = 'demo_owns_backup';
+  static const _restoreDeclined = 'record_restore_declined';
+  static const _demoDeclined = 'record_demo_declined';
+  static const _restoreFails = 'record_restore_fails';
+  static const _restoreLocked = 'record_restore_locked_until';
+
+  bool get demoUser => _prefs.getBool(_demoUser) ?? false;
+  Future<void> setDemoUser(bool on) => _prefs.setBool(_demoUser, on);
+
+  /// The demo wrote the backup mirror, so leaving the demo may delete it.
+  /// A real backup the person declined is never owned by the demo.
+  bool get demoOwnsBackup => _prefs.getBool(_demoOwnsBackup) ?? false;
+  Future<void> setDemoOwnsBackup(bool on) =>
+      _prefs.setBool(_demoOwnsBackup, on);
+
+  bool get restoreDeclined => _prefs.getBool(_restoreDeclined) ?? false;
+  Future<void> setRestoreDeclined(bool declined) =>
+      _prefs.setBool(_restoreDeclined, declined);
+
+  bool get demoDeclined => _prefs.getBool(_demoDeclined) ?? false;
+  Future<void> setDemoDeclined(bool declined) =>
+      _prefs.setBool(_demoDeclined, declined);
+
+  int get restoreFails => _prefs.getInt(_restoreFails) ?? 0;
+  Future<void> setRestoreFails(int n) => _prefs.setInt(_restoreFails, n);
+
+  DateTime? get restoreLockedUntil {
+    final ms = _prefs.getInt(_restoreLocked);
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  Future<void> lockRestoreUntil(DateTime until) =>
+      _prefs.setInt(_restoreLocked, until.millisecondsSinceEpoch);
+
+  Future<void> clearRestoreLock() async {
+    await _prefs.remove(_restoreFails);
+    await _prefs.remove(_restoreLocked);
+  }
+
   static const _identityKeys = [
     _role,
     _phone,
@@ -214,6 +255,8 @@ class AppPrefs {
     _caretakerLater,
     _linkedPatient,
     _linkedCaretaker,
+    _demoUser,
+    _demoOwnsBackup,
   ];
 
   /// Forget who this phone belongs to. Device choices stay.

@@ -41,6 +41,7 @@ Every trap already hit, with the fix. When something looks impossible, look here
 |---|---|---|
 | The wizard's bottom bar fills the whole screen | A `Scaffold` gives `bottomNavigationBar` the full height as a loose limit, and a plain `Align` takes all of it | `Align(heightFactor: 1)` |
 | `RenderFlex overflowed by 72 pixels` on a short phone | `Expanded` tiles with a minimum content height | The menu measures itself and falls back to a scrolling list |
+| The patient menu overflows after the demo label is added, even on the scroll path | The fit check treats the heading as 56px, so it still expands tiles into ~104px. The scroll fallback's 132px box is also too short: the tile's own padding leaves the inner column 104px | When that label is showing, scroll, and give each tile a fixed height that includes its padding (200) |
 
 ## Notifications and alarms
 

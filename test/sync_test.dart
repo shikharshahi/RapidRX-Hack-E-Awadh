@@ -145,7 +145,7 @@ void main() {
     setUp(() async {
       net = FakeNetworkStatus(online: false);
       notices = FakeNotices();
-      store = MedicineStore(prefs);
+      store = await MedicineStore.load();
       tmp = Directory.systemTemp.createTempSync('rx');
       photo = '${tmp.path}/rx.jpg';
       File(photo).writeAsBytesSync([1, 2, 3]);

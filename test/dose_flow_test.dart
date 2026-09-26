@@ -3,6 +3,7 @@ import 'package:rapidrx/domain/dose_clock.dart';
 import 'package:rapidrx/domain/scheduled_medicine.dart';
 import 'package:rapidrx/domain/sig.dart';
 import 'package:rapidrx/features/doses/dose_log_store.dart';
+import 'package:rapidrx/features/records/secure_record_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const m = DoseSlot.morning;
@@ -132,7 +133,7 @@ void main() {
       medicineIds: ['telma-40'],
       at: at(8, 10),
     );
-    final raw = (await SharedPreferences.getInstance()).getString('dose_logs')!;
+    final raw = (await SecureRecordStore.open()).read('dose_logs')!;
     expect(raw, contains('"date":"2026-09-26T00:00:00.000"'));
     expect(raw, contains('"status":"taken"'));
     expect(raw, contains('"taken":["telma-40"]'));

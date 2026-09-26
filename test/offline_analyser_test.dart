@@ -5,6 +5,7 @@ import 'package:rapidrx/domain/offline_analyser.dart';
 import 'package:rapidrx/domain/scheduled_medicine.dart';
 import 'package:rapidrx/domain/sig.dart';
 import 'package:rapidrx/features/medicines/medicine_store.dart';
+import 'package:rapidrx/features/records/secure_record_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -124,9 +125,7 @@ void main() {
           med('telma-40', [DoseSlot.morning]),
         ],
       );
-      final raw = (await SharedPreferences.getInstance()).getString(
-        'scheduled_medicines',
-      )!;
+      final raw = (await SecureRecordStore.open()).read('scheduled_medicines')!;
       expect(raw, contains('"slots":["morning"]'));
       expect(raw, contains('"active":true'));
       expect(raw, isNot(contains('"sos"')), reason: 'omitted when false');
