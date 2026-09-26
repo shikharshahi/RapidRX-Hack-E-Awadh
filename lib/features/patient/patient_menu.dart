@@ -5,11 +5,14 @@ import '../../core/theme/app_theme.dart';
 import '../../core/voice/voice_prompt.dart';
 import '../../core/widgets/app_bar_actions.dart';
 import '../../core/widgets/big_choice_tile.dart';
+import '../../ai/ai_config.dart';
+import '../../ai/gemini_client.dart';
 import '../doses/dose_log_store.dart';
 import '../doses/schedule_screen.dart';
 import '../medicines/medicine_store.dart';
 import '../visit/visit.dart';
 import '../visit/visit_repository.dart';
+import '../wizard/online_read_card.dart';
 import '../wizard/wizard_controller.dart';
 import '../wizard/wizard_screen.dart';
 import 'prescriptions_screen.dart';
@@ -141,6 +144,8 @@ Future<void> openWizard(BuildContext context) async {
   final navigator = Navigator.of(context);
   final repository = await VisitRepository.load();
   final store = await MedicineStore.load();
+  // One client per visit: its budget of calls is per visit.
+  final gemini = GeminiClient();
   final controller = VisitWizardController(
     visit: repository.loadDraft() ?? Visit.start(),
     repository: repository,
@@ -148,7 +153,13 @@ Future<void> openWizard(BuildContext context) async {
   );
   await navigator.push(
     MaterialPageRoute<void>(
-      builder: (_) => WizardScreen(controller: controller),
+      builder: (_) => WizardScreen(
+        controller: controller,
+        // Only with a key. The card also hides itself when offline.
+        onlineCard: AiConfig.hasGeminiKey
+            ? (c) => OnlineReadCard(controller: c, client: gemini)
+            : null,
+      ),
     ),
   );
   controller.dispose();

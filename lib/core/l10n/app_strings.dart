@@ -491,6 +491,33 @@ class AppStrings {
   String get evidenceChemist => _t('chemist', 'केमिस्ट');
   String get halfDot => _t('half', 'आधी');
 
+  // ── Online handwriting (consent-gated) ──────────────────────────────────
+  String get readOnlineTitle =>
+      _t('Read the handwriting online', 'लिखावट ऑनलाइन पढ़ें');
+  String get readOnlineBody => _t(
+    'The prescription photo will be sent to Google to read the handwriting. '
+        'Nothing else leaves the phone.',
+    'लिखावट पढ़ने के लिए पर्ची की फ़ोटो Google को भेजी जाएगी। इसके अलावा '
+        'कुछ भी फ़ोन से बाहर नहीं जाता।',
+  );
+  String get readButton => _t('Read', 'पढ़ें');
+  String get readingOnline =>
+      _t('Reading the handwriting…', 'लिखावट पढ़ रहे हैं…');
+  String readOnlineDone(int n) => _t(
+    'Read online. $n added to the cross-check — each one is still checked '
+        'against the bill.',
+    'ऑनलाइन पढ़ लिया। $n दवाई मिलान में जोड़ी गईं — हर एक अब भी बिल से '
+        'मिलाई जाएगी।',
+  );
+  String get readOnlineFailed => _t(
+    'Could not read it online. Everything done on this phone still stands.',
+    'ऑनलाइन नहीं पढ़ा जा सका। इस फ़ोन पर जो हुआ, वो सब वैसा ही है।',
+  );
+  String get onDeviceDone => _t(
+    'Done on this phone. Nothing has left it.',
+    'यह सब इसी फ़ोन पर हुआ। कुछ भी बाहर नहीं गया।',
+  );
+
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');
   String get back => _t('Back', 'पीछे');

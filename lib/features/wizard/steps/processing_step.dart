@@ -61,7 +61,7 @@ class ProcessingStep extends StatelessWidget {
         stage(s.stageExtract),
         stage(s.stageVerify),
         const SizedBox(height: 4),
-        InfoCard(text: s.onDeviceOnly),
+        InfoCard(text: online == null ? s.onDeviceOnly : s.onDeviceDone),
         if (online != null) ...[const SizedBox(height: 16), online!],
         if (done) ...[
           const SizedBox(height: 20),
