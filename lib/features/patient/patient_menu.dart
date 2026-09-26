@@ -8,6 +8,9 @@ import '../../core/widgets/big_choice_tile.dart';
 import '../../ai/ai_config.dart';
 import '../../ai/gemini_client.dart';
 import '../../core/app_state.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../platform/dose_reminders.dart';
+import '../doses/reminder_sync.dart';
 import '../caregiver/family.dart';
 import '../doses/dose_log_store.dart';
 import '../doses/schedule_screen.dart';
@@ -135,19 +138,38 @@ Future<void> openSchedule(BuildContext context) async {
   final store = await MedicineStore.load();
   final logs = await DoseLogStore.load();
   final family = familyNotifier(state);
+  final strings = AppStrings(state.language);
+  final reminders = DoseReminders();
+  // Every open is a full re-sync, and the banner shows what really happened.
+  final status = await syncReminders(
+    reminders: reminders,
+    medicines: store.active(),
+    logs: logs,
+    strings: strings,
+  );
   await navigator.push(
     MaterialPageRoute<void>(
       builder: (routeContext) => ScheduleScreen(
         store: store,
         logs: logs,
+        reminderBanner: reminderBanner(status, strings),
         // Nothing runs in the background, so opening the schedule is when
         // missed doses are found and queued alerts get another go.
         onOpened: (meds, now) async {
           await family.drainOutbox(now: now);
           await family.checkMissed(meds, logs, now: now);
         },
-        onConfirmed: (slot, date) =>
-            family.doseTaken(slot, date, now: DateTime.now()),
+        onConfirmed: (slot, date) async {
+          // The nudge must never fire for a dose already taken.
+          await reminders.cancelSlot(slot);
+          await family.doseTaken(slot, date, now: DateTime.now());
+          await syncReminders(
+            reminders: reminders,
+            medicines: store.active(),
+            logs: logs,
+            strings: strings,
+          );
+        },
         onShare: () => sharePlan(routeContext, store.active()),
       ),
     ),
@@ -158,6 +180,7 @@ Future<void> openSchedule(BuildContext context) async {
 /// where it was, because it was saved after every capture.
 Future<void> openWizard(BuildContext context) async {
   final navigator = Navigator.of(context);
+  final strings = AppStrings(AppScope.of(context).language);
   final repository = await VisitRepository.load();
   final store = await MedicineStore.load();
   // One client per visit: its budget of calls is per visit.
@@ -179,6 +202,13 @@ Future<void> openWizard(BuildContext context) async {
     ),
   );
   controller.dispose();
+  // New medicines mean new alarms.
+  await syncReminders(
+    reminders: DoseReminders(),
+    medicines: store.active(),
+    logs: await DoseLogStore.load(),
+    strings: strings,
+  );
 }
 
 class _MenuTile extends StatelessWidget {

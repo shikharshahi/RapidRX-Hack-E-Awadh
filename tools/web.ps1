@@ -14,7 +14,10 @@ param(
   [int]$Port = 8080
 )
 
-$ErrorActionPreference = 'Stop'
+# Not 'Stop': in Windows PowerShell 5.1 every line a native tool writes to
+# stderr — including Gradle's harmless warnings — becomes a terminating error.
+# Native commands are judged by $LASTEXITCODE instead.
+$ErrorActionPreference = 'Continue'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 

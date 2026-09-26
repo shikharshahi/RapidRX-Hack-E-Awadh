@@ -47,9 +47,6 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-# Local-only working notes — never published
-implementation_plan.md
-
 # Secrets — the repository is public, no key is ever committed
 tools/keys.local.ps1
 tools/keys.local.sh
