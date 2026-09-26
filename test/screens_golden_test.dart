@@ -215,6 +215,60 @@ void main() {
         expect(box.bottom, lessThan(phoneSize.height), reason: label);
       }
       expect(find.byType(ListView), findsNothing);
+      // The demo link sits under the tiles, on screen too.
+      expect(
+        tester.getRect(find.text('Dose demo')).bottom,
+        lessThan(phoneSize.height),
+      );
+    });
+
+    testWidgets('the demo link is gone when the demo tools are off', (
+      tester,
+    ) async {
+      usePhoneSurface(tester);
+      final state = await freshState();
+      await tester.pumpWidget(
+        themed(PatientMenu(onRestart: () {}, demoTools: false), state: state),
+      );
+      expect(find.text('Dose demo'), findsNothing);
+    });
+
+    testWidgets('the dose demo shows the alarm, and saves nothing', (
+      tester,
+    ) async {
+      usePhoneSurface(tester);
+      final state = await freshState();
+      await tester.pumpWidget(
+        themed(PatientMenu(onRestart: () {}), state: state),
+      );
+      await tester.tap(find.text('Dose demo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Show the alarm now'));
+      await tester.pumpAndSettle();
+
+      // An empty schedule: the clearly named demo medicine.
+      expect(find.text('DEMO MEDICINE 500'), findsOneWidget);
+      expect(find.text('Demo — nothing on this screen is saved'), findsOne);
+      await tester.tap(find.text('Yes, taken'));
+      await tester.pumpAndSettle();
+      expect(find.text('Demo finished. Nothing was saved.'), findsOneWidget);
+      expect(state.prefs.raw.getString('dose_logs'), isNull);
+    });
+
+    testWidgets('ringing the demo says where it works', (tester) async {
+      usePhoneSurface(tester);
+      final state = await freshState();
+      await tester.pumpWidget(
+        themed(PatientMenu(onRestart: () {}), state: state),
+      );
+      await tester.tap(find.text('Dose demo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ring in 15 seconds'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Ringing only works in the Android app.'),
+        findsOneWidget,
+      );
     });
   });
 }

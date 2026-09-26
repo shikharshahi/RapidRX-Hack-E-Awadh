@@ -1,4 +1,4 @@
-/// Two build-time switches, and nothing else.
+/// Three build-time switches, and nothing else.
 ///
 /// They exist because the two things that are slowest to reach during
 /// development are the far end of onboarding and a warm voice cache. Both are
@@ -15,4 +15,11 @@ abstract final class DevFlags {
   /// Off by default during development: a screen that talks every ten seconds
   /// while you are reading a stack trace is its own kind of punishment.
   static const bool voiceEnabled = false;
+
+  /// Show the "Demo" link on the patient menu: fire the dose alarm now, or
+  /// in fifteen seconds so it can be watched waking a locked phone.
+  ///
+  /// On for the hackathon build. **Turn it off for a store build**: it lets
+  /// anyone ring an alarm on demand, and a patient has no use for it.
+  static const bool demoTools = true;
 }

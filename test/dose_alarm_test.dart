@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rapidrx/core/l10n/app_language.dart';
 import 'package:rapidrx/core/l10n/app_strings.dart';
 import 'package:rapidrx/domain/dose_alarm.dart';
+import 'package:rapidrx/domain/medicine_form.dart';
 import 'package:rapidrx/domain/reminder_planner.dart';
 import 'package:rapidrx/domain/scheduled_medicine.dart';
 import 'package:rapidrx/domain/sig.dart';
@@ -151,6 +152,18 @@ void main() {
         reason: 'a real medicine when there is one',
       );
     });
+  });
+
+  test('the form pictogram reads the printed name, tablet by default', () {
+    expect(formOf('TELMA 40'), MedicineForm.tablet);
+    expect(formOf('AZITHRAL 500 TAB'), MedicineForm.tablet);
+    expect(formOf('PAN 40 CAP'), MedicineForm.capsule);
+    expect(formOf('Calpol syp'), MedicineForm.syrup);
+    expect(formOf('MOXIFLOX EYE DROPS'), MedicineForm.drops);
+    expect(formOf('INJ. B12'), MedicineForm.injection);
+    expect(formOf('BETNOVATE-N CREAM'), MedicineForm.cream);
+    // A word inside a name is not a form: CAPTOPRIL is a tablet.
+    expect(formOf('CAPTOPRIL 25'), MedicineForm.tablet);
   });
 
   test('a medicine photo path survives the store', () {

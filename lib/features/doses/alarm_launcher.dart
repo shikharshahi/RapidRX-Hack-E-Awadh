@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_state.dart';
 import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/l10n.dart';
+import '../../core/l10n/strings_alarm.dart';
+import '../../core/plain_language.dart';
 import '../../domain/dose_alarm.dart';
 import '../../domain/scheduled_medicine.dart';
 import '../../platform/dose_reminders.dart';
@@ -71,6 +74,51 @@ Future<bool> openDoseAlarm(
     ),
   );
   return true;
+}
+
+/// The demo button (DevFlags.demoTools): the alarm for today's slot nearest
+/// to now, with its real medicines — or the demo medicine on an empty
+/// schedule. Shown now, or rung in fifteen seconds so it can be watched
+/// waking a locked phone. A demo alarm never writes to the log.
+Future<void> openDoseDemo(
+  BuildContext context, {
+  bool ring = false,
+  DoseReminders? reminders,
+  DateTime Function() clock = DateTime.now,
+}) async {
+  final navigator = Navigator.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final state = AppScope.of(context);
+  final s = L10n.of(context);
+  final store = await MedicineStore.load();
+  final logs = await DoseLogStore.load();
+  final now = clock();
+  final target = DoseAlarm.demoTarget(
+    medicines: store.active(),
+    now: now,
+    taken: (date, slot) => logs.logFor(date, slot) != null,
+  );
+  if (!ring) {
+    await openDoseAlarm(
+      navigator,
+      target,
+      state: state,
+      reminders: reminders,
+      clock: clock,
+    );
+    return;
+  }
+  final meds = DoseAlarm.demoMedicines(target, store.active());
+  final rung = await (reminders ?? DoseReminders()).ringSoon(
+    target,
+    title: '${PlainLanguage.slot(target.slot, s)} · ${s.alarmTitle}',
+    body: meds.map((m) => m.name).join(', '),
+  );
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(rung ? s.doseDemoRingSet : s.doseDemoRingUnavailable),
+    ),
+  );
 }
 
 /// Listens for alarms for the life of the app, and opens the one that
