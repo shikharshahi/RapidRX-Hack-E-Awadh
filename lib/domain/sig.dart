@@ -70,11 +70,13 @@ class Sig {
   );
 
   /// Fill what this Sig does not know from [other]; never overwrite.
+  ///
+  /// An as-needed medicine never borrows slots: that would invent an alarm.
   Sig fillFrom(Sig other) => Sig(
-    slots: slots.isNotEmpty ? slots : other.slots,
+    slots: slots.isNotEmpty || sos ? slots : other.slots,
     food: food != FoodTiming.unspecified ? food : other.food,
     everyNDays: everyNDays ?? other.everyNDays,
-    sos: sos || other.sos,
+    sos: sos || (slots.isEmpty && other.sos),
     stat: stat || other.stat,
     durationDays: durationDays ?? other.durationDays,
     unitsPerDose: unitsPerDose != 1 ? unitsPerDose : other.unitsPerDose,
