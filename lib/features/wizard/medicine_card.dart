@@ -27,6 +27,10 @@ class MedicineCard extends StatelessWidget {
     required this.onEdit,
     required this.onPutBack,
     this.canConfirm = true,
+    this.verdict,
+    this.status,
+    this.notes = const [],
+    this.outLabel,
   });
 
   final MergedMedicine medicine;
@@ -39,7 +43,21 @@ class MedicineCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onPutBack;
 
-  (Color, Color, Color) get _tone => switch (medicine.verdict) {
+  /// The card's colour when a pharmacy question is still open on it — red,
+  /// whatever the sources agreed. Defaults to the merge's verdict.
+  final Verdict? verdict;
+
+  /// The line under the name, when something more pressing than the merge's
+  /// own status needs saying.
+  final String? status;
+
+  /// The pharmacy questions on this medicine, each with where it stands.
+  final List<Widget> notes;
+
+  /// Instead of "Left out", when an answer folded this row into another.
+  final String? outLabel;
+
+  (Color, Color, Color) get _tone => switch (verdict ?? medicine.verdict) {
     Verdict.green => (AppColors.greenSoft, AppColors.green, AppColors.green),
     Verdict.amber => (AppColors.warnSoft, AppColors.warn, AppColors.warn),
     Verdict.red => (AppColors.redSoft, AppColors.red, AppColors.red),
@@ -50,7 +68,10 @@ class MedicineCard extends StatelessWidget {
     final s = L10n.of(context);
     final text = Theme.of(context).textTheme;
     final (fill, border, accent) = _tone;
-    final name = decision.editedName ?? PlainLanguage.displayName(medicine);
+    final name =
+        decision.editedName ??
+        decision.identity?.name ??
+        PlainLanguage.displayName(medicine);
 
     if (decision.leftOut) {
       return ToneCard(
@@ -60,7 +81,7 @@ class MedicineCard extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                '$name — ${s.leftOut}',
+                outLabel ?? '$name — ${s.leftOut}',
                 style: text.titleMedium?.copyWith(
                   color: AppColors.muted,
                   decoration: TextDecoration.lineThrough,
@@ -99,7 +120,7 @@ class MedicineCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                medicine.verdict == Verdict.green
+                (verdict ?? medicine.verdict) == Verdict.green
                     ? Icons.verified_outlined
                     : Icons.info_outline,
                 size: 18,
@@ -108,7 +129,7 @@ class MedicineCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  PlainLanguage.status(medicine, s),
+                  status ?? PlainLanguage.status(medicine, s),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -120,6 +141,7 @@ class MedicineCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           for (final m in medicine.evidence) _EvidenceRow(mention: m),
+          ...notes,
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(),

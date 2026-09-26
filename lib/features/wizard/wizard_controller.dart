@@ -6,6 +6,7 @@ import '../../domain/mention.dart';
 import '../../domain/mention_extractor.dart';
 import '../../domain/merge_engine.dart';
 import '../../domain/offline_analyser.dart';
+import '../../domain/pharmacy_check.dart';
 import '../../domain/placement_advisor.dart';
 import '../../domain/scheduled_medicine.dart';
 import '../../domain/sig.dart';
@@ -452,6 +453,15 @@ class VisitWizardController extends ChangeNotifier {
       ..addEntries(
         analysis!.rows.map((r) => MapEntry(r.id, MedicineDecision())),
       );
+    pharmacyIssues = PharmacyCheck.find(
+      rows: analysis!.rows,
+      chemistWords: visit.chemistWords,
+      unreadable: analysis!.unreadable,
+    );
+    // A new analysis asks again whatever is still unanswered, and the
+    // answers already given are applied to the new cards.
+    _asked.clear();
+    _applyAnswers();
     _analysing = false;
     notifyListeners();
   }
@@ -473,15 +483,33 @@ class VisitWizardController extends ChangeNotifier {
   MedicineDecision decisionOf(MergedMedicine m) =>
       decisions.putIfAbsent(m.id, MedicineDecision.new);
 
-  bool get allDecided => rows.every((r) => decisionOf(r).decided);
+  /// Every card confirmed or left out, and every unreadable line answered.
+  bool get allDecided =>
+      rows.every((r) => decisionOf(r).decided) &&
+      unreadableLines.every(isSettled);
 
   List<MergedMedicine> get keptRows =>
       rows.where((r) => !decisionOf(r).leftOut).toList();
 
-  /// A red card cannot be confirmed until a person has picked a side.
+  /// Disagreements about *what* the medicine is. The rest are about *when*.
+  static const _identityFields = {
+    ConflictField.strength,
+    ConflictField.notPrescribed,
+  };
+
+  /// A red card cannot be confirmed until a person has picked a side for
+  /// every disagreement on it, and while any pharmacy question on it is still
+  /// open. A person's own edit settles all of it.
   bool canConfirm(MergedMedicine m) {
     final d = decisionOf(m);
-    return m.verdict != Verdict.red || d.chosen != null || d.editedSig != null;
+    if (d.editedSig != null) return true;
+    if (openIssuesOf(m).isNotEmpty) return false;
+    if (m.verdict != Verdict.red) return true;
+    return m.conflicts.every(
+      (c) => _identityFields.contains(c.field)
+          ? d.identity != null
+          : d.chosen != null,
+    );
   }
 
   void confirm(MergedMedicine m) {
@@ -493,11 +521,24 @@ class VisitWizardController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// A side picked on the card. A reading of the strength settles what the
+  /// medicine is; a reading of the timing settles when to take it.
   void choose(MergedMedicine m, Mention side) {
-    decisionOf(m)
-      ..chosen = side
-      ..confirmed = true
-      ..leftOut = false;
+    final d = decisionOf(m);
+    bool picks(bool Function(ConflictField) field) =>
+        m.conflicts.any((c) => field(c.field) && c.sides.contains(side));
+    final identity = picks(_identityFields.contains);
+    final timing = picks((f) => !_identityFields.contains(f));
+    if (identity) {
+      d
+        ..identity = side
+        ..identityByAnswer = false;
+    }
+    if (timing || !identity) d.chosen = side;
+    d
+      ..leftOut = false
+      ..outByAnswer = false
+      ..confirmed = canConfirm(m);
     notifyListeners();
   }
 
@@ -505,6 +546,8 @@ class VisitWizardController extends ChangeNotifier {
     final d = decisionOf(m);
     d
       ..leftOut = !d.leftOut
+      ..outByAnswer = false
+      ..foldedInto = null
       ..confirmed = false;
     notifyListeners();
   }
@@ -520,17 +563,199 @@ class VisitWizardController extends ChangeNotifier {
   }
 
   /// The Sig that will reach the schedule: a person's fix, else the side
-  /// they chose, else what the evidence proposed.
+  /// they chose, else what the evidence proposed — with the course shortened
+  /// only when a person said the bill's count is right.
   Sig finalSig(MergedMedicine m) {
     final d = decisionOf(m);
     if (d.editedSig != null) return d.editedSig!;
-    if (d.chosen != null) {
-      return d.chosen!.sig.copyWith(unresolved: const []);
-    }
-    return m.sig.copyWith(unresolved: const []);
+    var sig = (d.chosen?.sig ?? m.sig).copyWith(unresolved: const []);
+    if (d.courseDays != null) sig = sig.copyWith(durationDays: d.courseDays);
+    return sig;
   }
 
-  String finalName(MergedMedicine m) => decisionOf(m).editedName ?? m.name;
+  String finalName(MergedMedicine m) {
+    final d = decisionOf(m);
+    return d.editedName ?? d.identity?.name ?? m.name;
+  }
+
+  String? finalStrength(MergedMedicine m) {
+    final d = decisionOf(m);
+    return d.editedName == null && d.identity != null
+        ? d.identity!.strength
+        : m.strength;
+  }
+
+  // ── Step 7: pharmacy questions ──────────────────────────────────────────
+
+  /// What the counter may have got wrong, found when the analysis ran.
+  List<PharmacyIssue> pharmacyIssues = const [];
+
+  /// Popped up once per analysis. Closing a pop-up answers nothing.
+  final Set<String> _asked = {};
+
+  List<PharmacyIssue> get unreadableLines => [
+    for (final i in pharmacyIssues)
+      if (i.kind == PharmacyIssueKind.unreadable) i,
+  ];
+
+  /// The latest answer to a question, or null if nobody answered it.
+  PharmacyResolution? resolutionOf(PharmacyIssue i) {
+    for (final r in visit.pharmacyResolutions.reversed) {
+      if (r.key == i.key) return r;
+    }
+    return null;
+  }
+
+  /// Settled by an A or B answer, or by a person acting on the card itself:
+  /// their own edit, or a pick of what the medicine is. "Not sure" and an
+  /// explanation settle nothing.
+  bool isSettled(PharmacyIssue i) {
+    if (resolutionOf(i)?.settles ?? false) return true;
+    final row = _row(i.medicineId);
+    if (row == null) return false;
+    final d = decisionOf(row);
+    if (d.editedSig != null) return true;
+    return (i.kind == PharmacyIssueKind.strength ||
+            i.kind == PharmacyIssueKind.notPrescribed) &&
+        d.identity != null;
+  }
+
+  List<PharmacyIssue> issuesOf(MergedMedicine m) => [
+    for (final i in pharmacyIssues)
+      if (i.medicineId == m.id || i.otherId == m.id) i,
+  ];
+
+  List<PharmacyIssue> openIssuesOf(MergedMedicine m) =>
+      issuesOf(m).where((i) => !isSettled(i)).toList();
+
+  /// Red while any question on the card is open — never quietly green.
+  Verdict verdictOf(MergedMedicine m) =>
+      openIssuesOf(m).isNotEmpty ? Verdict.red : m.verdict;
+
+  /// The questions to pop up now, in order: never answered, not shown since
+  /// the analysis ran, and not already settled on the card.
+  List<PharmacyIssue> get questionsToAsk => [
+    for (final i in pharmacyIssues)
+      if (resolutionOf(i) == null && !_asked.contains(i.key) && !isSettled(i))
+        i,
+  ];
+
+  void markAsked(PharmacyIssue i) => _asked.add(i.key);
+
+  /// A person's answer. Kept on the visit whatever it is; only A or B
+  /// changes a card, and it does so as a person's decision.
+  Future<void> answer(
+    PharmacyIssue i,
+    PharmacyChoice choice, {
+    String explanation = '',
+    XFile? voiceNote,
+    AnsweredBy answeredBy = AnsweredBy.patient,
+  }) async {
+    _asked.add(i.key);
+    String? path;
+    if (voiceNote != null) {
+      path = await media.keep(
+        visit.id,
+        voiceNote,
+        name: 'pharmacy_${i.kind.name}_${visit.pharmacyResolutions.length + 1}',
+      );
+    }
+    visit.pharmacyResolutions.add(
+      PharmacyResolution(
+        kind: i.kind,
+        medicineId: i.medicineId,
+        choice: choice,
+        explanation: explanation.trim(),
+        voiceNotePath: path,
+        answeredBy: answeredBy,
+        answeredAt: _clock(),
+      ),
+    );
+    _applyAnswers(touched: {i.medicineId, ?i.otherId});
+    await repository.save(visit);
+    notifyListeners();
+  }
+
+  MergedMedicine? _row(String id) =>
+      rows.where((r) => r.id == id).firstOrNull;
+
+  /// Undo what earlier answers did, then apply the latest answer to every
+  /// question — so "not sure" after an A puts the card back to red.
+  void _applyAnswers({Set<String>? touched}) {
+    for (final d in decisions.values) {
+      if (d.identityByAnswer) {
+        d
+          ..identity = null
+          ..identityByAnswer = false;
+      }
+      if (d.outByAnswer) {
+        d
+          ..leftOut = false
+          ..outByAnswer = false
+          ..foldedInto = null;
+      }
+      d.courseDays = null;
+    }
+
+    void identify(MergedMedicine? m, Mention? side) {
+      if (m == null || side == null) return;
+      decisionOf(m)
+        ..identity = side
+        ..identityByAnswer = true;
+    }
+
+    void out(MergedMedicine? m, {String? into}) {
+      if (m == null) return;
+      decisionOf(m)
+        ..leftOut = true
+        ..outByAnswer = true
+        ..confirmed = false
+        ..foldedInto = into;
+    }
+
+    for (final i in pharmacyIssues) {
+      final r = resolutionOf(i);
+      if (r == null || !r.settles) continue;
+      final pickA = r.choice == PharmacyChoice.a;
+      final main = _row(i.medicineId);
+      final other = i.otherId == null ? null : _row(i.otherId!);
+      switch (i.kind) {
+        case PharmacyIssueKind.strength:
+          identify(main, pickA ? i.a : i.b);
+        case PharmacyIssueKind.substitution:
+          // One medicine, two readings of it. The bill's own row is either
+          // the wrong medicine (A) or this one under another name (B) — in
+          // neither case a second medicine to take.
+          identify(main, pickA ? i.a : i.b);
+          out(other, into: pickA ? null : main?.id);
+        case PharmacyIssueKind.notPrescribed:
+          if (pickA) {
+            identify(main, i.a);
+          } else {
+            out(main);
+          }
+        case PharmacyIssueKind.quantity:
+          if (!pickA && main != null) {
+            decisionOf(main).courseDays = i.billDays;
+          }
+        case PharmacyIssueKind.unreadable:
+          break;
+      }
+    }
+
+    for (final m in rows) {
+      if (touched != null && !touched.contains(m.id)) continue;
+      final mine = issuesOf(m);
+      if (mine.isEmpty) continue;
+      final d = decisionOf(m);
+      if (d.leftOut) continue;
+      if (openIssuesOf(m).isNotEmpty) {
+        d.confirmed = false;
+      } else if (mine.any((i) => resolutionOf(i)?.settles ?? false)) {
+        d.confirmed = canConfirm(m);
+      }
+    }
+  }
 
   // ── Step 8: placement ───────────────────────────────────────────────────
 
@@ -544,7 +769,7 @@ class VisitWizardController extends ChangeNotifier {
           ScheduledMedicine(
             id: MergedMedicine.idFor(finalName(m)),
             name: finalName(m),
-            strength: m.strength,
+            strength: finalStrength(m),
             sig: finalSig(m),
             startDate: today,
             purpose: m.purpose,
