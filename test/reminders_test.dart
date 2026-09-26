@@ -1,10 +1,13 @@
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rapidrx/core/l10n/app_language.dart';
 import 'package:rapidrx/core/l10n/app_strings.dart';
+import 'package:rapidrx/domain/dose_alarm.dart';
 import 'package:rapidrx/domain/reminder_planner.dart';
 import 'package:rapidrx/domain/scheduled_medicine.dart';
 import 'package:rapidrx/domain/sig.dart';
 import 'package:rapidrx/features/doses/reminder_sync.dart';
+import 'package:rapidrx/platform/dose_alarm_notification.dart';
 import 'package:rapidrx/platform/dose_reminders.dart';
 
 const en = AppStrings(AppLanguage.en);
@@ -109,5 +112,46 @@ void main() {
 
   test('the test runner has no alarm service, and says so', () async {
     expect(await DoseReminders().sync(const []), ReminderStatus.unsupported);
+  });
+
+  test('the test runner hands back no alarms, and cannot ring', () async {
+    final r = DoseReminders();
+    expect(identical(r, DoseReminders()), isTrue, reason: 'one per app');
+    expect(await r.launchAlarm(), isNull);
+    expect(await r.alarms.isEmpty, isTrue);
+    expect(
+      await r.ringSoon(
+        AlarmPayload(slot: m, date: start),
+        title: 't',
+        body: 'b',
+      ),
+      isFalse,
+    );
+  });
+
+  group('the alarm notification', () {
+    final android = DoseAlarmNotification.details().android!;
+
+    test('wakes the screen, as an alarm', () {
+      expect(android.fullScreenIntent, isTrue);
+      expect(android.category, AndroidNotificationCategory.alarm);
+      expect(android.importance, Importance.max);
+      expect(android.priority, Priority.max);
+    });
+
+    test('rings on the alarm stream, and vibrates', () {
+      expect(android.playSound, isTrue);
+      expect(android.audioAttributesUsage, AudioAttributesUsage.alarm);
+      expect(android.enableVibration, isTrue);
+      expect(android.vibrationPattern, isNotEmpty);
+    });
+
+    test('on its own channel, not the quiet old one', () {
+      expect(android.channelId, DoseAlarmNotification.channelId);
+      expect(
+        DoseAlarmNotification.channelId,
+        isNot(DoseAlarmNotification.oldChannelId),
+      );
+    });
   });
 }
