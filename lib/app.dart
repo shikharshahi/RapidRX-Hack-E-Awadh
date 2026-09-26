@@ -23,6 +23,9 @@ import 'features/sync/sync_queue.dart';
 import 'features/sync/sync_service.dart';
 import 'platform/network_status.dart';
 import 'platform/notices.dart';
+import 'features/records/record_check_screen.dart';
+import 'features/records/record_checker.dart';
+import 'features/records/secure_record_store.dart';
 import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/phone_screens.dart';
 import 'features/onboarding/role_screen.dart';
@@ -38,6 +41,7 @@ import 'platform/dose_reminders.dart';
 
 enum _Stage {
   splash,
+  recordCheck,
   language,
   saving,
   voice,
@@ -59,6 +63,7 @@ class RapidRxApp extends StatefulWidget {
     super.key,
     required this.prefs,
     this.stageDelay = const Duration(seconds: 3),
+    this.recordCheckDelay = const Duration(seconds: 5),
     this.showSplash = true,
     this.voice,
     this.pmjay,
@@ -72,6 +77,9 @@ class RapidRxApp extends StatefulWidget {
   /// How long the splash and "saving" screens stay up. Injectable, because a
   /// real three-second `Future.delayed` under fake test time hangs forever.
   final Duration stageDelay;
+
+  /// How long "Checking for your medical records…" stays up. Same reason.
+  final Duration recordCheckDelay;
 
   final bool showSplash;
 
@@ -227,7 +235,17 @@ class _RapidRxAppState extends State<RapidRxApp> {
       case _Stage.splash:
         return SplashScreen(
           duration: widget.stageDelay,
-          onDone: () => _go(_resume()),
+          onDone: () => _go(_Stage.recordCheck),
+        );
+
+      case _Stage.recordCheck:
+        return RecordCheckScreen(
+          duration: widget.recordCheckDelay,
+          checker: _records ??= RecordChecker(prefs: _prefs),
+          onContinue: () => _go(_resume()),
+          onDemo: () {
+            unawaited(_enterDemo());
+          },
         );
 
       case _Stage.language:
@@ -302,6 +320,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
               return;
             }
             await _prefs.setPin(pin);
+            await (await SecureRecordStore.open()).rewrap(pin);
             _pendingPin = null;
             // A fresh onboarding asks the role again.
             await _state.setRole(null);
@@ -352,7 +371,11 @@ class _RapidRxAppState extends State<RapidRxApp> {
         return switch (_state.role) {
           // "Change who is using the app" from a home screen lands here.
           null => RoleScreen(onChosen: _roleChosen),
-          AppRole.patient => PatientMenu(onRestart: _restart),
+          AppRole.patient => PatientMenu(
+            onRestart: _restart,
+            demoUser: _prefs.demoUser,
+            onLeaveDemo: _prefs.demoUser ? () => unawaited(_leaveDemo()) : null,
+          ),
           AppRole.caregiver => CaregiverHome(onRestart: _restart),
         };
     }
@@ -370,7 +393,33 @@ class _RapidRxAppState extends State<RapidRxApp> {
     });
   }
 
+  RecordChecker? _records;
+
+  /// The fixture already wrote language, voice and role into preferences.
+  /// [AppState] keeps its own copies, so they have to be pulled across or the
+  /// menu still thinks nobody has chosen.
+  Future<void> _enterDemo() async {
+    await _state.setLanguage(_prefs.language ?? _state.language);
+    await _state.setVoiceHelp(_prefs.voiceHelp ?? false);
+    await _state.setRole(_prefs.role);
+    if (mounted) _go(_Stage.ready);
+  }
+
+  Future<void> _leaveDemo() async {
+    final store = await SecureRecordStore.open();
+    await store.wipe(andBackup: _prefs.demoOwnsBackup);
+    await _prefs.clearIdentity();
+    await _state.setRole(null);
+    _phone = null;
+    if (mounted) _go(_Stage.language);
+  }
+
   Future<void> _restart() async {
+    if (_prefs.demoUser) {
+      await (await SecureRecordStore.open()).wipe(
+        andBackup: _prefs.demoOwnsBackup,
+      );
+    }
     await _prefs.clearIdentity();
     await _state.setRole(null);
     _phone = null;

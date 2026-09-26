@@ -99,15 +99,13 @@ strips it). There is still no server.
 
 ### 2. Encrypted local records + restore (~5 s check)
 
-Still in **plain** `shared_preferences` (`MedicineStore`, `DoseLogStore`,
-visits). A stopped agent only added vault packages to a **worktree
-pubspec** — **do not merge that** until the store exists.
+Built (ADR-63). Medicines, the dose log and the visit draft go through
+`SecureRecordStore`. Device choices stay in `shared_preferences`.
 
-Build `SecureRecordStore`: AES-256-GCM, Keystore data key, PIN wrap
-(PBKDF2), one-time migration, backup at `Documents/RapidRX/` via
-MediaStore (**no** `MANAGE_EXTERNAL_STORAGE`), web stub in IndexedDB.
-Restore screen before language; injectable duration; demo fixture when
-nothing is found (`DevFlags.demoRestore`). Never half-load.
+Still open: prove a restore on a phone after uninstall (MediaStore, no
+`MANAGE_EXTERNAL_STORAGE`). The web stub keeps the blob in memory for the
+tab and reports nothing found; IndexedDB is the same two blobs if a web
+session must survive a refresh, and it is not built.
 
 ### 3. Data wipe after doctor verification
 

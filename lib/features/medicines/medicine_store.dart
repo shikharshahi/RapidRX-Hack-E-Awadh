@@ -1,23 +1,22 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../domain/scheduled_medicine.dart';
+import '../records/secure_record_store.dart';
 
 /// The approved medicines and the visits they came from.
 ///
-/// Local JSON in shared_preferences for this build. The migration path is
-/// Firestore with an offline cache (ADR-6); the shapes here are the documents.
+/// The JSON shapes are unchanged. The bytes live in [SecureRecordStore],
+/// not in plain preferences (ADR-63).
 class MedicineStore {
-  MedicineStore(this._prefs);
+  MedicineStore(this._box);
 
-  final SharedPreferences _prefs;
+  final VaultBox _box;
 
-  static const _medicines = 'scheduled_medicines';
-  static const _records = 'prescription_records';
+  static const _medicines = MedicalKeys.medicines;
+  static const _records = MedicalKeys.records;
 
   static Future<MedicineStore> load() async =>
-      MedicineStore(await SharedPreferences.getInstance());
+      MedicineStore(await SecureRecordStore.open());
 
   List<ScheduledMedicine> medicines() =>
       _readList(_medicines, ScheduledMedicine.fromJson);
@@ -77,7 +76,7 @@ class MedicineStore {
   }
 
   List<T> _readList<T>(String key, T Function(Map<String, Object?>) parse) {
-    final raw = _prefs.getString(key);
+    final raw = _box.read(key);
     if (raw == null) return [];
     try {
       return [
@@ -90,5 +89,5 @@ class MedicineStore {
   }
 
   Future<void> _write(String key, List<Object?> value) =>
-      _prefs.setString(key, jsonEncode(value));
+      _box.write(key, jsonEncode(value));
 }

@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  shared_preferences: ^2.3.3              # device choices AND (for now) all medical data
+  shared_preferences: ^2.3.3              # device choices; medical data lives in the vault
   flutter_tts: ^4.2.0                     # fallback voice, behind Kokoro
   crypto: ^3.0.6                          # SHA-256 PIN hash
   audioplayers: ^6.1.0                    # plays cached Kokoro WAVs
@@ -29,6 +29,8 @@ dependencies:
   qr_flutter: ^4.1.0                      # the caretaker's pairing code
   mobile_scanner: ^7.0.0                  # the patient scans that code
   connectivity_plus: ^7.0.0               # save offline, sync when back online
+  cryptography: ^2.9.0                    # AES-256-GCM and the PIN wrap
+  flutter_secure_storage: ^11.2.0         # the data key, on the phone's keystore
 
 dev_dependencies:
   flutter_test:

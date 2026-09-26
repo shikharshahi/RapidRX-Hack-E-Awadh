@@ -281,8 +281,9 @@ A later cloud copy, if one is approved, holds dose status, medicine name, time, 
 for a linked caretaker. It does not hold transcripts, photos, the health profile, or Ayushman data.
 Family can read that copy. A commercial caretaker can read it only after the patient's PIN: the
 demo page compares four digits locally, and a real build checks the hash on the server. Only the
-patient device can write. Hosting is pointed at `portal/` with site id `myrapidrx`. Deploy is
-manual and was not run.
+patient device can write. Hosting is pointed at `portal/` on project `rapidrx-portal`
+(`https://rapidrx-portal.web.app`). `myrapidrx.web.app` is reserved by another
+project. Functions were not deployed.
 
 ---
 
@@ -298,8 +299,8 @@ skipped after one second. Both durations are injected, because a real timer unde
 never fires. A sync job that still needs the clip (Gemini's prescription photo, or a payload
 flagged `needsAudio`) keeps that file; other raw audio and transcript fields are stripped from
 queued payloads so they cannot leave later. When the job finishes or is dropped, the clip goes
-too. The encrypted store itself is a separate piece of work: this step only deletes raw capture,
-and it does not replace `MedicineStore` or `DoseLogStore`.
+too. The wipe still only deletes raw capture. The vault that holds the structured
+records is ADR-67.
 
 ---
 
@@ -316,3 +317,32 @@ ships in the APK. The phone sends the medicine names, the language, the slot, an
 already on the profile — never a transcript or a note. The call speaks those names. Press 1 logs
 the dose taken, 2 leaves it due, 9 tells the caretaker. Silence logs nothing. One call per slot
 per day, one retry an hour later, then the caretaker alert.
+
+---
+
+## Records
+
+### ADR-67 · Medical records are one encrypted vault
+Medicines, the dose log and the visit draft are one document (`SecureRecordStore`), AES-256-GCM,
+a new nonce on every write. The data key is random. On Android it sits in the keystore
+(`flutter_secure_storage`). The same key is wrapped with a key from the PIN (PBKDF2-SHA256,
+600000 rounds, a random salt stored beside the blob) so a backup can open after a reinstall.
+Changing the PIN re-wraps that key; it does not re-encrypt the records. Tests inject a small
+round count; the count used is stored in the envelope.
+
+The first launch that finds the old plain preference keys copies them in and deletes them.
+Language, voice, role, the PIN hash and pairing stay in `shared_preferences`.
+
+The working copy is an app-private file. A change that actually holds records is mirrored to
+`Documents/RapidRX` (`records.vault` and `manifest.json`) through MediaStore on Android 10+,
+with no `MANAGE_EXTERNAL_STORAGE`. The manifest is plain and holds only the format version,
+times, counts and a hash of the phone number. An empty document writes no backup, so setting a
+PIN on a new phone does not look like "previous files".
+
+A wrong PIN loads nothing. A tampered box is rejected. A corrupt file shows an error and the
+app continues empty; the file is left where it is. After the splash, and before language, a
+check of about five seconds (injectable; a `Timer`, because a real `Future.delayed` never
+fires under the test clock) asks before restoring a backup. No leaves the file. Nothing found
+offers one demo fixture, rebuilt each time, with Leave demo. The web build has no keystore and
+no MediaStore: the blob stays in memory for the tab, and the restore lookup reports nothing
+found. IndexedDB would be the same two blobs if a web session must survive a refresh.

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/dev_flags.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/feedback/pressable.dart';
 import '../../core/l10n/strings_alarm.dart';
 import '../../core/l10n/strings_calls.dart';
+import '../../core/l10n/strings_records.dart';
 import '../../core/l10n/strings_caretaker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -47,11 +49,17 @@ class PatientMenu extends StatelessWidget {
     this.onNewPrescription,
     this.onSchedule,
     this.demoTools = DevFlags.demoTools,
+    this.demoUser = false,
+    this.onLeaveDemo,
   });
 
   final VoidCallback onRestart;
   final VoidCallback? onNewPrescription;
   final VoidCallback? onSchedule;
+
+  /// The fixture patient. Shows the label and [onLeaveDemo].
+  final bool demoUser;
+  final VoidCallback? onLeaveDemo;
 
   /// The small "Demo" link under the tiles (DevFlags.demoTools).
   final bool demoTools;
@@ -112,9 +120,16 @@ class PatientMenu extends StatelessWidget {
                 // The demo link sits below the tiles, and must not push them
                 // off the screen.
                 final footer = demoTools ? _DemoLink.height : 0.0;
+                // The demo label is taller than the fit check's header allowance.
+                // Count it, or the tiles squash and overflow.
+                final demoExtra = demoUser ? 160.0 : 0.0;
                 final n = tiles.length;
                 final fits =
-                    (constraints.maxHeight - header - footer - 16 * (n - 1)) /
+                    (constraints.maxHeight -
+                            header -
+                            demoExtra -
+                            footer -
+                            16 * (n - 1)) /
                         n >=
                     minTile;
                 final heading = Padding(
@@ -124,6 +139,8 @@ class PatientMenu extends StatelessWidget {
                     children: [
                       // A PM-JAY card found after an offline lookup.
                       const FoundCardBanner(),
+                      if (demoUser && onLeaveDemo != null)
+                        _DemoUserBar(onLeave: onLeaveDemo!),
                       Text(
                         s.menuQuestion,
                         style: Theme.of(context).textTheme.titleLarge,
@@ -131,14 +148,19 @@ class PatientMenu extends StatelessWidget {
                     ],
                   ),
                 );
-                if (!fits) {
+                // The demo label does not fit in the no-scroll column. Scroll.
+                if (!fits || demoUser) {
                   return ListView(
                     children: [
                       heading,
                       for (final t in tiles)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 16),
-                          child: SizedBox(height: minTile, child: t),
+                          child: SizedBox(
+                            // 132 leaves the inner column at 104 after the tile's padding.
+                            height: demoUser ? 200 : minTile,
+                            child: t,
+                          ),
                         ),
                       if (demoTools) const _DemoLink(),
                     ],
@@ -283,6 +305,45 @@ Future<void> openWizard(BuildContext context) async {
     logs: await DoseLogStore.load(),
     strings: strings,
   );
+}
+
+/// The fixture patient: a label, and a way back to a normal empty phone.
+class _DemoUserBar extends StatelessWidget {
+  const _DemoUserBar({required this.onLeave});
+
+  final VoidCallback onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = L10n.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.amberSoft,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.amberBorder),
+            ),
+            child: Text(
+              s.recordDemoUser,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
+          const Spacer(),
+          Pressable(
+            child: TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(64, 64)),
+              onPressed: onLeave,
+              child: Text(s.recordLeaveDemo),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Demo tools, kept small and out of the patient's way: one link under the

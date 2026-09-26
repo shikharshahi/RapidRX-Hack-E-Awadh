@@ -22,4 +22,10 @@ abstract final class DevFlags {
   /// On for the hackathon build. **Turn it off for a store build**: it lets
   /// anyone ring an alarm on demand, and a patient has no use for it.
   static const bool demoTools = true;
+
+  /// Offer the demo patient even when a backup is already on the phone.
+  ///
+  /// Off by default: a real backup is asked about on its own. Turn it on only
+  /// to show that dialog on purpose.
+  static const bool demoRestore = false;
 }
