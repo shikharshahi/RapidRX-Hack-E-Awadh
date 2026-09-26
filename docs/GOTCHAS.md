@@ -23,6 +23,8 @@ Every trap already hit, with the fix. When something looks impossible, look here
 | Every golden shows boxes instead of letters and icons | The test runner has no fonts, and icons ship with the SDK, not the app | `test/flutter_test_config.dart` loads the Noto faces and `materialicons-regular.otf` from the SDK cache |
 | The logo is a blank square in a golden | Asset images decode on a real thread | `precacheImage` inside `tester.runAsync` (`precacheLogo`) |
 | A test hangs forever | A real `Future.delayed` under fake time | Injectable delays (`stageDelay`) |
+| A golden hangs for ten minutes, even with a zero delay | `Future.delayed(Duration.zero)` is still a timer, and fake time never fires it | Run the call inside `tester.runAsync` |
+| `find.text('Set a 4-digit PIN')` finds two widgets | The onboarding title and the field hint say the same thing | Find by the "why" line, or `findsWidgets` |
 | `There is no current invoker` at load | An external resource (`AudioPlayer`, `http.Client`, an ML Kit recogniser) built in a constructor | Build lazily: `_injected ?? (_lazy ??= Thing())` |
 | `Looking up a deactivated widget's ancestor is unsafe` | `dispose()` reading an inherited widget | Cache it in `didChangeDependencies` (`VoicePrompt`) |
 | A pushed route cannot find `L10n` or the voice | Scopes placed around `home` | Put them in `MaterialApp.builder` — and mirror that in the harness |

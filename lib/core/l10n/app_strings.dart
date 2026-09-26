@@ -74,15 +74,7 @@ class AppStrings {
   String get nameHint => _t('Your name', 'आपका नाम');
   String get nameMissing =>
       _t('Please write your name', 'कृपया अपना नाम लिखें');
-  String get backupLabel =>
-      _t('Family member’s number', 'परिवार के सदस्य का नंबर');
   String get optional => _t('Optional', 'ज़रूरी नहीं');
-  String get backupWhy => _t(
-    'If you add one, we will check it too. You can add it later.',
-    'अगर आप जोड़ते हैं तो हम उसे भी जाँचेंगे। आप इसे बाद में भी जोड़ सकते हैं।',
-  );
-  String get backupOtpTitle =>
-      _t('Code for your family member', 'परिवार के सदस्य का कोड');
 
   // ── PIN ─────────────────────────────────────────────────────────────────
   String get pinTitle => _t('Set a 4-digit PIN', '4 अंकों का PIN बनाएँ');
@@ -592,6 +584,51 @@ class AppStrings {
     '$name: $slot medicines on $date were missed.',
     '$name: $date को $slot की दवाई छूट गई।',
   );
+
+  // ── Health profile (patients) ───────────────────────────────────────────
+  String get healthTitle =>
+      _t('A little about your health', 'आपकी सेहत के बारे में');
+  String get healthWhy => _t(
+    'Only your age is needed. The rest helps, and you can add it later.',
+    'सिर्फ़ उम्र ज़रूरी है। बाकी से मदद मिलती है, और इसे बाद में भी जोड़ सकते हैं।',
+  );
+  String get ageLabel => _t('Age (years)', 'उम्र (साल)');
+  String get heightLabel => _t('Height (cm)', 'लंबाई (सेमी)');
+  String get weightLabel => _t('Weight (kg)', 'वज़न (किलो)');
+  String get ageMissing => _t('Please write your age', 'कृपया अपनी उम्र लिखें');
+  String get ageOutOfRange =>
+      _t('Age must be between 1 and 120', 'उम्र 1 से 120 के बीच होनी चाहिए');
+  String get heightOutOfRange => _t(
+    'Height must be between 50 and 250 cm',
+    'लंबाई 50 से 250 सेमी के बीच होनी चाहिए',
+  );
+  String get weightOutOfRange => _t(
+    'Weight must be between 10 and 300 kg',
+    'वज़न 10 से 300 किलो के बीच होना चाहिए',
+  );
+  String get ayushmanLabel =>
+      _t('Ayushman Bharat (PM-JAY) card', 'आयुष्मान भारत (PM-JAY) कार्ड');
+  String get ayushmanHint => _t('PM-JAY ID', 'PM-JAY आईडी');
+  String get fetchPmjay => _t('Fetch from PM-JAY', 'PM-JAY से लाएँ');
+  String get fetchingPmjay => _t('Looking it up…', 'ढूँढ रहे हैं…');
+  String get pmjayBadFormat => _t(
+    'That does not look like a PM-JAY ID. It has 9 letters and numbers.',
+    'यह PM-JAY आईडी नहीं लगती। इसमें 9 अक्षर और अंक होते हैं।',
+  );
+  String get pmjayNotFound => _t(
+    'No card was found for this ID. Check the number on your card.',
+    'इस आईडी से कोई कार्ड नहीं मिला। कार्ड पर लिखा नंबर जाँच लें।',
+  );
+  String get demoData => _t('Demo data', 'डेमो डेटा');
+  String get pmjayIdLabel => _t('PM-JAY ID', 'PM-JAY आईडी');
+  String get familyIdLabel => _t('Family ID', 'परिवार आईडी');
+  String get stateLabel => _t('State', 'राज्य');
+  String eligibleCover(String cover) =>
+      _t('Eligible — $cover cover', 'पात्र — $cover का कवर');
+  String validTill(String d) => _t('Valid till $d', '$d तक मान्य');
+  String get yesThisIsMe => _t('Yes, this is me', 'हाँ, यह मैं हूँ');
+  String get notMe => _t('Not me', 'यह मैं नहीं');
+  String get cardConfirmed => _t('Card saved', 'कार्ड सेव हो गया');
 
   // ── Shared ──────────────────────────────────────────────────────────────
   String get continueLabel => _t('Continue', 'आगे बढ़ें');

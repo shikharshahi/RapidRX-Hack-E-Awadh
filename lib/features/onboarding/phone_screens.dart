@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/l10n/l10n.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/widgets/onboarding_scaffold.dart';
 
 /// The hardcoded demo code.
@@ -121,21 +120,13 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 }
 
-/// Name, plus an optional family member's number.
-///
-/// The family number is where caregiver alerts go later, so if it is given it
-/// gets its own code check.
+/// Your name. A caretaker is linked later, by scanning their QR code — their
+/// own verified number is in it, and alerts go there.
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({
-    super.key,
-    required this.onSubmitted,
-    this.initialName,
-    this.initialBackup,
-  });
+  const ProfileScreen({super.key, required this.onSubmitted, this.initialName});
 
-  final void Function(String name, String? backupPhone) onSubmitted;
+  final ValueChanged<String> onSubmitted;
   final String? initialName;
-  final String? initialBackup;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -143,29 +134,21 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late final _name = TextEditingController(text: widget.initialName);
-  late final _backup = TextEditingController(text: widget.initialBackup);
   String? _nameError;
-  String? _backupError;
 
   @override
   void dispose() {
     _name.dispose();
-    _backup.dispose();
     super.dispose();
   }
 
   void _submit() {
-    final s = L10n.of(context);
     final name = _name.text.trim();
-    final backup = _backup.text.trim();
-    setState(() {
-      _nameError = name.isEmpty ? s.nameMissing : null;
-      _backupError = backup.isNotEmpty && backup.length != 10
-          ? s.phoneInvalid
-          : null;
-    });
-    if (_nameError != null || _backupError != null) return;
-    widget.onSubmitted(name, backup.isEmpty ? null : backup);
+    setState(
+      () => _nameError = name.isEmpty ? L10n.of(context).nameMissing : null,
+    );
+    if (_nameError != null) return;
+    widget.onSubmitted(name);
   }
 
   @override
@@ -179,39 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           hint: s.nameHint,
           errorText: _nameError,
           keyboardType: TextInputType.name,
-        ),
-        const SizedBox(height: 22),
-        Row(
-          children: [
-            Flexible(
-              child: Text(
-                s.backupLabel,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            OptionalTag(text: s.optional),
-          ],
-        ),
-        const SizedBox(height: 10),
-        BigTextField(
-          controller: _backup,
-          hint: s.backupLabel,
-          digits: 10,
-          keyboardType: TextInputType.phone,
-          errorText: _backupError,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          s.backupWhy,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.muted,
-          ),
+          onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 28),
         FilledButton(onPressed: _submit, child: Text(s.continueLabel)),

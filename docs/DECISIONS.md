@@ -15,6 +15,18 @@ the Windows and web builds exist so a laptop demo shows exactly what the phone s
 `PhoneShell` frames the app as a 412 × 892 phone on anything wider. A second, wide layout would
 be designed once and never used.
 
+### ADR-11 · Onboarding order: identity first, then the role, then role-specific
+language → voice → phone + code → name → PIN → **role** → a patient's health profile, or a
+caretaker's type and pairing code. Health details only make sense for a patient, so the role
+comes before them. The old "family member's number" field is gone: the caretaker's own verified
+number arrives in their pairing QR code.
+
+### ADR-39 · Ayushman Bharat is a mock behind an interface
+The health screen can look up a PM-JAY card, but there is no PM-JAY integration and there must
+not be one without the proper agreements. `MockPmjayClient` is deterministic per ID and the card
+says **Demo data**; a real client drops in behind `PmjayClient`. Nothing is saved until the
+patient says "Yes, this is me". Age is required; height, weight and the card are optional.
+
 ### ADR-19 · The patient lands on a menu, not on today's doses
 The first thing a new user needs is to add a prescription; what a returning user needs depends on
 the time of day. So the app asks. All three tiles fit without scrolling.

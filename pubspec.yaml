@@ -26,6 +26,9 @@ dependencies:
   url_launcher: ^6.3.2                    # wa.me fallback
   flutter_local_notifications: ^22.3.1    # dose reminders — v22 takes NAMED arguments
   timezone: ^0.11.1                       # zonedSchedule needs a TZDateTime
+  qr_flutter: ^4.1.0                      # the caretaker's pairing code
+  mobile_scanner: ^7.0.0                  # the patient scans that code
+  connectivity_plus: ^7.0.0               # save offline, sync when back online
 
 dev_dependencies:
   flutter_test:

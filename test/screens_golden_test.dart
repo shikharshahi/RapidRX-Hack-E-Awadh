@@ -93,7 +93,7 @@ void main() {
       'profile hi',
       (t) => golden(
         t,
-        ProfileScreen(onSubmitted: (_, _) {}),
+        ProfileScreen(onSubmitted: (_) {}),
         'onboarding_8_profile_hi',
         language: hi,
       ),

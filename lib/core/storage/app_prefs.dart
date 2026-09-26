@@ -73,9 +73,58 @@ class AppPrefs {
   static String hashPin(String pin) =>
       sha256.convert(utf8.encode('rapidrx:$pin')).toString();
 
+  // ── Health profile (patients only) ──────────────────────────────────────
+  static const _age = 'health_age';
+  static const _height = 'health_height_cm';
+  static const _weight = 'health_weight_kg';
+  static const _ayushmanId = 'ayushman_id';
+  static const _ayushmanCard = 'ayushman_card';
+
+  /// Required for a patient; null until the health screen is done.
+  int? get age => _prefs.getInt(_age);
+  int? get heightCm => _prefs.getInt(_height);
+  int? get weightKg => _prefs.getInt(_weight);
+  String? get ayushmanId => _prefs.getString(_ayushmanId);
+
+  /// The card the patient confirmed as theirs, as JSON.
+  String? get ayushmanCardJson => _prefs.getString(_ayushmanCard);
+
+  Future<void> setHealth({
+    required int age,
+    int? heightCm,
+    int? weightKg,
+    String? ayushmanId,
+    String? ayushmanCardJson,
+  }) async {
+    await _prefs.setInt(_age, age);
+    await _setOrRemoveInt(_height, heightCm);
+    await _setOrRemoveInt(_weight, weightKg);
+    await _setOrRemoveString(_ayushmanId, ayushmanId);
+    await _setOrRemoveString(_ayushmanCard, ayushmanCardJson);
+  }
+
+  Future<void> _setOrRemoveInt(String key, int? v) =>
+      v == null ? _prefs.remove(key) : _prefs.setInt(key, v);
+
+  Future<void> _setOrRemoveString(String key, String? v) =>
+      v == null || v.isEmpty ? _prefs.remove(key) : _prefs.setString(key, v);
+
+  static const _identityKeys = [
+    _role,
+    _phone,
+    _name,
+    _backupPhone,
+    _pinHash,
+    _age,
+    _height,
+    _weight,
+    _ayushmanId,
+    _ayushmanCard,
+  ];
+
   /// Forget who this phone belongs to. Device choices stay.
   Future<void> clearIdentity() async {
-    for (final key in [_role, _phone, _name, _backupPhone, _pinHash]) {
+    for (final key in _identityKeys) {
       await _prefs.remove(key);
     }
   }
