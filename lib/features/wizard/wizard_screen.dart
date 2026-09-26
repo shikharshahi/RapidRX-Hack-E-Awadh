@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/feedback/haptics.dart';
+import '../../core/feedback/pressable.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_colors.dart';
@@ -202,13 +204,21 @@ class _WizardScreenState extends State<WizardScreen> {
                 : c.canGoBack
                 ? TextButton(onPressed: c.back, child: Text(s.back))
                 : null,
-            right: FilledButton(
-              onPressed: !c.canGoNext || _approving
-                  ? null
-                  : last
-                  ? _approve
-                  : c.next,
-              child: Text(last ? s.approve : s.next),
+            right: Pressable(
+              enabled: c.canGoNext && !_approving,
+              child: FilledButton(
+                onPressed: !c.canGoNext || _approving
+                    ? null
+                    : last
+                    ? Haptics.on(_approve, HapticKind.confirm)
+                    : Haptics.on(c.next),
+                child: _approving
+                    ? const SizedBox.square(
+                        dimension: 26,
+                        child: CircularProgressIndicator(strokeWidth: 3),
+                      )
+                    : Text(last ? s.approve : s.next),
+              ),
             ),
           ),
         ),

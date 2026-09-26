@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/feedback/haptics.dart';
+import '../../core/feedback/pressable.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/plain_language.dart';
 import '../../core/theme/app_colors.dart';
@@ -122,20 +124,29 @@ class _DoseScreenState extends State<DoseScreen> {
                   style: text.labelMedium?.copyWith(fontSize: 17),
                 ),
                 const SizedBox(height: 10),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(76),
-                    backgroundColor: AppColors.green,
-                    textStyle: const TextStyle(
-                      fontFamily: AppTheme.fontFamily,
-                      fontFamilyFallback: AppTheme.fontFamilyFallback,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
+                Pressable(
+                  enabled: _all && !_saving,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(76),
+                      backgroundColor: AppColors.green,
+                      textStyle: const TextStyle(
+                        fontFamily: AppTheme.fontFamily,
+                        fontFamilyFallback: AppTheme.fontFamilyFallback,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
+                    // The tap shows at once: a spinner while the log is
+                    // written, never a button that seems to ignore the finger.
+                    icon: _saving
+                        ? const _Busy(color: AppColors.green)
+                        : const Icon(Icons.check_circle_rounded, size: 32),
+                    label: Text(s.allTaken),
+                    onPressed: _all && !_saving
+                        ? Haptics.on(_confirm, HapticKind.confirm)
+                        : null,
                   ),
-                  icon: const Icon(Icons.check_circle_rounded, size: 32),
-                  label: Text(s.allTaken),
-                  onPressed: _all && !_saving ? _confirm : null,
                 ),
               ],
             ),
@@ -232,4 +243,16 @@ class _DoseRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _Busy extends StatelessWidget {
+  const _Busy({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: 28,
+    child: CircularProgressIndicator(strokeWidth: 3, color: color),
+  );
 }

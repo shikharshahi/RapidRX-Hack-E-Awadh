@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/feedback/haptics.dart';
+import '../../core/feedback/pressable.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -59,7 +61,11 @@ class _HealthProfileScreenState extends State<HealthProfileScreen> {
       weight: _weight.text,
       ayushmanId: _ayushman.text,
     );
-    if (ok) widget.onDone();
+    if (ok) {
+      widget.onDone();
+    } else {
+      Haptics.error();
+    }
   }
 
   String? _error(HealthError? e, String missing, String range) => switch (e) {
@@ -158,7 +164,12 @@ class _HealthProfileScreenState extends State<HealthProfileScreen> {
           ),
         ],
         const SizedBox(height: 26),
-        FilledButton(onPressed: _submit, child: Text(s.continueLabel)),
+        Pressable(
+          child: FilledButton(
+            onPressed: Haptics.on(_submit),
+            child: Text(s.continueLabel),
+          ),
+        ),
       ],
     );
   }

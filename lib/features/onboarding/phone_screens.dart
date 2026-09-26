@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/feedback/haptics.dart';
+import '../../core/feedback/pressable.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/widgets/onboarding_scaffold.dart';
 
@@ -33,9 +35,11 @@ class _PhoneScreenState extends State<PhoneScreen> {
   void _submit() {
     final digits = _controller.text.trim();
     if (digits.length != 10) {
+      Haptics.error();
       setState(() => _error = L10n.of(context).phoneInvalid);
       return;
     }
+    Haptics.tap();
     widget.onSubmitted(digits);
   }
 
@@ -55,7 +59,9 @@ class _PhoneScreenState extends State<PhoneScreen> {
           onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 28),
-        FilledButton(onPressed: _submit, child: Text(s.continueLabel)),
+        Pressable(
+          child: FilledButton(onPressed: _submit, child: Text(s.continueLabel)),
+        ),
       ],
     );
   }
@@ -91,9 +97,11 @@ class _OtpScreenState extends State<OtpScreen> {
 
   void _submit() {
     if (_controller.text.trim() != demoOtp) {
+      Haptics.error();
       setState(() => _error = L10n.of(context).otpWrong);
       return;
     }
+    Haptics.confirm();
     widget.onVerified();
   }
 
@@ -112,7 +120,9 @@ class _OtpScreenState extends State<OtpScreen> {
           onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 28),
-        FilledButton(onPressed: _submit, child: Text(s.verify)),
+        Pressable(
+          child: FilledButton(onPressed: _submit, child: Text(s.verify)),
+        ),
         const SizedBox(height: 20),
         HintPill(text: s.otpDemoHint),
       ],
@@ -147,7 +157,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(
       () => _nameError = name.isEmpty ? L10n.of(context).nameMissing : null,
     );
-    if (_nameError != null) return;
+    if (_nameError != null) {
+      Haptics.error();
+      return;
+    }
+    Haptics.tap();
     widget.onSubmitted(name);
   }
 
@@ -165,7 +179,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 28),
-        FilledButton(onPressed: _submit, child: Text(s.continueLabel)),
+        Pressable(
+          child: FilledButton(onPressed: _submit, child: Text(s.continueLabel)),
+        ),
       ],
     );
   }
@@ -208,9 +224,11 @@ class _PinScreenState extends State<PinScreen> {
   void _submit() {
     final pin = _controller.text.trim();
     if (pin.length != 4) {
+      Haptics.error();
       setState(() => _error = L10n.of(context).pinInvalid);
       return;
     }
+    Haptics.tap();
     widget.onSubmitted(pin);
   }
 
@@ -230,7 +248,9 @@ class _PinScreenState extends State<PinScreen> {
           onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 28),
-        FilledButton(onPressed: _submit, child: Text(s.continueLabel)),
+        Pressable(
+          child: FilledButton(onPressed: _submit, child: Text(s.continueLabel)),
+        ),
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/app_state.dart';
 import 'core/dev_flags.dart';
+import 'core/feedback/haptics.dart';
 import 'core/l10n/app_strings.dart';
 import 'core/l10n/l10n.dart';
 import 'core/storage/app_prefs.dart';
@@ -221,6 +222,7 @@ class _RapidRxAppState extends State<RapidRxApp> {
           confirming: true,
           onSubmitted: (pin) async {
             if (pin != _pendingPin) {
+              Haptics.error();
               _pendingPin = null;
               _pinError = _strings.pinMismatch;
               _go(_Stage.pin);
