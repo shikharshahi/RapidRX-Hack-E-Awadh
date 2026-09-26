@@ -1,10 +1,41 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../l10n/app_language.dart';
 import 'kokoro_tts.dart';
 import 'speech_engine.dart';
+
+/// Which engine said the last sentence, and how long the user waited for it.
+@immutable
+class VoiceStatus {
+  const VoiceStatus({
+    required this.text,
+    required this.result,
+    required this.elapsed,
+  });
+
+  final String text;
+  final SpeakResult result;
+
+  /// From asking to the audio starting.
+  final Duration elapsed;
+
+  /// The engine that spoke, or null: the screen's text was all there was.
+  String? get spokenBy => result.spokenBy;
+
+  /// One line for the debug overlay, e.g.
+  /// `voice: device · 4003 ms (kokoro: timeout)`.
+  String describe() {
+    final who = spokenBy ?? 'none, text only';
+    final why = result.misses.entries
+        .map((e) => '${e.key}: ${e.value.name}')
+        .join(', ');
+    return 'voice: $who · ${elapsed.inMilliseconds} ms'
+        '${why.isEmpty ? '' : ' ($why)'}';
+  }
+}
 
 /// Reads screens aloud — and makes sure only the newest screen is talking.
 ///
@@ -18,6 +49,11 @@ class VoiceGuide extends ChangeNotifier {
           engine ??
           ChainEngine([KokoroEngine(tts: KokoroTts()), DeviceTtsEngine()]);
 
+  /// Show the one-line voice status on every [VoicePrompt]. Off unless
+  /// `main.dart` turns it on in a debug build; tests (and so goldens, which
+  /// run in debug mode) never see it unless they ask.
+  static bool showDebugStatus = false;
+
   final SpeechEngine _engine;
 
   bool enabled;
@@ -27,15 +63,35 @@ class VoiceGuide extends ChangeNotifier {
   /// Who holds the voice right now.
   Object? get speaker => _speaker;
 
+  /// The last sentence the current owner asked for, and who said it. Null
+  /// until something has been spoken.
+  final ValueNotifier<VoiceStatus?> status = ValueNotifier(null);
+
   /// Speak [text] for [owner], replacing whatever was playing.
-  Future<void> speak(Object owner, String text, AppLanguage language) async {
-    if (!enabled || text.trim().isEmpty) return;
+  ///
+  /// Returns what happened, or null when nothing was attempted (voice off,
+  /// empty text, or another screen claimed the voice first).
+  Future<SpeakResult?> speak(
+    Object owner,
+    String text,
+    AppLanguage language,
+  ) async {
+    if (!enabled || text.trim().isEmpty) return null;
     final previous = _speaker;
     _speaker = owner;
     if (previous != null) await _engine.stop();
     // Another screen may have claimed the voice while we were stopping.
-    if (!identical(_speaker, owner)) return;
-    await _engine.speak(text, language);
+    if (!identical(_speaker, owner)) return null;
+    final watch = Stopwatch()..start();
+    final result = await _engine.speak(text, language);
+    if (identical(_speaker, owner) && !result.superseded) {
+      status.value = VoiceStatus(
+        text: text,
+        result: result,
+        elapsed: watch.elapsed,
+      );
+    }
+    return result;
   }
 
   /// Stop only if [owner] is the one speaking. A screen leaving must never
@@ -50,6 +106,12 @@ class VoiceGuide extends ChangeNotifier {
     _speaker = null;
     await _engine.stop();
   }
+
+  @override
+  void dispose() {
+    status.dispose();
+    super.dispose();
+  }
 }
 
 class VoiceScope extends InheritedWidget {
@@ -62,4 +124,41 @@ class VoiceScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(VoiceScope old) => old.guide != guide;
+}
+
+/// The debug voice line: which engine spoke and how long it took. Renders
+/// nothing outside a debug build, or until [VoiceGuide.showDebugStatus] is on.
+class VoiceStatusLine extends StatelessWidget {
+  const VoiceStatusLine({super.key, required this.guide});
+
+  final VoiceGuide guide;
+
+  static bool get visible => kDebugMode && VoiceGuide.showDebugStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!visible) return const SizedBox.shrink();
+    return IgnorePointer(
+      child: ValueListenableBuilder<VoiceStatus?>(
+        valueListenable: guide.status,
+        builder: (context, status, _) {
+          if (status == null) return const SizedBox.shrink();
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            color: const Color(0xB3000000),
+            child: Text(
+              status.describe(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFFFFFFFF),
+                fontSize: 10,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

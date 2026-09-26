@@ -16,9 +16,12 @@ class FakeEngine implements SpeechEngine {
   Completer<void>? stopGate;
 
   @override
-  Future<bool> speak(String text, AppLanguage language) async {
+  String get name => 'fake';
+
+  @override
+  Future<SpeakResult> speak(String text, AppLanguage language) async {
     spoken.add(text);
-    return true;
+    return SpeakResult.spoke(name);
   }
 
   @override
